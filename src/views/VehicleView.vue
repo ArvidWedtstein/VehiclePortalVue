@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import LineChart from '@/components/LineChart.vue';
+import { groupBy } from '@/utils/utils';
 import { computed } from 'vue';
 const props = defineProps({
   id: String,
@@ -13,7 +14,28 @@ const vehicle = vehicles.find(
 );
 
 const fuelData = computed(() => {
-  return expenses.map(p => p.amount);
+  const dataPoints = [];
+
+  for (let i = 1; i < expenses.length; i++) {
+    const current = expenses[i];
+    const previous = expenses[i - 1];
+
+    // Calculate distance traveled
+    const distance = current.odometer_reading - previous.odometer_reading;
+
+    // Calculate fuel economy in liters per 100 km
+    const fuelUsed = current.amount; // In liters
+    const fuelEconomy = (fuelUsed / distance) * 100; // L/100km
+
+    dataPoints.push({
+      month: new Date(current.expense_date).getMonth(),
+      fuelEconomy: Math.round(fuelEconomy * 100) / 100,
+    });
+  }
+
+  console.log(Object.values(groupBy(dataPoints, 'month')));
+
+  return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
 });
 </script>
 
