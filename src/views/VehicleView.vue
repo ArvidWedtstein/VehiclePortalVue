@@ -1,76 +1,70 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import LineChart from '@/components/LineChart.vue';
-import { groupBy } from '@/utils/utils';
-import { computed } from 'vue';
+import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
+import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
+import { useRouter } from 'vue-router';
 const props = defineProps({
   id: String,
 });
 
-const { vehicles, expenses } = useVehiclesStore();
+const router = useRouter();
+const { vehicles } = useVehiclesStore();
 
 const vehicle = vehicles.find(
   ({ id: vehicle_id }) => vehicle_id === parseInt(props.id || ''),
 );
-
-const fuelData = computed(() => {
-  const dataPoints = [];
-
-  for (let i = 1; i < expenses.length; i++) {
-    const current = expenses[i];
-    const previous = expenses[i - 1];
-
-    // Calculate distance traveled
-    const distance = current.odometer_reading - previous.odometer_reading;
-
-    // Calculate fuel economy in liters per 100 km
-    const fuelUsed = current.amount; // In liters
-    const fuelEconomy = (fuelUsed / distance) * 100; // L/100km
-
-    dataPoints.push({
-      month: new Date(current.expense_date).getMonth(),
-      fuelEconomy: Math.round(fuelEconomy * 100) / 100,
-    });
-  }
-
-  console.log(Object.values(groupBy(dataPoints, 'month')));
-
-  return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
-});
 </script>
 
 <template>
-  <div v-if="vehicle" class="hero bg-base-200 min-h-screen">
-    <div class="hero-content flex-col lg:flex-row">
-      <img :src="vehicle.imageUrl" class="max-w-sm rounded-lg shadow-2xl" />
-      <div>
-        <h1 class="text-5xl font-bold">{{ vehicle.name }}</h1>
-        <p class="py-6">
-          {{ vehicle.model }}
-        </p>
-        <!-- :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]" -->
-        <LineChart
-          :data="fuelData"
-          :width="400"
-          :height="400"
-          :xLabels="[
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'May',
-            'Jun',
-            'Jul',
-            'Aug',
-            'Sep',
-            'Oct',
-            'Nov',
-            'Dec',
-          ]"
-          :yTicks="[0, 20, 40, 60, 80, 100]"
-          animate
-        />
-        <button class="btn btn-primary">Get Started</button>
+  <div
+    v-if="vehicle"
+    class="relative rounded-lg border overflow-hidden bg-base-300 p-4 gap-2"
+  >
+    <img
+      :src="vehicle.imageUrl"
+      class="absolute w-1/3 h-full left-0 top-0 bottom-0 object-cover"
+      loading="lazy"
+    />
+    <div class="absolute bottom-0 left-0 w-1/3 p-2">
+      <div class="card bg-neutral bg-opacity-50 rounded-md text-white">
+        <div class="card-body">
+          <button
+            class="btn btn-sm btn-secondary btn-square"
+            @click="router.back()"
+          >
+            ⬅
+          </button>
+          <h2 class="card-title">{{ vehicle.name }} {{ vehicle.make }}</h2>
+          <p>tralala</p>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3">
+      <div class="col-start-2 col-span-2 p-4">
+        <div role="tablist" class="tabs tabs-bordered">
+          <input
+            type="radio"
+            name="vehicle_tabs"
+            role="tab"
+            class="tab"
+            aria-label="Expenses"
+            :checked="true"
+          />
+          <div role="tabpanel" class="tab-content p-10">
+            <ExpenseTab :id="parseInt(id || '')" />
+          </div>
+
+          <input
+            type="radio"
+            name="vehicle_tabs"
+            role="tab"
+            class="tab"
+            aria-label="Service"
+          />
+          <div role="tabpanel" class="tab-content p-10">
+            <ServiceTab :id="parseInt(id || '')" />
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -37,3 +37,20 @@ export const groupBy = <T extends Record<string, unknown>>(
     return acc;
   }, {});
 };
+
+/**
+ * @description Dabounce
+ * @param func
+ * @param delay
+ * @returns
+ */
+export const debounce = <T extends (...args: unknown[]) => void>(
+  func: T,
+  delay: number,
+): ((...args: Parameters<T>) => void) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>): void => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
