@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 
-import { type Expense } from '@/stores/types';
+import { type Expense } from '@/types';
 
 const props = defineProps({
   vehicle_id: {

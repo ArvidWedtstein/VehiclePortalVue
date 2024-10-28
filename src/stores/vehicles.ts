@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { type Vehicle, type Service, type Expense } from './types';
+import { type Vehicle, type Service, type Expense } from '../types';
 
 export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = ref<Partial<Vehicle>[]>([

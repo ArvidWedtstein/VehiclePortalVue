@@ -3,6 +3,7 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { useRouter } from 'vue-router';
+import CalendarInput from '@/components/general/form/CalendarInput.vue';
 const props = defineProps({
   id: String,
 });
@@ -25,7 +26,7 @@ const vehicle = vehicles.find(
       class="absolute w-1/3 h-full left-0 top-0 bottom-0 object-cover"
       loading="lazy"
     />
-    <div class="absolute bottom-0 left-0 w-1/3 p-2">
+    <div class="absolute top-0 left-0 w-1/3 p-2">
       <div class="card bg-neutral bg-opacity-50 rounded-md text-white">
         <div class="card-body">
           <button

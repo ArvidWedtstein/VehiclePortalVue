@@ -3,7 +3,7 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
-import { type Service } from '@/stores/types';
+import { type Service } from '@/types';
 
 const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
 const { services } = useVehiclesStore();

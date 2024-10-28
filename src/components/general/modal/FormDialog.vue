@@ -7,10 +7,12 @@ const formRef = ref<InstanceType<typeof HTMLFormElement>>();
 type Props = {
   id?: string;
   title?: string;
+  size?: 'sm' | 'md' | 'lg';
 };
 
 withDefaults(defineProps<Props>(), {
   id: crypto.randomUUID(),
+  size: 'lg',
 });
 
 const emit = defineEmits<{
@@ -65,7 +67,12 @@ defineExpose(modalRef.value);
     @close="handleClose"
   >
     <form
-      class="modal-box !w-11/12 !max-w-5xl"
+      class="modal-box"
+      :class="{
+        '!w-4/12': size === 'sm',
+        '!w-8/12 !max-w-2xl': size === 'md',
+        '!w-11/12 !max-w-5xl': size === 'lg',
+      }"
       @submit.prevent="handleSubmit"
       ref="formRef"
     >
