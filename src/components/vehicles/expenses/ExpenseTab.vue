@@ -7,9 +7,9 @@ const props = defineProps({
   id: Number,
 });
 
-const { vehicles, expenses } = useVehiclesStore();
+const { expenses } = useVehiclesStore();
 
-const vehicle = vehicles.find(({ id: vehicle_id }) => vehicle_id === props.id);
+// const vehicle = vehicles.find(({ id: vehicle_id }) => vehicle_id === props.id);
 
 // const fuelData = computed(() => {
 //   const dataPoints = [];
