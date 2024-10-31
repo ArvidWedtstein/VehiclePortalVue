@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, withDefaults, defineEmits, defineExpose, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const modalRef = ref<InstanceType<typeof HTMLDialogElement>>();
 const formRef = ref<InstanceType<typeof HTMLFormElement>>();

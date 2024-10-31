@@ -1,13 +1,8 @@
 <script setup lang="ts">
+import type { Vehicle } from '@/types';
 import { RouterLink } from 'vue-router';
 type Props = {
-  vehicle: {
-    id: number;
-    name: string;
-    imageUrl: string;
-    model: number;
-    make: string;
-  };
+  vehicle: Vehicle;
 };
 
 defineProps<Props>();

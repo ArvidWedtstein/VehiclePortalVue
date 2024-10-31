@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { withDefaults, defineModel, computed } from 'vue';
+import { computed } from 'vue';
 type Props = {
   wrapperClass?: string;
   class?: string;

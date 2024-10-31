@@ -3,26 +3,29 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { useRouter } from 'vue-router';
+import { onMounted, toRefs } from 'vue';
 // import CalendarInput from '@/components/general/form/CalendarInput.vue';
 const props = defineProps({
   id: String,
 });
 
 const router = useRouter();
-const { vehicles } = useVehiclesStore();
+const vehiclesStore = useVehiclesStore();
+const { currentVehicle } = toRefs(vehiclesStore);
+const { setCurrentVehicle } = vehiclesStore;
 
-const vehicle = vehicles.find(
-  ({ id: vehicle_id }) => vehicle_id === parseInt(props.id || ''),
-);
+onMounted(async () => {
+  await setCurrentVehicle(parseInt(props.id || ''));
+});
 </script>
 
 <template>
   <div
-    v-if="vehicle"
+    v-if="currentVehicle"
     class="relative rounded-lg border overflow-hidden bg-base-300 p-4 gap-2"
   >
     <img
-      :src="vehicle.imageUrl"
+      :src="currentVehicle.imageUrl"
       class="absolute w-1/3 h-full left-0 top-0 bottom-0 object-cover"
       loading="lazy"
     />
@@ -35,7 +38,9 @@ const vehicle = vehicles.find(
           >
             ⬅
           </button>
-          <h2 class="card-title">{{ vehicle.name }} {{ vehicle.make }}</h2>
+          <h2 class="card-title">
+            {{ currentVehicle.name }} {{ currentVehicle.make }}
+          </h2>
           <p>tralala</p>
         </div>
       </div>

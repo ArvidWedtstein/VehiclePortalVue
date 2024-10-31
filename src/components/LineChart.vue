@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 interface Props {
   data: number[];

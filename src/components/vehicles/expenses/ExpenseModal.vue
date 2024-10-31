@@ -18,6 +18,8 @@ const props = defineProps({
   },
 });
 
+// TODO: auto-suggest last odometer reading
+
 const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
 const { expenses } = useVehiclesStore();
 

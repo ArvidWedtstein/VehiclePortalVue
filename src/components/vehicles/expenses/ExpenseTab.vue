@@ -2,12 +2,17 @@
 import { useVehiclesStore } from '@/stores/vehicles';
 import LineChart from '@/components/LineChart.vue';
 import ExpenseModal from './ExpenseModal.vue';
+import { onMounted, toRefs } from 'vue';
+import { formatDate } from '@/utils/date';
 
 const props = defineProps({
   id: Number,
 });
 
-const { expenses } = useVehiclesStore();
+const vehiclesStore = useVehiclesStore();
+
+const { expenses } = toRefs(vehiclesStore);
+const { getExpenses } = vehiclesStore;
 
 // const vehicle = vehicles.find(({ id: vehicle_id }) => vehicle_id === props.id);
 
@@ -35,14 +40,28 @@ const { expenses } = useVehiclesStore();
 
 //   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
 // });
+onMounted(() => {
+  getExpenses();
+});
 </script>
 
 <template>
   <ExpenseModal v-if="props.id" :vehicle_id="props.id" />
 
-  <button class="btn" onclick="expenseModal.showModal()">Add Expense</button>
+  <button class="btn" onclick="expenseModal.showModal()">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 448 512"
+      class="w-4 fill-current"
+    >
+      <path
+        d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
+      />
+    </svg>
+    Add Expense
+  </button>
   <!-- :data="fuelData" -->
-  <LineChart
+  <!-- <LineChart
     :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
     :width="400"
     :height="400"
@@ -62,7 +81,7 @@ const { expenses } = useVehiclesStore();
     ]"
     :yTicks="[0, 20, 40, 60, 80, 100]"
     animate
-  />
+  /> -->
 
   <ul class="mt-4 acw acz text-sm ayb daq dqz divide-y divide-base-100">
     <li
@@ -70,11 +89,19 @@ const { expenses } = useVehiclesStore();
       v-for="(expense, index) in expenses"
       :key="index"
     >
-      <img
-        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=2&amp;w=256&amp;h=256&amp;q=80"
-        alt=""
-        class="h-14 w-14 flex-none rounded-full"
-      />
+      <div class="w-14 h-14 flex-none rounded-full border">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          class="h-14 w-14 p-3"
+          fill="currentColor"
+        >
+          <path
+            d="M32 64C32 28.7 60.7 0 96 0L256 0c35.3 0 64 28.7 64 64l0 192 8 0c48.6 0 88 39.4 88 88l0 32c0 13.3 10.7 24 24 24s24-10.7 24-24l0-154c-27.6-7.1-48-32.2-48-62l0-64L384 64c-8.8-8.8-8.8-23.2 0-32s23.2-8.8 32 0l77.3 77.3c12 12 18.7 28.3 18.7 45.3l0 13.5 0 24 0 32 0 152c0 39.8-32.2 72-72 72s-72-32.2-72-72l0-32c0-22.1-17.9-40-40-40l-8 0 0 144c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32L32 64zM96 80l0 96c0 8.8 7.2 16 16 16l128 0c8.8 0 16-7.2 16-16l0-96c0-8.8-7.2-16-16-16L112 64c-8.8 0-16 7.2-16 16z"
+          />
+        </svg>
+      </div>
+
       <div class="flex-1">
         <h3 class="capitalize font-semibold azh xl:pr-0">
           {{ expense.expense_type }}
@@ -98,9 +125,9 @@ const { expenses } = useVehiclesStore();
               </svg>
             </dt>
             <dd>
-              <time datetime="2022-01-10T17:00"
-                >January 10th, 2022 at 5:00 PM</time
-              >
+              <time :datetime="expense.expense_date">{{
+                formatDate(expense.expense_date)
+              }}</time>
             </dd>
           </div>
           <div
@@ -122,7 +149,7 @@ const { expenses } = useVehiclesStore();
                 ></path>
               </svg>
             </dt>
-            <dd>Starbucks</dd>
+            <dd>{{ expense.notes }}</dd>
           </div>
         </dl>
       </div>

@@ -1,24 +1,12 @@
 <script setup lang="ts">
+import { useVehiclesStore } from '@/stores/vehicles';
 import VehicleItem from '../vehicles/VehicleItem.vue';
+import { onMounted } from 'vue';
+const { vehicles, getVehicles } = useVehiclesStore();
 
-const vehicles = [
-  {
-    id: 1,
-    name: 'Haudi',
-    model: 2005,
-    make: 'A4 S4',
-    imageUrl:
-      'https://c4.wallpaperflare.com/wallpaper/163/575/674/cars-audi-wallpaper-preview.jpg',
-  },
-  {
-    id: 6,
-    name: 'Honda',
-    model: 1993,
-    make: 'Shadow',
-    imageUrl:
-      'https://wallpapercat.com/w/full/a/1/a/7307-1920x1200-desktop-hd-honda-shadow-background.jpg',
-  },
-];
+onMounted(() => {
+  getVehicles();
+});
 </script>
 
 <template>

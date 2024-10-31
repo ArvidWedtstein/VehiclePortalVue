@@ -55,10 +55,34 @@ export const debounce = <T extends (...args: unknown[]) => void>(
   };
 };
 
+/**
+ * Converts array type to single type
+ */
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+
 export type ColumnsToReturn<T, C> = C extends '*'
   ? T
   : Pick<T, Extract<C, keyof T>>;
 
 export type FilterKeys<T> = {
   [K in keyof T]?: T[K];
+};
+
+export const getLanguage = () =>
+  navigator.language || (navigator.languages || ['en'])[0];
+
+/**
+ *
+ * @param a bytes
+ * @param b decimals
+ * @returns formatted byte number
+ */
+export const formatBytes = (a: number, b = 2) => {
+  if (!+a) return '0 Bytes';
+  const c = 0 > b ? 0 : b,
+    d = Math.floor(Math.log(a) / Math.log(1024));
+  return `${parseFloat((a / Math.pow(1024, d)).toFixed(c))} ${
+    ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
+  }`;
 };
