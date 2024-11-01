@@ -4,6 +4,7 @@ import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { useRouter } from 'vue-router';
 import { onMounted, toRefs } from 'vue';
+import MultiStepForm from '@/components/general/form/MultiStepForm.vue';
 // import CalendarInput from '@/components/general/form/CalendarInput.vue';
 const props = defineProps({
   id: String,
@@ -20,6 +21,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <MultiStepForm />
   <div
     v-if="currentVehicle"
     class="relative rounded-lg border overflow-hidden bg-base-300 p-4 gap-2"
