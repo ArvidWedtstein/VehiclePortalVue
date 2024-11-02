@@ -216,10 +216,6 @@ Instructions TBA...
    ```sh
     DATABASE_URL=postgresql://<user>:<pass>@db.<project>.supabase.co:<port>/postgres
    ```
-4. Check if everything is fine.
-   ```sh
-   yarn redwood check
-   ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -248,7 +244,6 @@ Testing is not in place yet, but will hopefully come later
 - [ ] Testing
 - [ ] Find place to deploy (preferably free)
 
-<!--https://redwoodjs.com/docs/how-to/test-in-github-actions-->
 
 See the [open issues](https://github.com/ArvidWedtstein/VehicleHub/issues) for a full list of proposed features (and known issues).
 
