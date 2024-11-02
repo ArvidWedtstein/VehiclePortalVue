@@ -5,6 +5,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![Version][version-shield]][version-url]
+[![Update database types][workflow-shield]][workflow-url]
 
 <br />
 <div align="center">
@@ -294,6 +295,8 @@ Nothing to acknowledge yet :D
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
+[workflow-shield]: https://github.com/ArvidWedtstein/VehicleHub/actions/workflows/update-types.yml/badge.svg
+[workflow-url]: https://github.com/ArvidWedtstein/VehicleHub/actions/workflows/update-types.yml
 [contributors-shield]: https://img.shields.io/github/contributors/ArvidWedtstein/VehicleHub.svg?style=for-the-badge
 [contributors-url]: https://github.com/ArvidWedtstein/VehicleHub/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/ArvidWedtstein/VehicleHub.svg?style=for-the-badge
