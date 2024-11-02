@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 
-import { type Expense } from '@/types';
+import type { TablesInsert, TablesUpdate } from '@/database.types';
 
 const props = defineProps({
   vehicle_id: {
@@ -22,8 +22,8 @@ const props = defineProps({
 const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
 const { expenses } = useVehiclesStore();
 
-const defaultValues: Expense = {
-  id: null,
+const defaultValues: TablesUpdate<"VehicleExpenses"> = {
+  ...(props.expense_id ? { id: props.expense_id } : {}),
   created_at: new Date().toISOString(),
   createdby_id: '',
   vehicle_id: props.vehicle_id,
@@ -36,7 +36,7 @@ const defaultValues: Expense = {
   unit: 'liter',
 };
 
-const expense = ref<Expense>({ ...defaultValues });
+const expense = ref<TablesInsert<"VehicleExpenses"> | TablesUpdate<"VehicleExpenses">>({ ...defaultValues });
 
 const onModalOpen = () => {
   expense.value = { ...defaultValues };

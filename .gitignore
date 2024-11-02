@@ -29,3 +29,8 @@ coverage
 .env
 
 *.tsbuildinfo
+
+# Supabase
+.branches
+.temp
+.env

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Vehicle } from '@/types';
+import type { Tables } from '@/database.types';
 import { RouterLink } from 'vue-router';
 type Props = {
-  vehicle: Vehicle;
+  vehicle: Tables<"Vehicles">;
 };
 
 defineProps<Props>();
@@ -11,7 +11,7 @@ defineProps<Props>();
 <template>
   <div class="card bg-base-100 image-full shadow-xl">
     <figure>
-      <img :src="vehicle.imageUrl" alt="car" loading="lazy" />
+      <!-- <img :src="vehicle" alt="car" loading="lazy" /> -->
     </figure>
     <div class="card-body">
       <h2 class="card-title">{{ vehicle.name }} {{ vehicle.make }}</h2>

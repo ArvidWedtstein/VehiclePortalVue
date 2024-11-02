@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { maskInput } from '@/lib/mask';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 type Props = {
   wrapperClass?: string;
   class?: string;
@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
   join: false,
 });
 
-const model = defineModel<string | number>();
+const model = defineModel<string | number | null>();
 
 const computedType = computed(() => {
   return props.type === 'select' || props.type === 'textarea'
@@ -35,72 +35,54 @@ const computedType = computed(() => {
     : 'input';
 });
 
-const computedClass = computed(() => [
-  {
-    'input input-bordered invalid:input-error': computedType.value === 'input',
-    'select select-bordered invalid:select-error': computedType.value === 'select',
-    'textarea textarea-bordered invalid:textarea-error': computedType.value === 'textarea',
+const computedClass = computed(() => {
+  const baseClasses = {
+    input: 'input input-bordered invalid:input-error',
+    textarea: 'textarea textarea-bordered invalid:textarea-error',
+    select: 'select select-bordered invalid:select-error',
+  };
 
-    'input-primary': props.color == 'primary' && computedType.value === 'input',
-    'input-secondary':
-      props.color == 'secondary' && computedType.value === 'input',
-    'input-error': props.color == 'error' && computedType.value === 'input',
-    'input-warning': props.color == 'warning' && computedType.value === 'input',
-    'input-success': props.color == 'success' && computedType.value === 'input',
-    'input-accent': props.color == 'accent' && computedType.value === 'input',
-    'input-info': props.color == 'info' && computedType.value === 'input',
+  // Color classes based on the component type
+  const colorClasses = {
+    primary: `${computedType.value}-primary`,
+    secondary: `${computedType.value}-secondary`,
+    error: `${computedType.value}-error`,
+    warning: `${computedType.value}-warning`,
+    success: `${computedType.value}-success`,
+    accent: `${computedType.value}-accent`,
+    info: `${computedType.value}-info`,
+  };
 
-    'textarea-primary':
-      props.color == 'primary' && computedType.value === 'textarea',
-    'textarea-secondary':
-      props.color == 'secondary' && computedType.value === 'textarea',
-    'textarea-error':
-      props.color == 'error' && computedType.value === 'textarea',
-    'textarea-warning':
-      props.color == 'warning' && computedType.value === 'textarea',
-    'textarea-success':
-      props.color == 'success' && computedType.value === 'textarea',
-    'textarea-accent':
-      props.color == 'accent' && computedType.value === 'textarea',
-    'textarea-info': props.color == 'info' && computedType.value === 'textarea',
+  // Size classes based on the component type
+  const sizeClasses = {
+    xs: `${computedType.value}-xs`,
+    sm: `${computedType.value}-sm`,
+    md: '',
+    lg: `${computedType.value}-lg`,
+  };
 
-    'select-primary':
-      props.color == 'primary' && computedType.value === 'select',
-    'select-secondary':
-      props.color == 'secondary' && computedType.value === 'select',
-    'select-error': props.color == 'error' && computedType.value === 'select',
-    'select-warning':
-      props.color == 'warning' && computedType.value === 'select',
-    'select-success':
-      props.color == 'success' && computedType.value === 'select',
-    'select-accent': props.color == 'accent' && computedType.value === 'select',
-    'select-info': props.color == 'info' && computedType.value === 'select',
+  const colorClass = props.color  
+    ? colorClasses[props.color]
+    : '';
 
-    'input-xs': props.size === 'xs' && computedType.value === 'input',
-    'input-sm': props.size === 'sm' && computedType.value === 'input',
-    'input-lg': props.size === 'lg' && computedType.value === 'input',
+  return [
+    baseClasses[computedType.value],
+    colorClass,
+    sizeClasses[props.size],
+    props.join && 'join-item',
+    'grow',
+    props.class,
+  ];
+});
 
-    'textarea-xs': props.size === 'xs' && computedType.value === 'textarea',
-    'textarea-sm': props.size === 'sm' && computedType.value === 'textarea',
-    'textarea-lg': props.size === 'lg' && computedType.value === 'textarea',
-
-    'select-xs': props.size === 'xs' && computedType.value === 'select',
-    'select-sm': props.size === 'sm' && computedType.value === 'select',
-    'select-lg': props.size === 'lg' && computedType.value === 'select',
-
-    'join-item': props.join,
-  },
-  props.class,
-]);
-
-const onInput = (event: InputEvent) => {
+const onInput = (event: Event) => {
   const rawValue = (event.target as HTMLInputElement)?.value;
 
   if (!props.mask) return;
 
 
   const masked = maskInput(rawValue, props.mask);
-  console.log(rawValue, masked, model.value)
+  // console.log(rawValue, masked, model.value)
   model.value = masked;
 }
 </script>
@@ -119,7 +101,7 @@ const onInput = (event: InputEvent) => {
       </slot>
 
       <slot name="input">
-        <component
+        <!-- <component
           :is="computedType"
           @input="onInput"
           class="grow"
@@ -129,7 +111,33 @@ const onInput = (event: InputEvent) => {
           :value="model"
         >
           <slot></slot>
-        </component>
+        </component> -->
+        <textarea
+          v-if="type === 'textarea'"
+          v-bind="$attrs"
+          v-model="model"
+          :class="computedClass"
+          @input="onInput"
+        ></textarea>
+
+        <select
+          v-else-if="type === 'select'"
+          v-bind="$attrs"
+          :class="computedClass"
+          v-model="model"
+          @input="onInput"
+        >
+          <slot></slot>
+        </select>
+
+        <input
+          v-else
+          :type="type"
+          v-bind="$attrs"
+          :class="computedClass"
+          v-model="model"
+          @input="onInput"
+        />
       </slot>
       <slot name="addon"></slot>
     </label>

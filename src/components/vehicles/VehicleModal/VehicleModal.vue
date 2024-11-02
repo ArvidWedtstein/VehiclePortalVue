@@ -4,23 +4,23 @@ import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 
-import { type Vehicle } from '@/types';
+import { type Tables, type TablesInsert, type TablesUpdate } from '@/database.types';
 
-type VehicleFormData = Omit<Vehicle, 'id'> & { id: null | number };
+// type VehicleFormData = Omit<Vehicle, 'id'> & { id: null | number };
 type Props = {
-  vehicle_id?: Vehicle['id'] | null;
+  vehicle_id?: Tables<"Vehicles">["id"];
 };
 const props = withDefaults(defineProps<Props>(), {
-  vehicle_id: null,
+  vehicle_id: undefined,
 });
 
-const defaultValues: VehicleFormData = {
-  id: props.vehicle_id,
+const defaultValues: TablesUpdate<"Vehicles"> = {
+  ...(props.vehicle_id ? { id: props.vehicle_id } : {}),
   created_at: new Date().toISOString(),
   createdby_id: '',
   name: '',
   make: '',
-  model: null,
+  model: 2000,
   type: '',
   body_type: '',
   manufacturer: '',
@@ -33,7 +33,6 @@ const defaultValues: VehicleFormData = {
   height: '',
   length: '',
   width: '',
-  imageUrl: '',
   fuel_capacity: 0,
   engine_id: undefined,
   transmission_id: undefined,
@@ -42,7 +41,7 @@ const defaultValues: VehicleFormData = {
 
 const { vehicles } = useVehiclesStore();
 
-const vehicle = ref<VehicleFormData>({ ...defaultValues });
+const vehicle = ref<TablesInsert<"Vehicles"> | TablesUpdate<"Vehicles">>({ ...defaultValues });
 
 const onModalOpen = () => {
   vehicle.value = { ...defaultValues };
@@ -76,8 +75,16 @@ onMounted(() => {
         label="Register Number"
         type="text"
         v-model="vehicle.register_number"
-        mask="(###) ###-####"
+        mask="AA-######"
+        placeholder="AB 123456"
         required
+      />
+
+      <FormInput
+        wrapperClass="sm:col-span-4"
+        label="VIN (Vehicle Identification Number)"
+        type="text"
+        v-model="vehicle.vehicle_identification_number"
       />
     </div>
   </FormDialog>

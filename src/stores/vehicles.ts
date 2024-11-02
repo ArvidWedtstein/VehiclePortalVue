@@ -1,14 +1,14 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { type Vehicle, type Service, type Expense } from '../types';
+import { type Service } from '../types';
 import type { FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
+import { type Tables } from '@/database.types';
 
 export const useVehiclesStore = defineStore('vehicles', () => {
-  const vehicles = ref<Vehicle[]>([]);
-  const currentVehicle = ref<Vehicle | null>(null);
-
-  const expenses = ref<Expense[]>([]);
+  const vehicles = ref<Tables<"Vehicles">[]>([]);
+  const currentVehicle = ref<Tables<"Vehicles"> | null>(null);
+  const expenses = ref<Tables<"VehicleExpenses">[]>([]);
 
   const services = ref<Service[]>([
     {
@@ -26,9 +26,10 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     },
   ]);
 
-  const setCurrentVehicle = async (pVehicle_ID: Vehicle['id']) => {
+  const setCurrentVehicle = async (pVehicle_ID: Tables<'Vehicles'>['id']) => {
     try {
       console.info('Set Current Vehicle');
+      if (!pVehicle_ID) return;
 
       if (!vehicles.value.length) {
         await getVehicles({ id: pVehicle_ID });
@@ -46,8 +47,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
-  const getVehicles = async <Columns extends (keyof Vehicle | '*')[]>(
-    filters?: FilterKeys<Vehicle>,
+  const getVehicles = async <Columns extends (keyof Tables<'Vehicles'>[] | '*')[]>(
+    filters?: FilterKeys<Tables<'Vehicles'>>,
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
@@ -58,7 +59,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
         .select(columns.join(','))
         .match(filters || {})
         .limit(100)
-        .returns<Vehicle[]>();
+        .returns<Tables<'Vehicles'>[]>();
 
       if (error && status !== 406) throw error;
 
@@ -68,12 +69,12 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
-  const getExpenses = async <Columns extends (keyof Expense | '*')[]>(
-    filters?: FilterKeys<Expense>,
+  const getExpenses = async <Columns extends (keyof Tables<"VehicleExpenses"> | '*')[]>(
+    filters?: FilterKeys<Tables<"VehicleExpenses">>,
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
-      if (!currentVehicle.value) {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
         throw new Error('No Vehicle Selected!');
       }
 
@@ -90,7 +91,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
-        .returns<Expense[]>();
+        .returns<Tables<"VehicleExpenses">[]>();
 
       if (error && status !== 406) throw error;
 
