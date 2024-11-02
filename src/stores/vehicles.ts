@@ -54,7 +54,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       console.info('Get Vehicles');
 
       const { data, error, status } = await supabase
-        .from('Vehicles')
+        .from('myvehicles') // Vehicles
         .select(columns.join(','))
         .match(filters || {})
         .limit(100)

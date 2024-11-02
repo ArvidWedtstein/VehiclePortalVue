@@ -16,7 +16,7 @@
 
     <form @submit.prevent="handleSubmit">
       <!-- Step 1: Name -->
-      <div v-if="currentStep === 0">
+      <div v-if="currentStep === 0" class="step-container">
         <label class="block mb-2">Name</label>
         <input
           v-model="formData.name"
@@ -27,7 +27,7 @@
       </div>
 
       <!-- Step 2: Email -->
-      <div v-if="currentStep === 1">
+      <div v-if="currentStep === 1" class="step-container">
         <label class="block mb-2">Email</label>
         <input
           v-model="formData.email"
@@ -38,7 +38,7 @@
       </div>
 
       <!-- Step 3: Age -->
-      <div v-if="currentStep === 2">
+      <div v-if="currentStep === 2" class="step-container">
         <label class="block mb-2">Age</label>
         <input
           v-model="formData.age"
@@ -49,7 +49,7 @@
       </div>
 
       <!-- Step 4: Country -->
-      <div v-if="currentStep === 3">
+      <div v-if="currentStep === 3" class="step-container">
         <label class="block mb-2">Country</label>
         <input
           v-model="formData.country"
@@ -104,10 +104,25 @@ const formData = ref({
   country: '',
 });
 
+// Function to validate only fields in the current step
+const validateCurrentStep = (): boolean => {
+  const stepContainer = document.querySelector('.step-container');
+  if (!stepContainer) return false;
+
+  // Check validity of each input in the current step container
+  const inputs = stepContainer.querySelectorAll('input[required]');
+  for (const input of inputs) {
+    if (!(input as HTMLInputElement).checkValidity()) {
+      (input as HTMLInputElement).reportValidity();
+      return false;
+    }
+  }
+  return true;
+};
+
 // Navigation methods
 const nextStep = () => {
-  const form = document.querySelector('form');
-  if (form?.reportValidity()) {
+  if (validateCurrentStep()) {
     currentStep.value++;
   }
 };
@@ -118,8 +133,7 @@ const prevStep = () => {
 
 // Submit form handler
 const handleSubmit = () => {
-  const form = document.querySelector('form');
-  if (form?.reportValidity()) {
+  if (validateCurrentStep()) {
     console.log('Form submitted:', formData.value);
     alert('Form submitted successfully!');
     resetForm();

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { vMaska } from 'maska/vue';
 import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
@@ -132,7 +131,6 @@ onMounted(() => {
         wrapperClass="sm:col-span-3"
         type="text"
         inputmode="numeric"
-        v-maska="'### ### ###'"
         placeholder="0 000 000"
         v-model="expense.odometer_reading"
       />

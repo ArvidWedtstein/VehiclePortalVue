@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { maskInput } from '@/lib/mask';
+import { computed, ref } from 'vue';
 type Props = {
   wrapperClass?: string;
   class?: string;
@@ -8,6 +9,7 @@ type Props = {
   helpText?: string;
   icon?: string;
   join?: boolean;
+  mask?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?:
     | 'error'
@@ -35,6 +37,10 @@ const computedType = computed(() => {
 
 const computedClass = computed(() => [
   {
+    'input input-bordered invalid:input-error': computedType.value === 'input',
+    'select select-bordered invalid:select-error': computedType.value === 'select',
+    'textarea textarea-bordered invalid:textarea-error': computedType.value === 'textarea',
+
     'input-primary': props.color == 'primary' && computedType.value === 'input',
     'input-secondary':
       props.color == 'secondary' && computedType.value === 'input',
@@ -86,6 +92,17 @@ const computedClass = computed(() => [
   },
   props.class,
 ]);
+
+const onInput = (event: InputEvent) => {
+  const rawValue = (event.target as HTMLInputElement)?.value;
+
+  if (!props.mask) return;
+
+
+  const masked = maskInput(rawValue, props.mask);
+  console.log(rawValue, masked, model.value)
+  model.value = masked;
+}
 </script>
 
 <template>
@@ -102,32 +119,17 @@ const computedClass = computed(() => [
       </slot>
 
       <slot name="input">
-        <textarea
-          v-if="type === 'textarea'"
+        <component
+          :is="computedType"
+          @input="onInput"
+          class="grow"
+          :class="computedClass"
           v-bind="$attrs"
           v-model="model"
-          class="textarea textarea-bordered grow invalid:textarea-error"
-          :class="computedClass"
-        ></textarea>
-
-        <select
-          v-else-if="type === 'select'"
-          v-bind="$attrs"
-          class="select select-bordered grow invalid:select-error"
-          :class="computedClass"
-          v-model="model"
+          :value="model"
         >
           <slot></slot>
-        </select>
-
-        <input
-          v-else
-          :type="type"
-          v-bind="$attrs"
-          class="input input-bordered grow invalid:input-error"
-          :class="computedClass"
-          v-model="model"
-        />
+        </component>
       </slot>
       <slot name="addon"></slot>
     </label>
