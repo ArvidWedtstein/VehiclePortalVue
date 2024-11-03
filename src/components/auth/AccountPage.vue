@@ -23,7 +23,7 @@ async function updateProfile() {
       updated_at: new Date(),
     };
 
-    const { error } = await supabase.from('profiles').upsert(updates);
+    const { error } = await supabase.from('Profiles').upsert(updates);
 
     if (error) throw error;
   } catch (error) {

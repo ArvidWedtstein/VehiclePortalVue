@@ -14,7 +14,7 @@ defineProps<Props>();
       <!-- <img :src="vehicle" alt="car" loading="lazy" /> -->
     </figure>
     <div class="card-body">
-      <h2 class="card-title">{{ vehicle.name }} {{ vehicle.make }}</h2>
+      <h2 class="card-title">{{ vehicle.make }} {{ vehicle.model }}</h2>
       <p>{{ vehicle.model }}</p>
       <div class="card-actions justify-end">
         <RouterLink

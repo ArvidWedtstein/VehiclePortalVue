@@ -3,16 +3,16 @@ export type Vehicle = {
   created_at?: string;
   createdby_id?: string;
   name: string;
-  model: number | null;
+  model: string | null;
   make: string;
-  manufacturer: string;
+  color: string;
   drivetrain: string;
   width: string;
   length: string;
   height?: string;
   weight: number;
   body_type: string;
-  register_number: string;
+  licenseplate_number: string;
   vehicle_identification_number: string | null;
   engine_id?: number;
   transmission_id?: number;
@@ -20,7 +20,7 @@ export type Vehicle = {
   registered_date: string;
   fuel_capacity: number;
   type: string;
-  odometer_unit: string;
+  mileage_unit: string;
   imageUrl?: string;
 };
 
@@ -33,7 +33,7 @@ export type Service = {
   currency: string;
   service_date: string;
   service_provider?: string;
-  odometer_reading?: number;
+  mileage?: number;
   notes?: string;
   type: string;
 };
@@ -47,7 +47,7 @@ export type Expense = {
   expense_type: string;
   amount: number;
   /** TODO: get last value here */
-  odometer_reading?: number;
+  mileage?: number;
   notes?: string;
   cost: number;
   currency?: string;

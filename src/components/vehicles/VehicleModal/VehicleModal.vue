@@ -20,14 +20,14 @@ const defaultValues: TablesUpdate<"Vehicles"> = {
   createdby_id: '',
   name: '',
   make: '',
-  model: 2000,
+  model: '',
   type: '',
   body_type: '',
-  manufacturer: '',
+  color: '',
   drivetrain: '',
   eu_control_date: '',
   registered_date: '',
-  register_number: '',
+  licenseplate_number: '',
   vehicle_identification_number: '',
   weight: 0,
   height: '',
@@ -36,7 +36,7 @@ const defaultValues: TablesUpdate<"Vehicles"> = {
   fuel_capacity: 0,
   engine_id: undefined,
   transmission_id: undefined,
-  odometer_unit: 'kilometer',
+  mileage_unit: 'kilometer',
 };
 
 const { vehicles } = useVehiclesStore();
@@ -74,7 +74,7 @@ onMounted(() => {
         wrapperClass="sm:col-span-2"
         label="Register Number"
         type="text"
-        v-model="vehicle.register_number"
+        v-model="vehicle.licenseplate_number"
         mask="AA-######"
         placeholder="AB 123456"
         required
@@ -85,6 +85,28 @@ onMounted(() => {
         label="VIN (Vehicle Identification Number)"
         type="text"
         v-model="vehicle.vehicle_identification_number"
+      />
+
+      
+      <FormInput
+        wrapperClass="sm:col-span-2"
+        label="Make"
+        type="text"
+        v-model="vehicle.make"
+      />
+
+      <FormInput
+        wrapperClass="sm:col-span-2"
+        label="Model"
+        type="text"
+        v-model="vehicle.model"
+      />
+
+      <FormInput
+        wrapperClass="sm:col-span-2"
+        label="Registered Date"
+        type="date"
+        v-model="vehicle.registered_date"
       />
     </div>
   </FormDialog>

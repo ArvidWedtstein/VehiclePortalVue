@@ -24,7 +24,7 @@ const { getExpenses } = vehiclesStore;
 //     const previous = expenses[i - 1];
 
 //     // Calculate distance traveled
-//     const distance = current.odometer_reading - previous.odometer_reading;
+//     const distance = current.mileage - previous.mileage;
 
 //     // Calculate fuel economy in liters per 100 km
 //     const fuelUsed = current.amount; // In liters

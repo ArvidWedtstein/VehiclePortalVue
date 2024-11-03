@@ -132,7 +132,7 @@ onMounted(() => {
         type="text"
         inputmode="numeric"
         placeholder="0 000 000"
-        v-model="expense.odometer_reading"
+        v-model="expense.mileage"
       />
 
       <FormInput

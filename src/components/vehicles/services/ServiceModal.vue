@@ -115,7 +115,7 @@ onMounted(() => {
         wrapperClass="sm:col-span-2"
         type="number"
         join
-        v-model="service.odometer_reading"
+        v-model="service.mileage"
       />
 
       <FormInput

@@ -1,0 +1,549 @@
+[
+  {
+    "name": "Elektriskdrevet kjøretøy",
+    "lettercombinations": [
+      "EL",
+      "EK",
+      "EV",
+      "EB",
+      "EC",
+      "ED",
+      "EE",
+      "EF",
+      "EH",
+      "EJ",
+      "EN"
+    ]
+  },
+  {
+    "name": "Gassdrevet kjøretøy",
+    "lettercombinations": ["GA"]
+  },
+  {
+    "name": "Hydrogendrevet kjøretøy",
+    "lettercombinations": ["HY"]
+  },
+  {
+    "name": "Ambassadekjøretøy (Corps Diplomatique)",
+    "lettercombinations": ["CD"]
+  },
+  {
+    "name": "Akershus",
+    "area": "Asker og Bærum",
+    "lettercombinations": [
+      "BL",
+      "BN",
+      "BP",
+      "BR",
+      "BS",
+      "BT",
+      "BU",
+      "BV",
+      "BX",
+      "BY",
+      "BZ",
+      "CA",
+      "CB"
+    ]
+  },
+  {
+    "name": "Akershus",
+    "area": "Drøbak",
+    "lettercombinations": ["BC", "BD", "BE", "BF", "BH", "BJ", "BK"]
+  },
+  {
+    "name": "Akershus",
+    "area": "Jessheim",
+    "lettercombinations": ["CV", "CX", "CY", "CZ", "CU"]
+  },
+  {
+    "name": "Akershus",
+    "area": "Lillestrøm",
+    "lettercombinations": [
+      "CC",
+      "CE",
+      "CF",
+      "CH",
+      "CJ",
+      "CK",
+      "CL",
+      "CN",
+      "CP",
+      "CR",
+      "CS",
+      "CT",
+      "CU"
+    ]
+  },
+  {
+    "name": "Buskerud",
+    "area": "Drammen",
+    "lettercombinations": [
+      "KE",
+      "KF",
+      "KH",
+      "KJ",
+      "KK",
+      "KL",
+      "KN",
+      "KP",
+      "KR",
+      "KS"
+    ]
+  },
+  {
+    "name": "Buskerud",
+    "area": "Gol",
+    "lettercombinations": ["KB", "KC", "KD"]
+  },
+  {
+    "name": "Buskerud",
+    "area": "Hønefoss",
+    "lettercombinations": ["JU", "JV", "JX", "JY", "JZ", "KA"]
+  },
+  {
+    "name": "Buskerud",
+    "area": "Kongsberg",
+    "lettercombinations": ["KT", "KU", "KV", "KX", "KY"]
+  },
+  {
+    "name": "Østfold",
+    "area": "Hafslund (tidligere Fredrikstad)",
+    "lettercombinations": [
+      "AD",
+      "AR",
+      "AS",
+      "AT",
+      "AU",
+      "AV",
+      "AW",
+      "DW",
+      "FL",
+      "ES"
+    ]
+  },
+  {
+    "name": "Østfold",
+    "area": "Halden",
+    "lettercombinations": ["AA", "AB", "AC"]
+  },
+  {
+    "name": "Østfold",
+    "area": "Moss",
+    "lettercombinations": ["AX", "AY", "AZ", "BA"]
+  },
+  {
+    "name": "Østfold",
+    "area": "Mysen",
+    "lettercombinations": ["AJ", "AK", "AL", "AN", "AP", "FN", "BW"]
+  },
+  {
+    "name": "Østfold",
+    "area": "Sarpsborg",
+    "lettercombinations": ["AE", "AF", "AH"]
+  },
+  {
+    "name": "Oslo",
+    "area": "Oslo",
+    "lettercombinations": [
+      "DA",
+      "DB",
+      "DC",
+      "DD",
+      "DE",
+      "DF",
+      "DH",
+      "DJ",
+      "DK",
+      "DL",
+      "DN",
+      "DP",
+      "DR",
+      "DS",
+      "DT",
+      "DU",
+      "DV",
+      "DX",
+      "DY",
+      "DZ",
+      "EA",
+      "EP",
+      "ER",
+      "EU"
+    ]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Elverum",
+    "lettercombinations": ["HB", "HC", "HD", "HE", "HA", "FZ"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Fagernes",
+    "lettercombinations": ["JR", "JS", "JT"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Gjøvik",
+    "lettercombinations": [
+      "JC",
+      "JD",
+      "JE",
+      "JF",
+      "JH",
+      "JJ",
+      "JK",
+      "JL",
+      "JN",
+      "JP"
+    ]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Hamar",
+    "lettercombinations": ["FS", "FT", "FU", "FV", "FX", "FY", "FZ", "FW", "ET"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Kongsvinger",
+    "lettercombinations": ["HJ", "HK", "HL", "HN", "HP", "HR"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Lillehammer",
+    "lettercombinations": ["HS", "HT", "HU", "HV", "HX", "FB"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Otta",
+    "lettercombinations": ["HZ", "JA", "JB"]
+  },
+  {
+    "name": "Innlandet",
+    "area": "Tynset",
+    "lettercombinations": ["HF", "HH"]
+  },
+  {
+    "name": "Vestfold",
+    "area": "Horten",
+    "lettercombinations": ["KZ", "LA", "LB", "LC", "LD"]
+  },
+  {
+    "name": "Vestfold",
+    "area": "Larvik",
+    "lettercombinations": ["LS", "LT", "LU", "LV", "LX", "LZ", "NA", "NB", "NC"]
+  },
+  {
+    "name": "Vestfold",
+    "area": "Sandefjord",
+    "lettercombinations": ["LY", "NA"]
+  },
+  {
+    "name": "Vestfold",
+    "area": "Tønsberg",
+    "lettercombinations": ["LH", "LJ", "LK", "LL", "LN", "LP", "LR", "LD"]
+  },
+  {
+    "name": "Telemark",
+    "area": "Notodden",
+    "lettercombinations": ["NV", "NX", "NY", "NZ"]
+  },
+  {
+    "name": "Telemark",
+    "area": "Rjukan",
+    "lettercombinations": ["PA", "PB"]
+  },
+  {
+    "name": "Telemark",
+    "area": "Skien",
+    "lettercombinations": [
+      "ND",
+      "NE",
+      "NF",
+      "NH",
+      "NJ",
+      "NK",
+      "NL",
+      "NN",
+      "NP",
+      "NR",
+      "NT",
+      "NU"
+    ]
+  },
+  {
+    "name": "Agder",
+    "area": "Arendal",
+    "lettercombinations": ["PC", "PD", "PE", "PF", "PH", "PJ", "PK"]
+  },
+  {
+    "name": "Agder",
+    "area": "Flekkefjord",
+    "lettercombinations": ["RA", "RB"]
+  },
+  {
+    "name": "Agder",
+    "area": "Kristiansand",
+    "lettercombinations": ["PN", "PP", "PR", "PS", "PT", "PU", "PV", "PW"]
+  },
+  {
+    "name": "Agder",
+    "area": "Mandal",
+    "lettercombinations": ["PX", "PY", "PZ", "RC", "RD"]
+  },
+  {
+    "name": "Agder",
+    "area": "Setesdal",
+    "lettercombinations": ["PL", "LF"]
+  },
+  {
+    "name": "Rogaland",
+    "area": "Egersund",
+    "lettercombinations": ["RZ", "SA", "SB"]
+  },
+  {
+    "name": "Rogaland",
+    "area": "Haugesund",
+    "lettercombinations": ["SC", "SD", "SE", "SF", "SH", "SJ", "SK", "SL"]
+  },
+  {
+    "name": "Rogaland",
+    "area": "Stavanger",
+    "lettercombinations": [
+      "RE",
+      "RF",
+      "RH",
+      "RJ",
+      "RK",
+      "RL",
+      "RN",
+      "RP",
+      "RR",
+      "RS",
+      "RT",
+      "RU",
+      "RV",
+      "RX",
+      "RY",
+      "RW"
+    ]
+  },
+  {
+    "name": "Vestland",
+    "area": "Bergen",
+    "lettercombinations": [
+      "SN",
+      "SP",
+      "SR",
+      "SS",
+      "ST",
+      "SU",
+      "SV",
+      "SX",
+      "SY",
+      "SZ",
+      "TA",
+      "TB",
+      "TC",
+      "TD",
+      "TE",
+      "HW"
+    ]
+  },
+  {
+    "name": "Vestland",
+    "area": "Førde",
+    "lettercombinations": ["TV", "TX", "TY", "TZ"]
+  },
+  {
+    "name": "Vestland",
+    "area": "Nordfjordeid",
+    "lettercombinations": ["UA", "UB"]
+  },
+  {
+    "name": "Vestland",
+    "area": "Odda",
+    "lettercombinations": ["TS", "TT", "TU"]
+  },
+  {
+    "name": "Vestland",
+    "area": "Sogndal",
+    "lettercombinations": ["UC", "UD"]
+  },
+  {
+    "name": "Vestland",
+    "area": "Stord",
+    "lettercombinations": ["TL", "TN", "TP", "TR"]
+  },
+  {
+    "name": "Vestland",
+    "area": "Voss",
+    "lettercombinations": ["TF", "TH", "TJ", "TK"]
+  },
+  {
+    "name": "Møre og Romsdal",
+    "area": "Kristiansund",
+    "lettercombinations": ["UX", "UY", "UZ", "VA"]
+  },
+  {
+    "name": "Møre og Romsdal",
+    "area": "Molde",
+    "lettercombinations": ["UR", "US", "UT", "UU", "UV"]
+  },
+  {
+    "name": "Møre og Romsdal",
+    "area": "Sunndalsøra",
+    "lettercombinations": ["VB", "VC"]
+  },
+  {
+    "name": "Møre og Romsdal",
+    "area": "Ørsta",
+    "lettercombinations": ["UN", "UP", "BB"]
+  },
+  {
+    "name": "Møre og Romsdal",
+    "area": "Ålesund",
+    "lettercombinations": ["UE", "UF", "UH", "UJ", "UK", "UL"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Brekstad",
+    "lettercombinations": ["XA", "XB", "XC"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Levanger",
+    "lettercombinations": ["XK", "XL", "VW"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Namsos",
+    "lettercombinations": ["XR", "XS", "XT", "XU"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Orkdal",
+    "lettercombinations": ["VX", "VY", "VZ"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Steinkjer",
+    "lettercombinations": ["XD", "XE", "XF", "XH", "XJ", "XW"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Stjørdal",
+    "lettercombinations": ["XN", "XP", "YW"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Støren",
+    "lettercombinations": ["VS", "VT"]
+  },
+  {
+    "name": "Trøndelag",
+    "area": "Trondheim",
+    "lettercombinations": [
+      "FP",
+      "VD",
+      "VE",
+      "VF",
+      "VH",
+      "VJ",
+      "VK",
+      "VL",
+      "VN",
+      "VP",
+      "VR",
+      "VS",
+      "VU",
+      "VV",
+      "NW"
+    ]
+  },
+  {
+    "name": "Nordland",
+    "area": "Bodø",
+    "lettercombinations": ["YE", "YF", "YH", "YJ", "FD", "EZ"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Fauske",
+    "lettercombinations": ["YK", "YL"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Mo i Rana",
+    "lettercombinations": ["YA", "YB", "YC", "YD"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Mosjøen",
+    "lettercombinations": ["XV", "XX", "XY", "XZ", "FA"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Narvik",
+    "lettercombinations": ["YN", "YP", "YR", "YS"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Sortland",
+    "lettercombinations": ["YU", "YV", "YX"]
+  },
+  {
+    "name": "Nordland",
+    "area": "Svolvær",
+    "lettercombinations": ["YT", "YY"]
+  },
+  {
+    "name": "Troms",
+    "area": "Finnsnes",
+    "lettercombinations": ["ZD", "ZF", "ZJ", "EX"]
+  },
+  {
+    "name": "Troms",
+    "area": "Harstad",
+    "lettercombinations": ["YZ", "ZA", "ZB", "TW"]
+  },
+  {
+    "name": "Troms",
+    "area": "Storslett",
+    "lettercombinations": ["FK", "SW"]
+  },
+  {
+    "name": "Troms",
+    "area": "Tromsø",
+    "lettercombinations": ["ZC", "ZE", "ZH", "ZK", "ZL", "FC"]
+  },
+  {
+    "name": "Finnmark",
+    "area": "Alta",
+    "lettercombinations": ["ZT", "ZU", "ZV", "ZY", "ZW", "UW"]
+  },
+  {
+    "name": "Finnmark",
+    "area": "Hammerfest",
+    "lettercombinations": ["ZX", "FF", "EX"]
+  },
+  {
+    "name": "Finnmark",
+    "area": "Kirkenes",
+    "lettercombinations": ["ZS", "EY"]
+  },
+  {
+    "name": "Finnmark",
+    "area": "Lakselv",
+    "lettercombinations": ["ZZ", "CW"]
+  },
+  {
+    "name": "Finnmark",
+    "area": "Vadsø",
+    "lettercombinations": ["FR", "ZP", "ZR", "LE"]
+  },
+  {
+    "name": "",
+    "area": "Svalbard",
+    "lettercombinations": ["ZN", "FH"]
+  }
+]

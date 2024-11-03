@@ -20,7 +20,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       currency: 'NOK',
       service_provider: 'Self',
       service_date: '2024-10-12 10:00:00+00',
-      odometer_reading: 145787,
+      mileage: 145787,
       notes: 'Oil (Castol Edge 5W-30 LL)and Oil Filter bought at Thansen.',
       type: 'Oil Change',
     },
@@ -111,3 +111,4 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     getExpenses,
   };
 });
+
