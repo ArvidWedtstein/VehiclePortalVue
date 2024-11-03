@@ -1,20 +1,19 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { type Service } from '../types';
 import type { FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
-import { type Tables } from '@/database.types';
+import type { Tables } from '@/database.types';
 
 export const useVehiclesStore = defineStore('vehicles', () => {
-  const vehicles = ref<Tables<"Vehicles">[]>([]);
-  const currentVehicle = ref<Tables<"Vehicles"> | null>(null);
-  const expenses = ref<Tables<"VehicleExpenses">[]>([]);
+  const vehicles = ref<Tables<'Vehicles'>[]>([]);
+  const currentVehicle = ref<Tables<'Vehicles'> | null>(null);
+  const expenses = ref<Tables<'VehicleExpenses'>[]>([]);
 
-  const services = ref<Service[]>([
+  const services = ref<Tables<'VehicleServiceLogs'>[]>([
     {
       id: 26,
       created_at: '2024-10-12 12:36:14.711825+00',
-      createdby_id: 'e11e43d9-a633-418f-98d5-7bfadd7a5968',
+      createby_id: 'e11e43d9-a633-418f-98d5-7bfadd7a5968',
       vehicle_id: 1,
       cost: 1198,
       currency: 'NOK',
@@ -47,7 +46,9 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
-  const getVehicles = async <Columns extends (keyof Tables<'Vehicles'>[] | '*')[]>(
+  const getVehicles = async <
+    Columns extends (keyof Tables<'Vehicles'>[] | '*')[],
+  >(
     filters?: FilterKeys<Tables<'Vehicles'>>,
     columns: Columns = ['*'] as Columns,
   ) => {
@@ -69,8 +70,10 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
-  const getExpenses = async <Columns extends (keyof Tables<"VehicleExpenses"> | '*')[]>(
-    filters?: FilterKeys<Tables<"VehicleExpenses">>,
+  const getExpenses = async <
+    Columns extends (keyof Tables<'VehicleExpenses'> | '*')[],
+  >(
+    filters?: FilterKeys<Tables<'VehicleExpenses'>>,
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
@@ -91,7 +94,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
-        .returns<Tables<"VehicleExpenses">[]>();
+        .returns<Tables<'VehicleExpenses'>[]>();
 
       if (error && status !== 406) throw error;
 
@@ -111,4 +114,3 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     getExpenses,
   };
 });
-

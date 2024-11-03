@@ -3,18 +3,25 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
+import CheckboxTile from '@/components/general/form/CheckboxTile.vue';
 
-import { type Tables, type TablesInsert, type TablesUpdate } from '@/database.types';
+import {
+  type Tables,
+  type TablesInsert,
+  type TablesUpdate,
+} from '@/database.types';
 
-// type VehicleFormData = Omit<Vehicle, 'id'> & { id: null | number };
 type Props = {
-  vehicle_id?: Tables<"Vehicles">["id"];
+  vehicle_id?: Tables<'Vehicles'>['id'];
 };
+
 const props = withDefaults(defineProps<Props>(), {
   vehicle_id: undefined,
 });
 
-const defaultValues: TablesUpdate<"Vehicles"> = {
+const step = ref(0);
+
+const defaultValues: TablesUpdate<'Vehicles'> = {
   ...(props.vehicle_id ? { id: props.vehicle_id } : {}),
   created_at: new Date().toISOString(),
   createdby_id: '',
@@ -41,7 +48,13 @@ const defaultValues: TablesUpdate<"Vehicles"> = {
 
 const { vehicles } = useVehiclesStore();
 
-const vehicle = ref<TablesInsert<"Vehicles"> | TablesUpdate<"Vehicles">>({ ...defaultValues });
+const vehicle = ref<TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>>({
+  ...defaultValues,
+});
+
+const changeStep = (stepIndex: number) => {
+  step.value = Math.max(0, Math.min(3, stepIndex));
+};
 
 const onModalOpen = () => {
   vehicle.value = { ...defaultValues };
@@ -69,45 +82,151 @@ onMounted(() => {
     @open="onModalOpen"
     @submit="onFormSubmit"
   >
-    <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-      <FormInput
-        wrapperClass="sm:col-span-2"
-        label="Register Number"
-        type="text"
-        v-model="vehicle.licenseplate_number"
-        mask="AA-######"
-        placeholder="AB 123456"
-        required
-      />
+    <ul class="steps steps-vertical lg:steps-horizontal w-full">
+      <li
+        data-content="?"
+        class="step"
+        :class="[step >= 0 ? 'step-primary' : '']"
+      >
+        <a href="#item1">General Info</a>
+      </li>
+      <li
+        data-content="?"
+        class="step"
+        :class="[step >= 1 ? 'step-primary' : '']"
+      >
+        <a href="#item2">Engine</a>
+      </li>
+      <li
+        data-content="✓"
+        class="step"
+        :class="[step >= 2 ? 'step-primary' : '']"
+      >
+        <a href="#item3">Transmission</a>
+      </li>
+      <li
+        data-content="✕"
+        class="step"
+        :class="[step >= 3 ? 'step-primary' : '']"
+      >
+        <a href="#item4">Step 4</a>
+      </li>
+    </ul>
+    <div class="carousel w-full">
+      <div v-if="step === 0" id="item1" class="carousel-item w-full">
+        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Register Number"
+            type="text"
+            v-model="vehicle.licenseplate_number"
+            mask="AA-######"
+            placeholder="AB 123456"
+            required
+          />
 
-      <FormInput
-        wrapperClass="sm:col-span-4"
-        label="VIN (Vehicle Identification Number)"
-        type="text"
-        v-model="vehicle.vehicle_identification_number"
-      />
+          <FormInput
+            wrapperClass="sm:col-span-4"
+            label="VIN (Vehicle Identification Number)"
+            type="text"
+            v-model="vehicle.vehicle_identification_number"
+          />
 
-      
-      <FormInput
-        wrapperClass="sm:col-span-2"
-        label="Make"
-        type="text"
-        v-model="vehicle.make"
-      />
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Make"
+            type="text"
+            v-model="vehicle.make"
+          />
 
-      <FormInput
-        wrapperClass="sm:col-span-2"
-        label="Model"
-        type="text"
-        v-model="vehicle.model"
-      />
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Model"
+            type="text"
+            v-model="vehicle.model"
+          />
 
-      <FormInput
-        wrapperClass="sm:col-span-2"
-        label="Registered Date"
-        type="date"
-        v-model="vehicle.registered_date"
-      />
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Registered Date"
+            type="date"
+            v-model="vehicle.registered_date"
+          />
+        </div>
+      </div>
+      <div v-if="step === 1" id="item2" class="carousel-item w-full">
+        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Fuel Capacity"
+            type="number"
+            inputmode="decimal"
+            v-model="vehicle.fuel_capacity"
+          />
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Engine Size"
+            type="text"
+            v-model="vehicle.engine_size"
+          />
+        </div>
+      </div>
+      <div v-if="step === 2" id="item3" class="carousel-item w-full">
+        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Type"
+            type="select"
+            v-model="vehicle.transmission_type"
+          >
+            <option value="Manual">Manual</option>
+            <option value="Automatic">Automatic</option>
+          </FormInput>
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Gears"
+            type="number"
+            inputmode="decimal"
+            v-model="vehicle.transmission_gears"
+          />
+
+          <CheckboxTile />
+        </div>
+      </div>
+      <div id="item4" class="carousel-item w-full">
+        <img
+          src="https://img.daisyui.com/images/stock/photo-1665553365602-b2fb8e5d1707.webp"
+          class="w-full"
+        />
+      </div>
     </div>
+
+    <template #actions>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline"
+        @click="changeStep(step - 1)"
+      >
+        ⬅
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline"
+        @click="changeStep(step + 1)"
+      >
+        ➡
+      </button>
+
+      <button
+        class="btn btn-sm btn-outline"
+        value="cancel"
+        formmethod="dialog"
+        formnovalidate
+      >
+        Close
+      </button>
+    </template>
   </FormDialog>
 </template>

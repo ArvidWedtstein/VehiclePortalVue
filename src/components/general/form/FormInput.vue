@@ -9,6 +9,7 @@ type Props = {
   helpText?: string;
   icon?: string;
   join?: boolean;
+  required?: boolean;
   mask?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?:
@@ -19,12 +20,22 @@ type Props = {
     | 'accent'
     | 'primary'
     | 'secondary';
+  inputmode?:
+    | 'decimal'
+    | 'numeric'
+    | 'email'
+    | 'none'
+    | 'search'
+    | 'tel'
+    | 'text'
+    | 'url';
 };
 
 const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   size: 'md',
   join: false,
+  required: false,
 });
 
 const model = defineModel<string | number | null>();
@@ -61,9 +72,7 @@ const computedClass = computed(() => {
     lg: `${computedType.value}-lg`,
   };
 
-  const colorClass = props.color  
-    ? colorClasses[props.color]
-    : '';
+  const colorClass = props.color ? colorClasses[props.color] : '';
 
   return [
     baseClasses[computedType.value],
@@ -80,18 +89,20 @@ const onInput = (event: Event) => {
 
   if (!props.mask) return;
 
-
   const masked = maskInput(rawValue, props.mask);
   // console.log(rawValue, masked, model.value)
   model.value = masked;
-}
+};
 </script>
 
 <template>
   <label class="form-control w-full" :class="wrapperClass">
     <slot name="label">
       <div class="label" v-show="label">
-        <span class="label-text">{{ label }}</span>
+        <span class="label-text">
+          {{ label }}
+          {{ required ? '*' : '' }}
+        </span>
       </div>
     </slot>
 
@@ -117,14 +128,18 @@ const onInput = (event: Event) => {
           v-bind="$attrs"
           v-model="model"
           :class="computedClass"
+          :inputmode="inputmode"
+          :required="props.required"
           @input="onInput"
         ></textarea>
 
         <select
           v-else-if="type === 'select'"
           v-bind="$attrs"
-          :class="computedClass"
           v-model="model"
+          :class="computedClass"
+          :inputmode="inputmode"
+          :required="props.required"
           @input="onInput"
         >
           <slot></slot>
@@ -134,8 +149,10 @@ const onInput = (event: Event) => {
           v-else
           :type="type"
           v-bind="$attrs"
-          :class="computedClass"
           v-model="model"
+          :class="computedClass"
+          :inputmode="inputmode"
+          :required="props.required"
           @input="onInput"
         />
       </slot>

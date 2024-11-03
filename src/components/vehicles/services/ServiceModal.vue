@@ -3,7 +3,7 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
-import { type Service } from '@/types';
+import type { TablesInsert, TablesUpdate } from '@/database.types';
 
 const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
 const { services } = useVehiclesStore();
@@ -19,20 +19,21 @@ const props = defineProps({
   },
 });
 
-const defaultValues: Service = {
-  id: null,
+const defaultValues: TablesUpdate<"VehicleServiceLogs"> = {
+  ...(props.service_id ? { id: props.service_id } : {}),
   created_at: new Date().toISOString(),
-  createdby_id: '',
+  createby_id: '',
   vehicle_id: props.vehicle_id,
   service_date: new Date().toISOString().split('.')[0].slice(0, -3),
   service_provider: '',
   cost: 0,
   currency: 'NOK',
+  mileage: 0,
   notes: '',
   type: '',
 };
 
-const service = ref<Service>({ ...defaultValues });
+const service = ref<TablesInsert<"VehicleServiceLogs"> | TablesUpdate<"VehicleServiceLogs">>({ ...defaultValues });
 
 const onModalOpen = () => {
   service.value = { ...defaultValues };

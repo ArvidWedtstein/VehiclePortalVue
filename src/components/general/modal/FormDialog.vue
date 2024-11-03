@@ -92,24 +92,24 @@ defineExpose(modalRef.value);
       <slot></slot>
 
       <div class="modal-action">
-        <button
-          class="btn btn-sm btn-outline"
-          value="cancel"
-          formmethod="dialog"
-          formnovalidate
-        >
-          Close
-        </button>
-
         <slot name="actions">
           <button
-            type="submit"
-            class="btn btn-sm btn-primary ms-1"
-            value="submit"
+            class="btn btn-sm btn-outline"
+            value="cancel"
+            formmethod="dialog"
+            formnovalidate
           >
-            OK
+            Close
           </button>
         </slot>
+
+        <button
+          type="submit"
+          class="btn btn-sm btn-primary ms-1"
+          value="submit"
+        >
+          OK
+        </button>
       </div>
     </form>
   </dialog>
