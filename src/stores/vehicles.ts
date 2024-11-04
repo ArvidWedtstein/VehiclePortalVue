@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
-import type { Tables } from '@/database.types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
 
 export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = ref<Tables<'Vehicles'>[]>([]);
@@ -70,6 +70,36 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
+  const upsertVehicle = async (
+    pData: TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>,
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('Vehicles')
+        .upsert(pData)
+        .select();
+
+      if (error) throw error;
+
+      const vVehicleIndex = vehicles.value.findIndex(
+        ({ id }) => id === data[0].id,
+      );
+
+      if (vVehicleIndex !== -1) {
+        vehicles.value[vVehicleIndex] = {
+          ...vehicles.value[vVehicleIndex],
+          ...data[0],
+        };
+
+        return;
+      }
+
+      vehicles.value.push(...data);
+    } catch (pErr) {
+      console.error(pErr);
+    }
+  };
+
   const getExpenses = async <
     Columns extends (keyof Tables<'VehicleExpenses'> | '*')[],
   >(
@@ -104,13 +134,50 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
+  const getServices = async <
+    Columns extends (keyof Tables<'VehicleServiceLogs'> | '*')[],
+  >(
+    filters?: FilterKeys<Tables<'VehicleServiceLogs'>>,
+    columns: Columns = ['*'] as Columns,
+  ) => {
+    try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
+      if (
+        services.value.filter(
+          ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
+        ).length > 0
+      ) {
+        return;
+      }
+
+      const { data, error, status } = await supabase
+        .from('VehicleServiceLogs')
+        .select(columns.join(','))
+        .match(filters || {})
+        .eq('vehicle_id', currentVehicle.value.id)
+        .limit(100)
+        .returns<Tables<'VehicleServiceLogs'>[]>();
+
+      if (error && status !== 406) throw error;
+
+      services.value = data ?? [];
+    } catch (pErr) {
+      console.error(pErr);
+    }
+  };
+
   return {
     vehicles,
     currentVehicle,
     expenses,
     services,
     getVehicles,
+    upsertVehicle,
     setCurrentVehicle,
     getExpenses,
+    getServices,
   };
 });

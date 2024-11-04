@@ -48,6 +48,15 @@ onMounted(() => {});
 
     <template #actions>
       <button
+        class="btn btn-sm btn-outline"
+        value="cancel"
+        formmethod="dialog"
+        formnovalidate
+      >
+        Close
+      </button>
+
+      <button
         type="submit"
         class="btn btn-sm btn-primary ms-1"
         value="submit"

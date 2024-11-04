@@ -23,8 +23,6 @@ const step = ref(0);
 
 const defaultValues: TablesUpdate<'Vehicles'> = {
   ...(props.vehicle_id ? { id: props.vehicle_id } : {}),
-  created_at: new Date().toISOString(),
-  createdby_id: '',
   name: '',
   make: '',
   model: '',
@@ -56,10 +54,23 @@ const changeStep = (stepIndex: number) => {
   step.value = Math.max(0, Math.min(3, stepIndex));
 };
 
-const onModalOpen = () => {
+const onModalOpen = async () => {
   vehicle.value = { ...defaultValues };
 
   console.log('open', vehicle.value, defaultValues);
+
+  // upsertVehicle({
+  //   id: 7,
+  //   name: 'TEST',
+  //   make: 'TEST',
+  //   model: 'TEST',
+  //   type: 'AAAAAAAA',
+  //   body_type: 'AAAAAAAA',
+  //   color: 'BLAAACK',
+  //   drivetrain: 'NWD',
+  //   licenseplate_number: 'AA 12345',
+  //   mileage_unit: 'kilometer',
+  // });
 };
 
 const onFormSubmit = () => {
@@ -103,13 +114,6 @@ onMounted(() => {
         :class="[step >= 2 ? 'step-primary' : '']"
       >
         <a href="#item3">Transmission</a>
-      </li>
-      <li
-        data-content="✕"
-        class="step"
-        :class="[step >= 3 ? 'step-primary' : '']"
-      >
-        <a href="#item4">Step 4</a>
       </li>
     </ul>
     <div class="carousel w-full">
@@ -195,12 +199,6 @@ onMounted(() => {
           <CheckboxTile />
         </div>
       </div>
-      <div id="item4" class="carousel-item w-full">
-        <img
-          src="https://img.daisyui.com/images/stock/photo-1665553365602-b2fb8e5d1707.webp"
-          class="w-full"
-        />
-      </div>
     </div>
 
     <template #actions>
@@ -208,6 +206,7 @@ onMounted(() => {
         type="button"
         class="btn btn-sm btn-outline"
         @click="changeStep(step - 1)"
+        :disabled="step === 0"
       >
         ⬅
       </button>
@@ -215,6 +214,7 @@ onMounted(() => {
         type="button"
         class="btn btn-sm btn-outline"
         @click="changeStep(step + 1)"
+        :disabled="step === 2"
       >
         ➡
       </button>
@@ -226,6 +226,15 @@ onMounted(() => {
         formnovalidate
       >
         Close
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-sm btn-primary ms-1"
+        value="submit"
+        :disabled="step !== 2"
+      >
+        Create
       </button>
     </template>
   </FormDialog>

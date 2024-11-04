@@ -21,7 +21,7 @@ onMounted(() => {
 <template>
   <VehicleModal />
   <div class="py-24 sm:py-32">
-    <div class="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
+    <div class="mx-auto grid max-w-7xl gap-20 px-6 lg:gap-8 xl:grid-cols-3">
       <div class="max-w-xl">
         <h2
           class="text-pretty text-3xl font-semibold tracking-tight dark:text-white text-gray-900 sm:text-4xl"
@@ -33,10 +33,6 @@ onMounted(() => {
         </p>
       </div>
       <ul role="list" class="grid gap-8 sm:grid-cols-2 sm:gap-16 xl:col-span-2">
-        <li v-for="(vehicle, index) in vehicles" :key="index">
-          <VehicleItem :vehicle="vehicle" />
-        </li>
-
         <li>
           <button
             type="button"
@@ -61,6 +57,10 @@ onMounted(() => {
               >Add Vehicle</span
             >
           </button>
+        </li>
+
+        <li v-for="(vehicle, index) in vehicles" :key="index">
+          <VehicleItem :vehicle="vehicle" />
         </li>
       </ul>
     </div>

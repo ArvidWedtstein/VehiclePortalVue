@@ -101,15 +101,15 @@ defineExpose(modalRef.value);
           >
             Close
           </button>
-        </slot>
 
-        <button
-          type="submit"
-          class="btn btn-sm btn-primary ms-1"
-          value="submit"
-        >
-          OK
-        </button>
+          <button
+            type="submit"
+            class="btn btn-sm btn-primary ms-1"
+            value="submit"
+          >
+            OK
+          </button>
+        </slot>
       </div>
     </form>
   </dialog>
