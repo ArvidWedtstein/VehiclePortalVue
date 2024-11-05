@@ -3,11 +3,16 @@ import CarIcon from '@/assets/icons/CarIcon.vue';
 import MotorcycleIcon from '@/assets/icons/MotorcycleIcon.vue';
 import type { Tables } from '@/database.types';
 import { RouterLink } from 'vue-router';
+
 type Props = {
   vehicle: Tables<'Vehicles'>;
 };
 
 defineProps<Props>();
+
+defineEmits<{
+  (e: 'editVehicle', vehicle_id: number): void;
+}>();
 </script>
 
 <template>
@@ -25,9 +30,16 @@ defineProps<Props>();
       <h2 class="card-title">{{ vehicle.make }} {{ vehicle.model }}</h2>
 
       <div class="card-actions justify-end">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline btn-secondary"
+          @click="$emit('editVehicle', vehicle.id)"
+        >
+          Edit
+        </button>
         <RouterLink
           :to="{ name: 'vehicle', params: { id: vehicle.id } }"
-          class="btn btn-primary"
+          class="btn btn-sm btn-primary"
         >
           View
         </RouterLink>

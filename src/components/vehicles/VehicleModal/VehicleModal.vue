@@ -1,28 +1,17 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import CheckboxTile from '@/components/general/form/CheckboxTile.vue';
 
-import {
-  type Tables,
-  type TablesInsert,
-  type TablesUpdate,
-} from '@/database.types';
-
-type Props = {
-  vehicle_id?: Tables<'Vehicles'>['id'];
-};
-
-const props = withDefaults(defineProps<Props>(), {
-  vehicle_id: undefined,
-});
+import { type TablesInsert, type TablesUpdate } from '@/database.types';
 
 const step = ref(0);
 
+const modalRef = ref();
+
 const defaultValues: TablesUpdate<'Vehicles'> = {
-  ...(props.vehicle_id ? { id: props.vehicle_id } : {}),
   name: '',
   make: '',
   model: '',
@@ -54,10 +43,8 @@ const changeStep = (stepIndex: number) => {
   step.value = Math.max(0, Math.min(3, stepIndex));
 };
 
-const onModalOpen = async () => {
-  vehicle.value = { ...defaultValues };
-
-  console.log('open', vehicle.value, defaultValues);
+const onFormSubmit = () => {
+  console.log('submit', vehicle.value);
 
   // upsertVehicle({
   //   id: 7,
@@ -73,24 +60,42 @@ const onModalOpen = async () => {
   // });
 };
 
-const onFormSubmit = () => {
-  console.log('submit', vehicle.value);
+const handleOpen = (vehicle_id: TablesUpdate<'Vehicles'>['id']) => {
+  console.log('open', vehicle_id);
+
+  if (vehicle_id == null || vehicle_id === undefined) {
+    modalRef.value.modalRef.showModal();
+    return;
+  }
+
+  const editVehicle = vehicles.find(({ id }) => id === vehicle_id);
+
+  if (!editVehicle) {
+    alert('No vehicle found');
+    return;
+  }
+
+  console.log({
+    ...defaultValues,
+    ...editVehicle,
+  });
+
+  vehicle.value = {
+    ...defaultValues,
+    ...editVehicle,
+  };
+
+  modalRef.value.modalRef.showModal();
 };
 
-onMounted(() => {
-  const editVehicle = vehicles.find(({ id }) => id === props.vehicle_id);
-
-  if (!editVehicle) return;
-  vehicle.value = editVehicle;
-});
+defineExpose({ modalRef: modalRef, open: handleOpen });
 </script>
 
 <template>
   <FormDialog
     id="vehicleModal"
     ref="modalRef"
-    :title="vehicle_id ? 'Edit Vehicle' : 'Add Vehicle'"
-    @open="onModalOpen"
+    :title="vehicle.id ? 'Edit Vehicle' : 'Add Vehicle'"
     @submit="onFormSubmit"
   >
     <ul class="steps steps-vertical lg:steps-horizontal w-full">
@@ -121,7 +126,7 @@ onMounted(() => {
         <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
           <FormInput
             wrapperClass="sm:col-span-2"
-            label="Register Number"
+            label="Liscense Number"
             type="text"
             v-model="vehicle.licenseplate_number"
             mask="AA-######"
@@ -156,6 +161,28 @@ onMounted(() => {
             type="date"
             v-model="vehicle.registered_date"
           />
+
+          <CheckboxTile
+            v-model="vehicle.drivetrain"
+            value="AWD"
+            type="radio"
+            name="drivetrain"
+            >AWD</CheckboxTile
+          >
+          <CheckboxTile
+            v-model="vehicle.drivetrain"
+            value="RWD"
+            type="radio"
+            name="drivetrain"
+            >RWD</CheckboxTile
+          >
+          <CheckboxTile
+            v-model="vehicle.drivetrain"
+            value="FWD"
+            type="radio"
+            name="drivetrain"
+            >FWD</CheckboxTile
+          >
         </div>
       </div>
       <div v-if="step === 1" id="item2" class="carousel-item w-full">
@@ -195,8 +222,6 @@ onMounted(() => {
             inputmode="decimal"
             v-model="vehicle.transmission_gears"
           />
-
-          <CheckboxTile />
         </div>
       </div>
     </div>

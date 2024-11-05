@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import VehicleItem from '../vehicles/VehicleItem.vue';
-import { defineAsyncComponent, onMounted, toRefs } from 'vue';
+import { defineAsyncComponent, onMounted, toRefs, ref } from 'vue';
 
 const VehicleModal = defineAsyncComponent(
   async () =>
@@ -16,10 +16,21 @@ const { getVehicles } = vehiclesStore;
 onMounted(() => {
   getVehicles();
 });
+
+const editVehicle_ID = ref<number | undefined>(undefined);
+
+const vehicleModal = ref();
+
+const editVehicle = (vehicle_id: number) => {
+  editVehicle_ID.value = vehicle_id;
+  console.log(vehicleModal.value);
+  vehicleModal.value.open(vehicle_id);
+};
 </script>
 
 <template>
-  <VehicleModal />
+  <VehicleModal ref="vehicleModal" :vehicle_id="editVehicle_ID" />
+
   <div class="py-24 sm:py-32">
     <div class="mx-auto grid max-w-7xl gap-20 px-6 lg:gap-8 xl:grid-cols-3">
       <div class="max-w-xl">
@@ -60,7 +71,7 @@ onMounted(() => {
         </li>
 
         <li v-for="(vehicle, index) in vehicles" :key="index">
-          <VehicleItem :vehicle="vehicle" />
+          <VehicleItem :vehicle="vehicle" @editVehicle="editVehicle" />
         </li>
       </ul>
     </div>

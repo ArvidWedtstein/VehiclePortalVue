@@ -56,7 +56,7 @@ onMounted(() => {
   observer.observe(modalRef.value, { attributes: true });
 });
 
-defineExpose(modalRef.value);
+defineExpose({ modalRef: modalRef });
 </script>
 
 <template>
