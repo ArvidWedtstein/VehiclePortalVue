@@ -286,6 +286,7 @@ export type Database = {
           model: string | null
           name: string | null
           registered_date: string | null
+          thumbnail: string | null
           transmission_gears: number | null
           transmission_id: number | null
           transmission_type: string | null
@@ -313,6 +314,7 @@ export type Database = {
           model?: string | null
           name?: string | null
           registered_date?: string | null
+          thumbnail?: string | null
           transmission_gears?: number | null
           transmission_id?: number | null
           transmission_type?: string | null
@@ -340,6 +342,7 @@ export type Database = {
           model?: string | null
           name?: string | null
           registered_date?: string | null
+          thumbnail?: string | null
           transmission_gears?: number | null
           transmission_id?: number | null
           transmission_type?: string | null
