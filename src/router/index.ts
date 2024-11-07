@@ -13,6 +13,18 @@ const router = createRouter({
       },
     },
     {
+      path: '/profile/:id',
+      name: 'profile',
+      // route level code-splitting
+      // this generates a separate chunk (About.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: async () => await import('../views/ProfileView.vue'),
+      meta: {
+        showInNavbar: false,
+      },
+      props: true,
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting

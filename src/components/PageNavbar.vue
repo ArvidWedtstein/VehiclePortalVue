@@ -2,8 +2,8 @@
 import { useRouter, RouterLink } from 'vue-router';
 import { computed } from 'vue';
 import { useSessionStore } from '@/stores/userSession';
-import LoginModal from './auth/LoginModal.vue';
 import { storeToRefs } from 'pinia';
+import LoginModal from './auth/LoginModal.vue';
 
 const router = useRouter();
 
@@ -59,10 +59,13 @@ const navbarRoutes = computed(() => {
         >
           <template v-if="profile">
             <li>
-              <a class="justify-between">
+              <RouterLink
+                :to="{ name: 'profile', params: { id: profile.id } }"
+                class="justify-between"
+              >
                 Profile
                 <span class="badge">Comming Soon</span>
-              </a>
+              </RouterLink>
             </li>
             <li><button @click="sessionStore.logout">Logout</button></li>
           </template>

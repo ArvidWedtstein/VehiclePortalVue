@@ -2,14 +2,13 @@
 import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import { onMounted, toRefs } from 'vue';
 
 const props = defineProps({
   id: String,
 });
 
-const router = useRouter();
 const vehiclesStore = useVehiclesStore();
 const { currentVehicle } = toRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;

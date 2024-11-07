@@ -2,20 +2,12 @@ import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import { type Session } from '@supabase/supabase-js';
-
-type Profile = {
-  id: number;
-  created_at?: string;
-  user_id: string;
-  name: string;
-  profile_image_url?: string;
-  role_id?: number;
-};
+import type { Tables } from '@/database.types';
 
 // TODO: fix google login
 export const useSessionStore = defineStore('session', () => {
   const session = ref<Session | null>(null);
-  const profile = ref<Profile | null>(null);
+  const profile = ref<Tables<'Profiles'> | null>(null);
 
   const getProfile = async () => {
     try {
@@ -23,15 +15,25 @@ export const useSessionStore = defineStore('session', () => {
 
       const { data, error, status } = await supabase
         .from('Profiles')
-        .select(`id, user_id, name, profile_image_url, role_id`)
+        .select(
+          `
+          id, 
+          user_id, 
+          name, 
+          profile_image_url, 
+          role_id, 
+          Roles (
+            name
+          )
+        `,
+        )
         .eq('user_id', session.value?.user.id)
+        .returns<Tables<'Profiles'>>()
         .single();
 
       if (error && status !== 406) throw error;
 
-      profile.value = data as Profile;
-
-      console.log(data);
+      profile.value = data;
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
