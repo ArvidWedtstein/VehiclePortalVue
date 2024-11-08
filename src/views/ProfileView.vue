@@ -17,7 +17,7 @@ const { profile } = toRefs(sessionStore);
       />
       <div>
         <h1 class="text-5xl font-bold">{{ profile?.name }}</h1>
-        <p class="py-6">Your role: {{ profile?.role_id }}</p>
+        <!-- <p class="py-6">Your role: {{ profile?.role_id }}</p> -->
       </div>
     </div>
   </div>
