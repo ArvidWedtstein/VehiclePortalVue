@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import VehicleItem from '../vehicles/VehicleItem.vue';
+import VehicleGridItem from './VehicleGridItem.vue';
 import { defineAsyncComponent, onMounted, toRefs, ref } from 'vue';
 
 const VehicleModal = defineAsyncComponent(
@@ -71,7 +71,7 @@ const editVehicle = (vehicle_id: number) => {
         </li>
 
         <li v-for="(vehicle, index) in vehicles" :key="index">
-          <VehicleItem :vehicle="vehicle" @editVehicle="editVehicle" />
+          <VehicleGridItem :vehicle="vehicle" @editVehicle="editVehicle" />
         </li>
       </ul>
     </div>
