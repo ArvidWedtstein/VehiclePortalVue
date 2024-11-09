@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import { ref, toRef } from 'vue';
-import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import ListItem from '../general/list/ListItem.vue';
 import ListSubGroup from '../general/list/ListSubGroup.vue';
 import ListGroup from '../general/list/ListGroup.vue';
+import { groupBy } from '@/utils/utils';
+import AutoComplete from '../general/form/AutoComplete.vue';
 
 const modalRef = ref();
 
@@ -276,9 +277,10 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
   <FormDialog
     id="vehicleShareModal"
     ref="modalRef"
-    title="Share Vehicle"
+    :title="`Share '${currentVehicle?.name}'`"
     @submit="onFormSubmit"
   >
+    <AutoComplete label="Person" :options="people.map(p => p.name)" />
     <ListGroup class="h-64">
       <ListSubGroup
         v-for="(people, group) in groupedPersons"
@@ -291,7 +293,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
           :title="person.name"
           :subtitle="person.email"
           :imageUrl="person.imageUrl"
-        ></ListItem>
+        />
       </ListSubGroup>
     </ListGroup>
 

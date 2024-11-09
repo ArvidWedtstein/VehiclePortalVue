@@ -3,7 +3,8 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { RouterLink } from 'vue-router';
-import { onMounted, toRefs } from 'vue';
+import { onMounted, ref, toRefs } from 'vue';
+import VehicleShareModal from '@/components/vehicles/VehicleShareModal.vue';
 
 const props = defineProps({
   id: String,
@@ -13,12 +14,16 @@ const vehiclesStore = useVehiclesStore();
 const { currentVehicle } = toRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;
 
+const vehicleShareModal = ref();
+
 onMounted(async () => {
   await setCurrentVehicle(parseInt(props.id || ''));
 });
 </script>
 
 <template>
+  <VehicleShareModal ref="vehicleShareModal" />
+
   <RouterLink to="/vehicles" class="flex gap-2 mb-2">
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -54,6 +59,7 @@ onMounted(async () => {
             type="button"
             class="btn btn-sm btn-square btn-secondary btn-outline"
             title="Share"
+            @click="vehicleShareModal.modalRef.modalRef.showModal()"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -1,31 +1,55 @@
-<script lang="ts" setup>
+<script
+  lang="ts"
+  setup
+  generic="
+    Value,
+    Multiple extends boolean | undefined = false,
+    DisableClearable extends boolean | undefined = false
+  "
+>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { debounce } from '@/utils/utils';
 
-// Define component props
-interface Props {
+type AutocompleteValue<Value, Multiple, DisableClearable> =
+  Multiple extends true
+    ? Array<Value | never>
+    : DisableClearable extends true
+      ? NonNullable<Value | never>
+      : Value | null | never;
+
+type AutocompleteProps<
+  Value,
+  Multiple extends boolean | undefined,
+  DisableClearable extends boolean | undefined,
+> = {
   label?: string;
-  modelValue: string;
-  options: string[];
+  modelValue?: AutocompleteValue<Value, Multiple, DisableClearable>;
+  options: ReadonlyArray<Value>;
   debounceDelay?: number;
-}
-const props = defineProps<Props>();
+  multiple?: Multiple;
+  disableClearable?: DisableClearable;
+};
+const props =
+  defineProps<AutocompleteProps<Value, Multiple, DisableClearable>>();
 
 // Emit selected option to parent component
 const emit = defineEmits<{
-  (e: 'select', option: string): void;
-  (e: 'update:modelValue', value: string): void;
+  (e: 'select', option: Value): void;
+  (e: 'update:modelValue', value: Value): void;
 }>();
 
 // Reactive states
-const inputValue = ref(props.modelValue);
+const inputValue = ref(props.modelValue || '');
 const selectedIndex = ref(-1);
 const isDropdownOpen = ref(false);
 const filteredOptions = computed(() =>
   props.options.filter(option =>
-    option.toLowerCase().includes(inputValue.value.toLowerCase()),
+    typeof option === 'string'
+      ? option.toLowerCase().includes(inputValue.value.toLowerCase())
+      : option === inputValue.value,
   ),
 );
+
 watch(
   () => props.modelValue,
   newValue => {
@@ -72,7 +96,7 @@ const onEnter = () => {
 };
 
 // Select an option, emit to parent, and close dropdown
-const selectOption = (option: string) => {
+const selectOption = (option: Value) => {
   inputValue.value = option; // Set inputValue to the selected option
   emit('select', option); // Emit select event
   emit('update:modelValue', option); // Update modelValue
@@ -119,16 +143,22 @@ onBeforeUnmount(() =>
       </label>
       <ul
         v-if="isDropdownOpen && filteredOptions.length && inputValue"
-        class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+        class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
       >
         <li
           v-for="(option, index) in filteredOptions"
-          :key="option"
+          :key="index"
           @click="selectOption(option)"
         >
-          <a :class="{ 'bg-primary text-white': index === selectedIndex }">{{
-            option
-          }}</a>
+          <slot
+            name="option"
+            :option="option"
+            :selected="index === selectedIndex"
+          >
+            <a :class="{ 'bg-primary text-white': index === selectedIndex }">{{
+              option
+            }}</a>
+          </slot>
         </li>
       </ul>
     </div>
