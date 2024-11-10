@@ -86,3 +86,9 @@ export const formatBytes = (a: number, b = 2) => {
     ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
   }`;
 };
+
+export const stripDiacritics = (string: string) => {
+  return typeof string.normalize !== 'undefined'
+    ? string.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    : string;
+};

@@ -67,7 +67,7 @@ defineExpose({ modalRef: modalRef });
     @close="handleClose"
   >
     <form
-      class="modal-box"
+      class="modal-box overflow-visible"
       :class="{
         '!w-4/12': size === 'sm',
         '!w-8/12 !max-w-2xl': size === 'md',
