@@ -100,6 +100,21 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     }
   };
 
+  const shareVehicle = async (users: TablesInsert<'VehicleShares'>[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('VehicleShares')
+        .insert(users)
+        .select();
+
+      if (error) throw error;
+
+      return data;
+    } catch (pErr) {
+      console.error(pErr);
+    }
+  };
+
   const getExpenses = async <
     Columns extends (keyof Tables<'VehicleExpenses'> | '*')[],
   >(
@@ -176,6 +191,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     services,
     getVehicles,
     upsertVehicle,
+    shareVehicle,
     setCurrentVehicle,
     getExpenses,
     getServices,

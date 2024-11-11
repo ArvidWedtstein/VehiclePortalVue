@@ -7,14 +7,7 @@
     DisableClearable extends boolean | undefined = false
   "
 >
-import {
-  ref,
-  computed,
-  watch,
-  onMounted,
-  onBeforeUnmount,
-  defineModel,
-} from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { debounce, stripDiacritics } from '@/utils/utils';
 
 function createFilterOptions<Value>(

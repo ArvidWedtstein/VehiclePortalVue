@@ -15,7 +15,10 @@ withDefaults(defineProps<Props>(), {
     >
       <h3>{{ title }}</h3>
     </div>
-    <ul role="list" class="divide-y divide-opacity-50">
+    <ul
+      role="list"
+      class="menu p-0 [&_li>*]:rounded-none divide-y divide-opacity-50"
+    >
       <slot></slot>
     </ul>
   </div>
