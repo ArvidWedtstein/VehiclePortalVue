@@ -72,19 +72,9 @@ export type FilterKeys<T> = {
 export const getLanguage = () =>
   navigator.language || (navigator.languages || ['en'])[0];
 
-/**
- *
- * @param a bytes
- * @param b decimals
- * @returns formatted byte number
- */
-export const formatBytes = (a: number, b = 2) => {
-  if (!+a) return '0 Bytes';
-  const c = 0 > b ? 0 : b,
-    d = Math.floor(Math.log(a) / Math.log(1024));
-  return `${parseFloat((a / Math.pow(1024, d)).toFixed(c))} ${
-    ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
-  }`;
+export const formatFileSize = (size: number) => {
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+  return `${(size / Math.pow(1024, i)).toFixed(2)} ${['B', 'KB', 'MB', 'GB', 'TB'][i]}`;
 };
 
 export const stripDiacritics = (string: string) => {

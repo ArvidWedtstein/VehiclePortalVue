@@ -104,7 +104,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     try {
       const { data, error } = await supabase
         .from('VehicleShares')
-        .insert(users)
+        .upsert(users, { defaultToNull: true })
         .select();
 
       if (error) throw error;
@@ -112,6 +112,54 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       return data;
     } catch (pErr) {
       console.error(pErr);
+    }
+  };
+
+  const unShareVehicle = async (
+    vehicle_id: Tables<'VehicleShares'>['vehicle_id'],
+    users: TablesInsert<'VehicleShares'>['user_id'][],
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('VehicleShares')
+        .delete()
+        .in('user_id', users)
+        .eq('vehicle_id', vehicle_id)
+        .select();
+
+      if (error) throw error;
+
+      return data;
+    } catch (pErr) {
+      console.error(pErr);
+    }
+  };
+
+  const getVehicleShares = async (
+    vehicle_ID?: Tables<'VehicleShares'>['vehicle_id'],
+  ) => {
+    try {
+      const currentVehicle_ID = currentVehicle.value?.id || vehicle_ID;
+
+      if (!currentVehicle_ID) {
+        return [];
+      }
+
+      const { data, error, status } = await supabase
+        .from('VehicleShares')
+        .select('*')
+        .eq('vehicle_id', currentVehicle_ID)
+        .returns<Tables<'VehicleShares'>[]>();
+
+      if (error && status !== 406) throw error;
+
+      return data || [];
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+
+      return [];
     }
   };
 
@@ -192,6 +240,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     getVehicles,
     upsertVehicle,
     shareVehicle,
+    unShareVehicle,
+    getVehicleShares,
     setCurrentVehicle,
     getExpenses,
     getServices,

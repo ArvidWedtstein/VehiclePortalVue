@@ -6,21 +6,25 @@ import ListGroupItem from '../general/list/ListGroupItem.vue';
 import ListSubGroup from '../general/list/ListSubGroup.vue';
 import ListGroup from '../general/list/ListGroup.vue';
 import { groupBy } from '@/utils/utils';
-import type { Tables, TablesInsert } from '@/database.types';
+import type { Tables } from '@/database.types';
 import { useProfilesStore } from '@/stores/profiles';
+import { toast } from '@/lib/toastManager';
 
-// TODO: get VehicleShares to check which users already have this vehicle shared
 const modalRef = ref();
 
 const vehiclesStore = useVehiclesStore();
 const { getProfiles } = useProfilesStore();
 
 const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
-const { shareVehicle } = vehiclesStore;
+const { shareVehicle, unShareVehicle, getVehicleShares } = vehiclesStore;
 
 const users = ref<Tables<'Profiles'>[]>([]);
 
 const personsModel = ref<Tables<'Profiles'>[]>([]);
+const vehiclesShare = ref<Tables<'VehicleShares'>[]>([]);
+
+const addedShares = ref<Tables<'VehicleShares'>['user_id'][]>([]);
+const removedShares = ref<Tables<'VehicleShares'>['user_id'][]>([]);
 
 const groupedPersons = computed(() =>
   groupBy(
@@ -37,39 +41,78 @@ const onFormSubmit = async (event: Event) => {
   const currentVehicle_ID = currentVehicle.value?.id;
   if (!currentVehicle_ID) return;
 
-  const shares: TablesInsert<'VehicleShares'>[] = personsModel.value.map(
-    pUser => ({
-      user_id: pUser.user_id,
-      vehicle_id: currentVehicle_ID,
-      readonly: true,
-    }),
-  );
+  if (removedShares.value.length > 0) {
+    await unShareVehicle(currentVehicle_ID, removedShares.value);
+  }
 
-  const data = await shareVehicle(shares);
-  console.log('submit', personsModel.value, data);
+  if (addedShares.value.length > 0) {
+    await shareVehicle(
+      addedShares.value.map(p => ({
+        user_id: p,
+        vehicle_id: currentVehicle_ID,
+      })),
+    );
+  }
+
+  console.log('submit', personsModel.value);
+
+  toast.triggerToast(`Successfully updated shares`, 'success', 1000);
 };
 
-const handleOpen = () => {
+const handleOpen = async () => {
+  addedShares.value = [];
+  removedShares.value = [];
+
   modalRef.value.modalRef.showModal();
+
+  const vehicleShares = await getVehicleShares();
+
+  vehiclesShare.value = vehicleShares;
+
+  personsModel.value = users.value.filter(pProfile =>
+    vehicleShares?.some(pShare => pShare.user_id === pProfile.user_id),
+  );
+};
+
+const resetModal = () => {
+  addedShares.value = [];
+  removedShares.value = [];
+
+  vehiclesShare.value = [];
 };
 
 const checkPerson = (person: Tables<'Profiles'>) => {
-  if (personsModel.value.some(p => p.id === person.id)) {
-    personsModel.value = personsModel.value.filter(p => p.id !== person.id);
+  if (personsModel.value.some(p => p.user_id === person.user_id)) {
+    personsModel.value = personsModel.value.filter(
+      p => p.user_id !== person.user_id,
+    );
+
+    if (!vehiclesShare.value.some(p => p.user_id === person.user_id)) {
+      addedShares.value = addedShares.value.filter(p => p !== person.user_id);
+    } else {
+      removedShares.value.push(person.user_id);
+    }
 
     return;
   }
 
   personsModel.value.push(person);
+  if (!vehiclesShare.value.some(p => p.user_id === person.user_id)) {
+    addedShares.value.push(person.user_id);
+
+    return;
+  }
+
+  removedShares.value = removedShares.value.filter(p => p !== person.user_id);
 };
 
 onMounted(async () => {
   const profiles = await getProfiles();
 
-  users.value = profiles || [];
+  users.value = profiles;
 });
 
-defineExpose({ modalRef: modalRef, open: handleOpen });
+defineExpose({ modalRef: modalRef });
 </script>
 
 <template>
@@ -78,6 +121,8 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     ref="modalRef"
     :title="`Share '${currentVehicle?.name}'`"
     @submit="onFormSubmit"
+    @open="handleOpen"
+    @close="resetModal"
   >
     <ListGroup class="max-h-96 mt-2">
       <ListSubGroup

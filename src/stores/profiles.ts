@@ -27,7 +27,7 @@ export const useProfilesStore = defineStore('profiles', () => {
 
       profilesCache.value = data || [];
 
-      return data;
+      return data || [];
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);

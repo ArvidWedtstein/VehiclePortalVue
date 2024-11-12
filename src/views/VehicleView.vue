@@ -5,6 +5,7 @@ import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { RouterLink } from 'vue-router';
 import { onMounted, ref, toRefs } from 'vue';
 import VehicleShareModal from '@/components/vehicles/VehicleShareModal.vue';
+import FilesTab from '@/components/vehicles/files/FilesTab.vue';
 
 const props = defineProps({
   id: String,
@@ -98,6 +99,17 @@ onMounted(async () => {
           />
           <div role="tabpanel" class="tab-content p-10">
             <ServiceTab :id="parseInt(id || '')" />
+          </div>
+
+          <input
+            type="radio"
+            name="vehicle_tabs"
+            role="tab"
+            class="tab"
+            aria-label="Files"
+          />
+          <div role="tabpanel" class="tab-content p-10">
+            <FilesTab :id="parseInt(id || '')" />
           </div>
         </div>
       </div>
