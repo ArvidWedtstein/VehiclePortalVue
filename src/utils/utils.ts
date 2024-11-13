@@ -82,3 +82,17 @@ export const stripDiacritics = (string: string) => {
     ? string.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     : string;
 };
+
+/**
+ * Formats a list of strings as a sentence with "or" as the final separator.
+ * Similar to Intl.ListFormat with type: "disjunction" and style: "long".
+ *
+ * @param items - Array of strings to be formatted
+ * @returns A formatted string, e.g., "JPG, PNG, or GIF"
+ */
+export const formatListDisjunction = (items: string[]): string => {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} or ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, or ${items[items.length - 1]}`;
+};

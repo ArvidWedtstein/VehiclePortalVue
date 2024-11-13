@@ -4,8 +4,6 @@ import FileDrop from '@/components/general/form/FileDrop.vue';
 
 <template>
   <div>
-    <button class="btn">Add File</button>
-
     <FileDrop />
     <ul class="menu w-full">
       <li>
