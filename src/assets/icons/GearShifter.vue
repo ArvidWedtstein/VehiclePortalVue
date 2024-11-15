@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { withDefaults } from 'vue';
 type Props = {
   gears?: number;
 };

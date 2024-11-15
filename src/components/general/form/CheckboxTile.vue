@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineModel, withDefaults } from 'vue';
+import { computed } from 'vue';
 
 type Props = {
   label?: string;

@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { useVehiclesStore } from '@/stores/vehicles';
 import LineChart from '@/components/LineChart.vue';
 import ExpenseModal from './ExpenseModal.vue';
 import { onMounted, toRefs } from 'vue';
 import { formatDate } from '@/utils/date';
+import { useExpensesStore } from '@/stores/expenses';
 
 const props = defineProps({
   id: Number,
 });
 
-const vehiclesStore = useVehiclesStore();
+const expenseStore = useExpensesStore();
 
-const { expenses } = toRefs(vehiclesStore);
-const { getExpenses } = vehiclesStore;
+const { expenses } = toRefs(expenseStore);
+const { getExpenses } = expenseStore;
 
 // const vehicle = vehicles.find(({ id: vehicle_id }) => vehicle_id === props.id);
 
