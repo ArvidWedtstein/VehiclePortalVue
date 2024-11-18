@@ -2,7 +2,7 @@
 import FileDrop from '@/components/general/form/FileDrop.vue';
 import { useDocumentsStore } from '@/stores/documents';
 import { useVehiclesStore } from '@/stores/vehicles';
-import { onMounted, toRef, toRefs } from 'vue';
+import { onMounted, ref, toRef, toRefs } from 'vue';
 
 const vehicleStore = useVehiclesStore();
 const documentsStore = useDocumentsStore();
@@ -13,14 +13,24 @@ const { getDocuments } = documentsStore;
 
 onMounted(() => {
   getDocuments();
-
-  console.log(documents.value);
 });
+console.log(documents.value);
+
+const mappedDocuments = ref(
+  documents.value.map(document => ({
+    url: document.signedUrl,
+    file: { name: document.name || '' },
+    error: undefined,
+  })),
+);
 </script>
 
 <template>
   <div>
-    <FileDrop :storagePath="`${currentVehicle?.licenseplate_number}/`" />
+    <FileDrop
+      :storagePath="`VehicleDocuments/${currentVehicle?.licenseplate_number}/`"
+      v-model="mappedDocuments"
+    />
     <ul class="menu w-full">
       <li v-for="document in documents" :key="document.id">
         <a>

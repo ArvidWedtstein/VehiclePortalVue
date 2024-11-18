@@ -4,13 +4,13 @@ import { formatFileSize } from '@/utils/utils';
 type iFile = {
   file: {
     name: string;
-    lastModified: number;
-    webkitRelativePath: string;
-    size: number;
-    type: string;
+    lastModified?: number;
+    webkitRelativePath?: string;
+    size?: number;
+    type?: string;
   };
   [key: string]: unknown;
-  preview: boolean;
+  preview?: boolean;
   state: 'newfile' | 'uploading' | 'uploaded' | 'newuploaded';
   url: string;
   error?: {
@@ -20,7 +20,7 @@ type iFile = {
 };
 
 type Props = {
-  files?: iFile[];
+  files?: Partial<iFile>[];
 };
 
 withDefaults(defineProps<Props>(), {
@@ -28,11 +28,11 @@ withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'previewFile', file: iFile): void;
-  (e: 'deleteFile', file: iFile): void;
+  (e: 'previewFile', file: Partial<iFile>): void;
+  (e: 'deleteFile', file: Partial<iFile>): void;
 }>();
 
-const handleFileDelete = async (file: iFile) => {
+const handleFileDelete = async (file: Partial<iFile>) => {
   emit('deleteFile', file);
 };
 </script>
@@ -69,6 +69,7 @@ const handleFileDelete = async (file: iFile) => {
     >
       <div class="table-cell">
         <span
+          :title="file.error?.message"
           class="truncate rounded p-1 text-center align-middle text-xs uppercase text-black dark:text-white"
           :class="[file.error ? 'bg-red-500' : 'bg-zinc-500']"
         >
@@ -97,15 +98,15 @@ const handleFileDelete = async (file: iFile) => {
             />
           </svg>
 
-          <span v-else>{{ file.file.name.split('.').pop() }}</span>
+          <span v-else>{{ file.file?.name.split('.').pop() }}</span>
         </span>
       </div>
-      <div class="table-cell w-2/5 p-2">{{ file.file.name }}</div>
+      <div class="table-cell w-2/5 p-2">{{ file.file?.name }}</div>
       <div class="table-cell p-2">
-        {{ formatFileSize(file.file.size) }}
+        {{ file.file?.size ? formatFileSize(file.file?.size) : '' }}
       </div>
       <div class="table-cell truncate p-2">
-        {{ new Date(file.file.lastModified).toDateString() }}
+        {{ new Date(file.file?.lastModified || new Date()).toDateString() }}
       </div>
       <div class="table-cell align-middle relative">
         <div class="dropdown">

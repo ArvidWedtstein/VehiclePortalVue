@@ -39,13 +39,13 @@ type FileUploadProps = {
 type iFile = {
   file: {
     name: string;
-    lastModified: number;
-    webkitRelativePath: string;
-    size: number;
-    type: string;
+    lastModified?: number;
+    webkitRelativePath?: string;
+    size?: number;
+    type?: string;
   };
   [key: string]: unknown;
-  preview: boolean;
+  preview?: boolean;
   state: 'newfile' | 'uploading' | 'uploaded' | 'newuploaded';
   url: string;
   error?: {
@@ -59,12 +59,16 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   hideFilesGrid: false,
   storagePath: '',
   accept: 'image/png, image/jpg, image/jpeg, image/webp',
-  maxSize: 5000,
+  maxSize: 3150000,
   valueFormatter: (filename: string | null) => {
     return filename || '';
   },
   name: '',
   label: '',
+});
+// Pick<iFile, 'file' | 'error' | 'url'>[]
+const model = defineModel<Partial<iFile>[]>({
+  default: [],
 });
 
 const files = ref<iFile[]>([]);
@@ -79,7 +83,7 @@ const readFiles = (ifiles: FileList): void => {
         return;
       }
 
-      files.value.push({
+      model.value.push({
         file: file,
         url: fileloader.target.result.toString(),
         state: 'newfile',
@@ -142,7 +146,10 @@ const handleUpload = () => {
 
       const { error } = await supabase.storage
         .from(`${props.storagePath}`)
-        .upload(props.valueFormatter(file.name, true), file as File);
+        .upload(
+          `${props.storagePath}${props.valueFormatter(file.name, true)}`,
+          file as File,
+        );
 
       let hasError: iFile['error'] = undefined;
 
@@ -167,7 +174,7 @@ const handleUpload = () => {
     });
 };
 
-const handleFileDelete = async (file: iFile) => {
+const handleFileDelete = async (file: Partial<iFile>) => {
   files.value = files.value.filter(f => f.url !== file.url);
 };
 </script>
@@ -245,12 +252,12 @@ const handleFileDelete = async (file: iFile) => {
 
     <FileGrid
       v-if="!hideFilesGrid"
-      :files="files"
+      :files="model"
       @previewFile="
         file => {
-          files = files.map(f => ({
+          model = model.map(f => ({
             ...f,
-            preview: f.file.name === file?.file?.name,
+            preview: f.file?.name === file?.file?.name,
           }));
         }
       "
@@ -258,14 +265,14 @@ const handleFileDelete = async (file: iFile) => {
     />
 
     <div
-      v-if="files.some(p => p.preview)"
+      v-if="model.some(p => p.preview)"
       class="animate-fade-in relative rounded-lg border border-zinc-500 p-2"
     >
       <button
         class="!absolute top-1 right-1 btn btn-sm btn-error btn-square btn-ghost"
         @click="
           $event => {
-            files = files.map(f => ({
+            model = model.map(f => ({
               ...f,
               preview: false,
             }));
@@ -286,7 +293,7 @@ const handleFileDelete = async (file: iFile) => {
       </button>
 
       <img
-        :src="files.find(f => f.preview)?.url"
+        :src="model.find(f => f.preview)?.url"
         class="aspect-square w-max max-w-full object-cover rounded"
       />
     </div>
@@ -294,7 +301,7 @@ const handleFileDelete = async (file: iFile) => {
     <button
       class="btn w-full btn-primary"
       @click="handleUpload"
-      :disabled="!files.filter(({ state }) => state === 'newfile').length"
+      :disabled="!model.filter(({ state }) => state === 'newfile').length"
     >
       Upload
     </button>
