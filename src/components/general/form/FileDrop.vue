@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { formatFileSize, formatListDisjunction } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
+import { ref, watch } from 'vue';
 
 type FileUploadProps = {
   hideDropArea?: boolean;
@@ -18,8 +18,13 @@ type FileUploadProps = {
    */
   valueFormatter?: (filename: string | null, isUpload: boolean) => string;
   className?: string;
+  initialFiles?: Partial<iFile>[];
   label?: string;
   multiple?: boolean;
+  /**
+   * Bucket to get files from
+   */
+  bucket: string;
   storagePath?: string;
   sizeLimit?: number;
   /**
@@ -35,7 +40,6 @@ type FileUploadProps = {
    */
   maxSize?: number;
 };
-
 type iFile = {
   file: {
     name: string;
@@ -44,10 +48,10 @@ type iFile = {
     size?: number;
     type?: string;
   };
-  [key: string]: unknown;
   preview?: boolean;
   state: 'newfile' | 'uploading' | 'uploaded' | 'newuploaded';
-  url: string;
+  url?: string;
+  path: string;
   error?: {
     type: 'oversized' | 'invalidType' | 'uploadError';
     message: string;
@@ -55,6 +59,8 @@ type iFile = {
 };
 
 const props = withDefaults(defineProps<FileUploadProps>(), {
+  name: '',
+  label: '',
   hideDropArea: false,
   hideFilesGrid: false,
   storagePath: '',
@@ -63,15 +69,10 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   valueFormatter: (filename: string | null) => {
     return filename || '';
   },
-  name: '',
-  label: '',
-});
-// Pick<iFile, 'file' | 'error' | 'url'>[]
-const model = defineModel<Partial<iFile>[]>({
-  default: [],
+  initialFiles: () => [],
 });
 
-const files = ref<iFile[]>([]);
+const files = ref<Partial<iFile>[]>([]);
 
 const readFiles = (ifiles: FileList): void => {
   Array.prototype.forEach.call(ifiles, (file: File) => {
@@ -83,7 +84,7 @@ const readFiles = (ifiles: FileList): void => {
         return;
       }
 
-      model.value.push({
+      files.value.push({
         file: file,
         url: fileloader.target.result.toString(),
         state: 'newfile',
@@ -136,7 +137,7 @@ const handleUpload = () => {
     .filter(f => f.error == null && f.state === 'newfile')
     .forEach(async ({ file }) => {
       files.value = files.value.map(f =>
-        f.file.name === file.name
+        f.file?.name === file?.name || ''
           ? {
               ...f,
               state: 'uploading',
@@ -144,12 +145,14 @@ const handleUpload = () => {
           : f,
       );
 
-      const { error } = await supabase.storage
-        .from(`${props.storagePath}`)
+      const { data, error } = await supabase.storage
+        .from(props.bucket)
         .upload(
-          `${props.storagePath}${props.valueFormatter(file.name, true)}`,
+          `${props.storagePath}${props.valueFormatter(file?.name || '', true)}`,
           file as File,
         );
+
+      console.log('uploadData', data);
 
       let hasError: iFile['error'] = undefined;
 
@@ -163,7 +166,7 @@ const handleUpload = () => {
       }
 
       files.value = files.value.map(f =>
-        f.file.name === file.name
+        f.file?.name === (file?.name || '')
           ? {
               ...f,
               state: 'newuploaded',
@@ -174,9 +177,65 @@ const handleUpload = () => {
     });
 };
 
-const handleFileDelete = async (file: Partial<iFile>) => {
-  files.value = files.value.filter(f => f.url !== file.url);
+const fetchFiles = async () => {
+  try {
+    if (!props.initialFiles.length) return;
+
+    const { data, error } = await supabase.storage
+      .from(props.bucket)
+      .createSignedUrls(
+        props.initialFiles.map(({ path }) => path || ''),
+        7200,
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    files.value.push(
+      ...props.initialFiles.map(file => {
+        const url = data.find(({ path }) => path === file.path);
+
+        return {
+          ...file,
+          url: url?.signedUrl || '',
+          error: undefined,
+        };
+      }),
+    );
+  } catch (error) {
+    console.error(error);
+  }
 };
+
+const handleFileDelete = async (file: Partial<iFile>) => {
+  try {
+    if (!file.path) return;
+
+    // TODO: fix, emit event, drop table and continue life.
+
+    const { error } = await supabase.storage
+      .from(props.bucket)
+      .remove([file.path || '']);
+
+    if (error) {
+      throw error;
+    }
+
+    files.value = files.value.filter(({ path }) => path !== file.path);
+
+    // TODO: alert success here
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+watch(
+  () => props.initialFiles,
+  () => {
+    fetchFiles();
+  },
+);
 </script>
 
 <template>
@@ -252,10 +311,10 @@ const handleFileDelete = async (file: Partial<iFile>) => {
 
     <FileGrid
       v-if="!hideFilesGrid"
-      :files="model"
+      :files="files"
       @previewFile="
         file => {
-          model = model.map(f => ({
+          files = files.map(f => ({
             ...f,
             preview: f.file?.name === file?.file?.name,
           }));
@@ -265,14 +324,14 @@ const handleFileDelete = async (file: Partial<iFile>) => {
     />
 
     <div
-      v-if="model.some(p => p.preview)"
+      v-if="files.some(p => p.preview)"
       class="animate-fade-in relative rounded-lg border border-zinc-500 p-2"
     >
       <button
         class="!absolute top-1 right-1 btn btn-sm btn-error btn-square btn-ghost"
         @click="
           $event => {
-            model = model.map(f => ({
+            files = files.map(f => ({
               ...f,
               preview: false,
             }));
@@ -293,7 +352,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
       </button>
 
       <img
-        :src="model.find(f => f.preview)?.url"
+        :src="files.find(f => f.preview)?.url"
         class="aspect-square w-max max-w-full object-cover rounded"
       />
     </div>
@@ -301,7 +360,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
     <button
       class="btn w-full btn-primary"
       @click="handleUpload"
-      :disabled="!model.filter(({ state }) => state === 'newfile').length"
+      :disabled="!files.filter(({ state }) => state === 'newfile').length"
     >
       Upload
     </button>

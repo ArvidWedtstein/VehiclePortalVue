@@ -45,6 +45,7 @@ export const useDocumentsStore = defineStore('documents', () => {
 
       const files = data ?? [];
 
+      // TODO: remove this.
       const { data: bucketData, error: bucketError } = await supabase.storage
         .from('VehicleDocuments')
         .createSignedUrls(
