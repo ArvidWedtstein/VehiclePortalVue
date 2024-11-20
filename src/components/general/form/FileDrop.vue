@@ -145,6 +145,8 @@ const handleUpload = () => {
           : f,
       );
 
+      // TODO: consider moving this to store?
+
       const { data, error } = await supabase.storage
         .from(props.bucket)
         .upload(
@@ -192,17 +194,15 @@ const fetchFiles = async () => {
       throw error;
     }
 
-    files.value.push(
-      ...props.initialFiles.map(file => {
-        const url = data.find(({ path }) => path === file.path);
+    files.value = props.initialFiles.map(file => {
+      const url = data.find(({ path }) => path === file.path);
 
-        return {
-          ...file,
-          url: url?.signedUrl || '',
-          error: undefined,
-        };
-      }),
-    );
+      return {
+        ...file,
+        url: url?.signedUrl || '',
+        error: undefined,
+      };
+    });
   } catch (error) {
     console.error(error);
   }
@@ -211,8 +211,6 @@ const fetchFiles = async () => {
 const handleFileDelete = async (file: Partial<iFile>) => {
   try {
     if (!file.path) return;
-
-    // TODO: fix, emit event, drop table and continue life.
 
     const { error } = await supabase.storage
       .from(props.bucket)

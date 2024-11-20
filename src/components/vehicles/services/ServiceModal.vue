@@ -1,29 +1,24 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { onMounted, ref } from 'vue';
+import { ref, toRef } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { TablesInsert, TablesUpdate } from '@/database.types';
+import { useServicesStore } from '@/stores/services';
 
-const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
-const { services } = useVehiclesStore();
+const modalRef = ref();
 
-const props = defineProps({
-  vehicle_id: {
-    type: Number,
-    required: true,
-  },
-  service_id: {
-    type: Number,
-    required: false,
-  },
-});
+const vehiclesStore = useVehiclesStore();
 
-const defaultValues: TablesUpdate<"VehicleServiceLogs"> = {
-  ...(props.service_id ? { id: props.service_id } : {}),
+const serviceStore = useServicesStore();
+const services = toRef(serviceStore, 'services');
+
+const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+
+const defaultValues: TablesUpdate<'VehicleServiceLogs'> = {
   created_at: new Date().toISOString(),
   createby_id: '',
-  vehicle_id: props.vehicle_id,
+  vehicle_id: currentVehicle.value?.id,
   service_date: new Date().toISOString().split('.')[0].slice(0, -3),
   service_provider: '',
   cost: 0,
@@ -33,34 +28,56 @@ const defaultValues: TablesUpdate<"VehicleServiceLogs"> = {
   type: '',
 };
 
-const service = ref<TablesInsert<"VehicleServiceLogs"> | TablesUpdate<"VehicleServiceLogs">>({ ...defaultValues });
-
-const onModalOpen = () => {
-  service.value = { ...defaultValues };
-
-  console.log('open', service.value, defaultValues);
-};
+const service = ref<
+  TablesInsert<'VehicleServiceLogs'> | TablesUpdate<'VehicleServiceLogs'>
+>({ ...defaultValues });
 
 const onFormSubmit = () => {
   console.log('submit', service.value);
+  // todo: finish submit
 };
 
-onMounted(() => {
-  if (!props.service_id) return;
+const handleOpen = (service_id: TablesUpdate<'VehicleServiceLogs'>['id']) => {
+  console.log('open', service_id);
 
-  const editService = services.find(({ id }) => id === props.service_id);
+  if (service_id == null || service_id === undefined) {
+    service.value = { ...defaultValues };
+    modalRef.value?.modalRef?.showModal();
+    return;
+  }
 
-  if (!editService) return;
-  service.value = editService;
-});
+  const editService = services.value.find(({ id }) => id === service_id);
+
+  if (!editService) {
+    alert('No Service found');
+    return;
+  }
+
+  console.log({
+    ...defaultValues,
+    ...editService,
+  });
+
+  service.value = {
+    ...defaultValues,
+    ...editService,
+    service_date: new Date(editService.service_date || '')
+      .toISOString()
+      .split('.')[0]
+      .slice(0, -3),
+  };
+
+  modalRef.value.modalRef.showModal();
+};
+
+defineExpose({ modalRef: modalRef, open: handleOpen });
 </script>
 
 <template>
   <FormDialog
     id="serviceModal"
     ref="modalRef"
-    :title="service_id ? 'Edit Service' : 'Create Service'"
-    @open="onModalOpen"
+    :title="service.id ? 'Edit Service' : 'Create Service'"
     @submit="onFormSubmit"
   >
     <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">

@@ -5,14 +5,15 @@ import type { Tables } from '@/database.types';
 import type { FilterKeys } from '@/utils/utils';
 import { useVehiclesStore } from './vehicles';
 
-type VehicleDocument = Tables<'VehicleDocuments'> & {
-  path: string | null;
-  signedUrl: string;
-};
+// type VehicleDocument = Tables<'VehicleDocuments'> & {
+//   path: string | null;
+//   signedUrl: string;
+// };
+
 export const useDocumentsStore = defineStore('documents', () => {
   const { currentVehicle } = useVehiclesStore();
-  const documents = ref<VehicleDocument[]>([]);
-  const documentsCache = new Map<number, VehicleDocument[]>();
+  const documents = ref<Tables<'VehicleDocuments'>[]>([]);
+  const documentsCache = new Map<number, Tables<'VehicleDocuments'>[]>();
 
   const getDocuments = async <
     Columns extends (keyof Tables<'VehicleDocuments'> | '*')[],
@@ -46,35 +47,35 @@ export const useDocumentsStore = defineStore('documents', () => {
       const files = data ?? [];
 
       // TODO: remove this.
-      const { data: bucketData, error: bucketError } = await supabase.storage
-        .from('VehicleDocuments')
-        .createSignedUrls(
-          files.map(
-            ({ name }) => `${currentVehicle.licenseplate_number}/${name || ''}`,
-          ),
-          5000,
-        );
+      // const { data: bucketData, error: bucketError } = await supabase.storage
+      //   .from('VehicleDocuments')
+      //   .createSignedUrls(
+      //     files.map(
+      //       ({ name }) => `${currentVehicle.licenseplate_number}/${name || ''}`,
+      //     ),
+      //     5000,
+      //   );
 
-      if (bucketError) throw bucketError;
+      // if (bucketError) throw bucketError;
 
-      if (bucketData) {
-        console.log(bucketData);
-      }
+      // if (bucketData) {
+      //   console.log(bucketData);
+      // }
 
-      const filesWithBucketData = files.map(file => {
-        const bFile = bucketData.find(({ path }) =>
-          path?.includes(file.name || ''),
-        );
+      // const filesWithBucketData = files.map(file => {
+      //   const bFile = bucketData.find(({ path }) =>
+      //     path?.includes(file.name || ''),
+      //   );
 
-        return {
-          ...file,
-          path: bFile?.path || '',
-          signedUrl: bFile?.signedUrl || '',
-        };
-      });
+      //   return {
+      //     ...file,
+      //     path: bFile?.path || '',
+      //     signedUrl: bFile?.signedUrl || '',
+      //   };
+      // });
 
-      documentsCache.set(currentVehicle.id, filesWithBucketData);
-      documents.value = filesWithBucketData;
+      documentsCache.set(currentVehicle.id, files);
+      documents.value = files;
     } catch (pErr) {
       console.error(pErr);
     }

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LineChart from '@/components/LineChart.vue';
 import ExpenseModal from './ExpenseModal.vue';
 import { onMounted, toRefs } from 'vue';
 import { formatDate } from '@/utils/date';
@@ -83,7 +82,7 @@ onMounted(() => {
     animate
   /> -->
 
-  <ul class="mt-4 acw acz text-sm ayb daq dqz divide-y divide-base-100">
+  <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
       class="relative flex space-x-6 py-6 xl:static"
       v-for="(expense, index) in expenses"
@@ -103,10 +102,10 @@ onMounted(() => {
       </div>
 
       <div class="flex-1">
-        <h3 class="capitalize font-semibold azh xl:pr-0">
+        <h3 class="capitalize font-semibold xl:pr-0">
           {{ expense.expense_type }}
         </h3>
-        <dl class="mt-2 flex flex-col azd xl:flex-row">
+        <dl class="mt-2 flex flex-col xl:flex-row">
           <div class="flex items-start flex-nowrap space-x-3">
             <dt class="mt-0.5">
               <svg
@@ -153,10 +152,10 @@ onMounted(() => {
           </div>
         </dl>
       </div>
-      <div class="aa dh ea xl:relative dql dqo dut">
+      <div class="xl:relative">
         <div>
           <button
-            class="fw flex zr rounded-full arv azd bmt"
+            class="fw flex rounded-full"
             id="headlessui-menu-button-:r2:"
             type="button"
             aria-haspopup="menu"

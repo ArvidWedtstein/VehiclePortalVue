@@ -1,32 +1,26 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { onMounted, ref } from 'vue';
+import { ref, toRef } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 
 import type { TablesInsert, TablesUpdate } from '@/database.types';
-
-const props = defineProps({
-  vehicle_id: {
-    type: Number,
-    required: true,
-  },
-  expense_id: {
-    type: Number,
-    required: false,
-  },
-});
+import { useExpensesStore } from '@/stores/expenses';
 
 // TODO: auto-suggest last odometer reading
 
-const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
-const { expenses } = useVehiclesStore();
+const modalRef = ref();
 
-const defaultValues: TablesUpdate<"VehicleExpenses"> = {
-  ...(props.expense_id ? { id: props.expense_id } : {}),
+const vehiclesStore = useVehiclesStore();
+const expensesStore = useExpensesStore();
+const expenses = toRef(expensesStore, 'expenses');
+
+const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+
+const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   created_at: new Date().toISOString(),
   createdby_id: '',
-  vehicle_id: props.vehicle_id,
+  vehicle_id: currentVehicle.value?.id,
   expense_date: new Date().toISOString().split('.')[0].slice(0, -3),
   expense_type: '',
   amount: 0,
@@ -36,34 +30,56 @@ const defaultValues: TablesUpdate<"VehicleExpenses"> = {
   unit: 'liter',
 };
 
-const expense = ref<TablesInsert<"VehicleExpenses"> | TablesUpdate<"VehicleExpenses">>({ ...defaultValues });
-
-const onModalOpen = () => {
-  expense.value = { ...defaultValues };
-
-  console.log('open', expense.value, defaultValues);
-};
+const expense = ref<
+  TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>
+>({ ...defaultValues });
 
 const onFormSubmit = () => {
   console.log('submit', expense.value);
+  // todo: finish submit
 };
 
-onMounted(() => {
-  if (!props.expense_id) return;
+const handleOpen = (expense_id: TablesUpdate<'VehicleExpenses'>['id']) => {
+  console.log('open', expense_id);
 
-  const editExpense = expenses.find(({ id }) => id === props.expense_id);
+  if (expense_id == null || expense_id === undefined) {
+    expense.value = { ...defaultValues };
+    modalRef.value?.modalRef?.showModal();
+    return;
+  }
 
-  if (!editExpense) return;
-  expense.value = editExpense;
-});
+  const editExpense = expenses.value.find(({ id }) => id === expense_id);
+
+  if (!editExpense) {
+    alert('No Expense found');
+    return;
+  }
+
+  console.log({
+    ...defaultValues,
+    ...editExpense,
+  });
+
+  expense.value = {
+    ...defaultValues,
+    ...editExpense,
+    expense_date: new Date(editExpense.expense_date || '')
+      .toISOString()
+      .split('.')[0]
+      .slice(0, -3),
+  };
+
+  modalRef.value.modalRef.showModal();
+};
+
+defineExpose({ modalRef: modalRef, open: handleOpen });
 </script>
 
 <template>
   <FormDialog
     id="expenseModal"
     ref="modalRef"
-    :title="expense_id ? 'Edit Expense' : 'Create Expense'"
-    @open="onModalOpen"
+    :title="expense.id ? 'Edit Expense' : 'Create Expense'"
     @submit="onFormSubmit"
   >
     <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
