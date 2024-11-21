@@ -380,7 +380,7 @@ export type Database = {
           id: number
           mileage: number | null
           notes: string | null
-          service_date: string | null
+          service_date: string
           service_provider: string | null
           type: string
           vehicle_id: number
@@ -393,7 +393,7 @@ export type Database = {
           id?: number
           mileage?: number | null
           notes?: string | null
-          service_date?: string | null
+          service_date?: string
           service_provider?: string | null
           type: string
           vehicle_id: number
@@ -406,7 +406,7 @@ export type Database = {
           id?: number
           mileage?: number | null
           notes?: string | null
-          service_date?: string | null
+          service_date?: string
           service_provider?: string | null
           type?: string
           vehicle_id?: number
