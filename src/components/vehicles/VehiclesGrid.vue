@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import VehicleGridItem from './VehicleGridItem.vue';
 import { defineAsyncComponent, onMounted, toRefs, ref } from 'vue';
+import VehicleGridItem from './VehicleGridItem.vue';
 
 const VehicleModal = defineAsyncComponent(
   async () =>

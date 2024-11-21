@@ -45,10 +45,10 @@ onMounted(async () => {
     <img
       v-if="currentVehicle.thumbnail"
       :src="currentVehicle.thumbnail"
-      class="absolute w-1/3 h-full left-0 top-0 bottom-0 object-cover"
+      class="absolute w-1/3 h-full left-0 top-0 bottom-0 object-coverhidden md:block"
       loading="lazy"
     />
-    <div class="absolute top-0 left-0 w-1/3 p-2">
+    <div class="relative md:absolute top-0 left-0 md:w-1/3 w-full p-2">
       <div class="card bg-neutral bg-opacity-50 rounded-md text-white">
         <div class="card-body">
           <h2 class="card-title">
@@ -76,7 +76,7 @@ onMounted(async () => {
       </div>
     </div>
     <div class="grid grid-cols-3">
-      <div class="col-start-2 col-span-2 p-4">
+      <div class="col-start-1 md:col-start-2 col-span-3 md:col-span-2 p-2">
         <div role="tablist" class="tabs tabs-bordered">
           <input
             type="radio"
@@ -87,7 +87,7 @@ onMounted(async () => {
             :checked="true"
           />
           <div role="tabpanel" class="tab-content p-10">
-            <ExpenseTab :id="parseInt(id || '')" />
+            <ExpenseTab />
           </div>
 
           <input
@@ -98,7 +98,7 @@ onMounted(async () => {
             aria-label="Service"
           />
           <div role="tabpanel" class="tab-content p-10">
-            <ServiceTab :id="parseInt(id || '')" />
+            <ServiceTab />
           </div>
 
           <input
@@ -109,7 +109,7 @@ onMounted(async () => {
             aria-label="Files"
           />
           <div role="tabpanel" class="tab-content p-10">
-            <FilesTab :id="parseInt(id || '')" />
+            <FilesTab />
           </div>
         </div>
       </div>

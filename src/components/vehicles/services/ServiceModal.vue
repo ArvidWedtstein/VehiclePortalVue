@@ -12,12 +12,12 @@ const vehiclesStore = useVehiclesStore();
 
 const serviceStore = useServicesStore();
 const services = toRef(serviceStore, 'services');
+const { upsertService } = serviceStore;
 
 const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
 const defaultValues: TablesUpdate<'VehicleServiceLogs'> = {
   created_at: new Date().toISOString(),
-  createby_id: '',
   vehicle_id: currentVehicle.value?.id,
   service_date: new Date().toISOString().split('.')[0].slice(0, -3),
   service_provider: '',
@@ -35,6 +35,8 @@ const service = ref<
 const onFormSubmit = () => {
   console.log('submit', service.value);
   // todo: finish submit
+
+  upsertService(service.value);
 };
 
 const handleOpen = (service_id: TablesUpdate<'VehicleServiceLogs'>['id']) => {
@@ -117,14 +119,14 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             class="join-item w-10"
             type="select"
             v-model="service.currency"
-          >
-            <option disabled selected>Select a currency</option>
-            <option value="NOK">NOK</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="SEK">SEK</option>
-            <option value="DDK">DDK</option>
-          </FormInput>
+            :options="[
+              { value: 'NOK' },
+              { value: 'USD' },
+              { value: 'EUR' },
+              { value: 'SEK' },
+              { value: 'DDK' },
+            ]"
+          />
         </template>
       </FormInput>
 

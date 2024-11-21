@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import VehiclesGrid from '../components/Vehicles/VehiclesGrid.vue';
+import VehiclesGrid from '@/components/vehicles/VehiclesGrid.vue';
 </script>
 
 <template>

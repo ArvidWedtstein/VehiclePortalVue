@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { maskInput } from '@/lib/mask';
-import { computed } from 'vue';
+import { useSlots, computed } from 'vue';
 type Props = {
   wrapperClass?: string;
   class?: string;
   type?: HTMLInputElement['type'] | 'select' | 'textarea';
+  options?: Array<{ value: string | number; label?: string }>;
   label?: string;
   helpText?: string;
-  icon?: string;
+  placeholder?: string;
   join?: boolean;
   required?: boolean;
   mask?: string;
@@ -37,6 +38,8 @@ const props = withDefaults(defineProps<Props>(), {
   join: false,
   required: false,
 });
+
+const slots = useSlots();
 
 const model = defineModel<string | number | null>();
 
@@ -79,6 +82,7 @@ const computedClass = computed(() => {
     colorClass,
     sizeClasses[props.size],
     props.join && 'join-item',
+    slots.icon && 'pl-10',
     'grow',
     props.class,
   ];
@@ -106,23 +110,18 @@ const onInput = (event: Event) => {
       </div>
     </slot>
 
-    <label :class="[join ? `join` : 'flex items-center gap-2']">
-      <slot name="icon">
-        <i v-if="icon" :class="icon"></i>
-      </slot>
+    <label
+      class="relative"
+      :class="[join ? `join` : 'flex items-center gap-2']"
+    >
+      <div
+        v-if="$slots.icon"
+        class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+      >
+        <slot name="icon"> </slot>
+      </div>
 
       <slot name="input">
-        <!-- <component
-          :is="computedType"
-          @input="onInput"
-          class="grow"
-          :class="computedClass"
-          v-bind="$attrs"
-          v-model="model"
-          :value="model"
-        >
-          <slot></slot>
-        </component> -->
         <textarea
           v-if="type === 'textarea'"
           v-bind="$attrs"
@@ -130,6 +129,7 @@ const onInput = (event: Event) => {
           :class="computedClass"
           :inputmode="inputmode"
           :required="props.required"
+          :placeholder="placeholder"
           @input="onInput"
         ></textarea>
 
@@ -140,9 +140,17 @@ const onInput = (event: Event) => {
           :class="computedClass"
           :inputmode="inputmode"
           :required="props.required"
+          :placeholder="placeholder"
           @input="onInput"
         >
-          <slot></slot>
+          <option disabled value="" selected hidden>{{ placeholder }}</option>
+          <option
+            v-for="option in options"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label ?? option.value }}
+          </option>
         </select>
 
         <input
@@ -153,6 +161,7 @@ const onInput = (event: Event) => {
           :class="computedClass"
           :inputmode="inputmode"
           :required="props.required"
+          :placeholder="placeholder"
           @input="onInput"
         />
       </slot>

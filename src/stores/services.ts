@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
-import type { Tables } from '@/database.types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
 import type { FilterKeys } from '@/utils/utils';
 import { useVehiclesStore } from './vehicles';
 
@@ -46,5 +46,63 @@ export const useServicesStore = defineStore('services', () => {
     }
   };
 
-  return { services, getServices };
+  const upsertService = async (
+    pData:
+      | TablesInsert<'VehicleServiceLogs'>
+      | TablesUpdate<'VehicleServiceLogs'>,
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('VehicleServiceLogs')
+        .upsert({
+          ...pData,
+          vehicle_id: currentVehicle?.id || -1,
+        })
+        .select();
+
+      if (error) throw error;
+
+      const vServiceIndex = services.value.findIndex(
+        ({ id }) => id === data[0].id,
+      );
+
+      if (vServiceIndex !== -1) {
+        services.value[vServiceIndex] = {
+          ...services.value[vServiceIndex],
+          ...data[0],
+        };
+
+        return;
+      }
+
+      services.value.push(...data);
+    } catch (pErr) {
+      console.error(pErr);
+    }
+  };
+
+  const deleteService = async (
+    service_id: Tables<'VehicleServiceLogs'>['id'],
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('VehicleServiceLogs')
+        .delete()
+        .eq('id', service_id);
+
+      if (error) throw error;
+
+      services.value = services.value.filter(({ id }) => id !== service_id);
+      servicesCache.set(
+        currentVehicle?.id || -1,
+        servicesCache
+          .get(currentVehicle?.id || 0)
+          ?.filter(({ id }) => id !== service_id) || [],
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return { services, getServices, upsertService, deleteService };
 });

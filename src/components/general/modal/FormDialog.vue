@@ -63,15 +63,15 @@ defineExpose({ modalRef: modalRef });
   <dialog
     :id="id"
     ref="modalRef"
-    class="modal modal-bottom sm:modal-middle"
+    class="modal modal-top sm:modal-middle"
     @close="handleClose"
   >
     <form
       class="modal-box"
       :class="{
         '!w-4/12': size === 'sm',
-        '!w-8/12 !max-w-2xl': size === 'md',
-        '!w-11/12 !max-w-5xl': size === 'lg',
+        'md:!w-8/12 !max-w-2xl': size === 'md',
+        'md:!w-11/12 !max-w-5xl max-h-full': size === 'lg',
       }"
       @submit.prevent="handleSubmit"
       ref="formRef"
