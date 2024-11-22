@@ -23,7 +23,7 @@ const vehicleModal = ref();
 
 const editVehicle = (vehicle_id: number) => {
   editVehicle_ID.value = vehicle_id;
-  console.log(vehicleModal.value);
+
   vehicleModal.value.open(vehicle_id);
 };
 </script>

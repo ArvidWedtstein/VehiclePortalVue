@@ -6,19 +6,29 @@ import { RouterLink } from 'vue-router';
 import { onMounted, ref, toRefs } from 'vue';
 import VehicleShareModal from '@/components/vehicles/VehicleShareModal.vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
+import { useExpensesStore } from '@/stores/expenses';
+import { useServicesStore } from '@/stores/services';
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
   id: String,
 });
 
 const vehiclesStore = useVehiclesStore();
-const { currentVehicle } = toRefs(vehiclesStore);
+const servicesStore = useServicesStore();
+const expensesStore = useExpensesStore();
+
+const { currentVehicle } = storeToRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;
+const { getServices } = servicesStore;
+const { getExpenses } = expensesStore;
 
 const vehicleShareModal = ref();
 
 onMounted(async () => {
-  await setCurrentVehicle(parseInt(props.id || ''));
+  setCurrentVehicle(parseInt(props.id || ''));
+  // await getServices();
+  // await getExpenses({ vehicle_id: parseInt(props.id || '') });
 });
 </script>
 

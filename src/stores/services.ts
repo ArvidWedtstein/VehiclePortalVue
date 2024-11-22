@@ -1,12 +1,15 @@
-import { ref } from 'vue';
-import { defineStore } from 'pinia';
+import { ref, toRef } from 'vue';
+import { acceptHMRUpdate, defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
 import type { FilterKeys } from '@/utils/utils';
 import { useVehiclesStore } from './vehicles';
 
 export const useServicesStore = defineStore('services', () => {
-  const { currentVehicle } = useVehiclesStore();
+  const vehiclesStore = useVehiclesStore();
+  const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+  const { setCurrentVehicle } = vehiclesStore;
+
   const services = ref<Tables<'VehicleServiceLogs'>[]>([]);
   const servicesCache = new Map<number, Tables<'VehicleServiceLogs'>[]>();
 
@@ -17,15 +20,19 @@ export const useServicesStore = defineStore('services', () => {
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
-      if (!currentVehicle || !currentVehicle.id) {
-        throw new Error('No Vehicle Selected!');
+      console.log('currenmt', currentVehicle);
+
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        setCurrentVehicle();
+        // throw new Error('No Vehicle Selected!');
+        return;
       }
 
       if (
         services.value.filter(
-          ({ vehicle_id }) => vehicle_id === currentVehicle.id,
+          ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
         ).length > 0 ||
-        servicesCache.has(currentVehicle.id)
+        servicesCache.has(currentVehicle.value.id)
       )
         return;
 
@@ -33,13 +40,13 @@ export const useServicesStore = defineStore('services', () => {
         .from('VehicleServiceLogs')
         .select(columns.join(','))
         .match(filters || {})
-        .eq('vehicle_id', currentVehicle.id)
+        .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
         .returns<Tables<'VehicleServiceLogs'>[]>();
 
       if (error && status !== 406) throw error;
 
-      servicesCache.set(currentVehicle.id, data ?? []);
+      servicesCache.set(currentVehicle.value.id, data ?? []);
       services.value = data ?? [];
     } catch (pErr) {
       console.error(pErr);
@@ -56,7 +63,7 @@ export const useServicesStore = defineStore('services', () => {
         .from('VehicleServiceLogs')
         .upsert({
           ...pData,
-          vehicle_id: currentVehicle?.id || -1,
+          vehicle_id: currentVehicle.value?.id || -1,
         })
         .select();
 
@@ -94,9 +101,9 @@ export const useServicesStore = defineStore('services', () => {
 
       services.value = services.value.filter(({ id }) => id !== service_id);
       servicesCache.set(
-        currentVehicle?.id || -1,
+        currentVehicle.value?.id || -1,
         servicesCache
-          .get(currentVehicle?.id || 0)
+          .get(currentVehicle.value?.id || 0)
           ?.filter(({ id }) => id !== service_id) || [],
       );
     } catch (error) {
@@ -106,3 +113,7 @@ export const useServicesStore = defineStore('services', () => {
 
   return { services, getServices, upsertService, deleteService };
 });
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useServicesStore, import.meta.hot));
+}

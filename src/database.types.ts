@@ -569,6 +569,13 @@ export type Database = {
         };
         Returns: boolean;
       };
+      get_last_mileage: {
+        Args: {
+          vehicle_id: number;
+          type?: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

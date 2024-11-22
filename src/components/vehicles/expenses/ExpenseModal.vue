@@ -6,6 +6,7 @@ import FormDialog from '@/components/general/modal/FormDialog.vue';
 
 import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useExpensesStore } from '@/stores/expenses';
+import { supabase } from '@/lib/supabaseClient';
 
 // TODO: auto-suggest last odometer reading
 
@@ -41,11 +42,21 @@ const onFormSubmit = () => {
   // todo: finish submit
 };
 
-const handleOpen = (expense_id: TablesUpdate<'VehicleExpenses'>['id']) => {
-  console.log('open', expense_id);
+const handleOpen = async (
+  expense_id: TablesUpdate<'VehicleExpenses'>['id'],
+) => {
+  const { data: lastExpenseMileage, error } = await supabase.rpc(
+    'get_last_mileage',
+    {
+      vehicle_id: currentVehicle.value?.id || -1,
+      type: 'expenses',
+    },
+  );
+
+  if (error) throw error;
 
   if (expense_id == null || expense_id === undefined) {
-    expense.value = { ...defaultValues };
+    expense.value = { ...defaultValues, mileage: lastExpenseMileage };
     modalRef.value?.modalRef?.showModal();
     return;
   }
@@ -56,11 +67,6 @@ const handleOpen = (expense_id: TablesUpdate<'VehicleExpenses'>['id']) => {
     alert('No Expense found');
     return;
   }
-
-  console.log({
-    ...defaultValues,
-    ...editExpense,
-  });
 
   expense.value = {
     ...defaultValues,
@@ -148,6 +154,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
       <FormInput
         wrapperClass="sm:col-span-3"
+        class="w-full"
         label="Cost"
         type="text"
         inputmode="decimal"
@@ -156,7 +163,8 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       >
         <template #addon>
           <FormInput
-            class="join-item w-10"
+            wrapperClass="max-w-32"
+            class="join-item"
             type="select"
             v-model="expense.currency"
             placeholder="Select a currency"
@@ -175,8 +183,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         label="Odometer Reading"
         wrapperClass="sm:col-span-3"
         type="text"
-        inputmode="numeric"
-        placeholder="0 000 000"
+        inputmode="decimal"
         v-model="expense.mileage"
       >
         <template #icon>

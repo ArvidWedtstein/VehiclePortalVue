@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { defineStore } from 'pinia';
+import { acceptHMRUpdate, defineStore } from 'pinia';
 import type { FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
@@ -8,10 +8,15 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = ref<Tables<'Vehicles'>[]>([]);
   const currentVehicle = ref<Tables<'Vehicles'> | null>(null);
 
-  const setCurrentVehicle = async (pVehicle_ID: Tables<'Vehicles'>['id']) => {
+  const setCurrentVehicle = async (pVehicle_ID?: Tables<'Vehicles'>['id']) => {
     try {
       console.info('Set Current Vehicle');
-      if (!pVehicle_ID) return;
+      if (!pVehicle_ID) {
+        const urlVehicleID = window.location.href.split('/').pop();
+        if (!urlVehicleID || Number.isNaN(urlVehicleID)) return;
+
+        pVehicle_ID = parseInt(urlVehicleID);
+      }
 
       if (!vehicles.value.length) {
         await getVehicles({ id: pVehicle_ID });
@@ -24,6 +29,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       }
 
       currentVehicle.value = vehicle;
+
+      return currentVehicle;
     } catch (pErr) {
       console.error(pErr);
     }
@@ -157,3 +164,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     setCurrentVehicle,
   };
 });
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useVehiclesStore, import.meta.hot));
+}

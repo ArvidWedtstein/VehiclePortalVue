@@ -35,6 +35,7 @@ type Props = {
 const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   size: 'md',
+  wrapperClass: ' w-full',
   join: false,
   required: false,
 });
@@ -100,7 +101,7 @@ const onInput = (event: Event) => {
 </script>
 
 <template>
-  <label class="form-control w-full" :class="wrapperClass">
+  <label class="form-control" :class="wrapperClass">
     <slot name="label">
       <div class="label" v-show="label">
         <span class="label-text">

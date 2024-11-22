@@ -5,6 +5,7 @@ import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useServicesStore } from '@/stores/services';
+import { supabase } from '@/lib/supabaseClient';
 
 const modalRef = ref();
 
@@ -34,16 +35,25 @@ const service = ref<
 
 const onFormSubmit = () => {
   console.log('submit', service.value);
-  // todo: finish submit
 
   upsertService(service.value);
 };
 
-const handleOpen = (service_id: TablesUpdate<'VehicleServiceLogs'>['id']) => {
-  console.log('open', service_id);
+const handleOpen = async (
+  service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
+) => {
+  const { data: lastServiceMileage, error } = await supabase.rpc(
+    'get_last_mileage',
+    {
+      vehicle_id: currentVehicle.value?.id || -1,
+      type: 'services',
+    },
+  );
+
+  if (error) throw error;
 
   if (service_id == null || service_id === undefined) {
-    service.value = { ...defaultValues };
+    service.value = { ...defaultValues, mileage: lastServiceMileage };
     modalRef.value?.modalRef?.showModal();
     return;
   }
