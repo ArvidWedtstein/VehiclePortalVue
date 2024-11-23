@@ -8,7 +8,6 @@ import { useVehiclesStore } from './vehicles';
 export const useExpensesStore = defineStore('expenses', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
-  const { setCurrentVehicle } = vehiclesStore;
 
   const expenses = ref<Tables<'VehicleExpenses'>[]>([]);
   const expensesCache = new Map<number, Tables<'VehicleExpenses'>[]>();
@@ -20,11 +19,8 @@ export const useExpensesStore = defineStore('expenses', () => {
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
-      console.log('current', currentVehicle);
       if (!currentVehicle.value || !currentVehicle.value.id) {
-        // throw new Error('No Vehicle Selected!');
-        setCurrentVehicle();
-        return;
+        throw new Error('No Vehicle Selected!');
       }
 
       if (

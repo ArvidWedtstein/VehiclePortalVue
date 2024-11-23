@@ -53,7 +53,6 @@ const router = createRouter({
       meta: {
         showInNavbar: false,
       },
-      props: true,
     },
   ],
 });

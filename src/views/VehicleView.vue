@@ -2,33 +2,33 @@
 import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
-import { RouterLink } from 'vue-router';
-import { onMounted, ref, toRefs } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+import { onMounted, ref, watchEffect } from 'vue';
 import VehicleShareModal from '@/components/vehicles/VehicleShareModal.vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
-import { useExpensesStore } from '@/stores/expenses';
-import { useServicesStore } from '@/stores/services';
+
 import { storeToRefs } from 'pinia';
 
-const props = defineProps({
-  id: String,
-});
+const route = useRoute();
+const vehicleId = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id;
 
 const vehiclesStore = useVehiclesStore();
-const servicesStore = useServicesStore();
-const expensesStore = useExpensesStore();
 
 const { currentVehicle } = storeToRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;
-const { getServices } = servicesStore;
-const { getExpenses } = expensesStore;
 
 const vehicleShareModal = ref();
 
+watchEffect(() => {
+  console.log(route.params, vehicleId);
+
+  if (route.params.id !== vehicleId) setCurrentVehicle(parseInt(vehicleId));
+});
+
 onMounted(async () => {
-  setCurrentVehicle(parseInt(props.id || ''));
-  // await getServices();
-  // await getExpenses({ vehicle_id: parseInt(props.id || '') });
+  setCurrentVehicle(parseInt(vehicleId));
 });
 </script>
 

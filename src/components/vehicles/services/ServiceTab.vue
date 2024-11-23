@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import LineChart from '@/components/LineChart.vue';
+import LineChart from '@/components/general/charts/LineChart.vue';
 import ServiceModal from './ServiceModal.vue';
 import { useServicesStore } from '@/stores/services';
 import { onMounted, ref, toRef } from 'vue';
 import { formatDate } from '@/utils/date';
+import LineChartV2 from '@/components/general/charts/LineChartV2.vue';
 
 const servicesStore = useServicesStore();
 
@@ -57,6 +58,27 @@ onMounted(() => {
     Add Service
   </button>
   <LineChart
+    :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
+    :width="400"
+    :height="400"
+    :xLabels="[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]"
+    :yTicks="[0, 20, 40, 60, 80, 100]"
+    animate
+  />
+  <LineChartV2
     :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
     :width="400"
     :height="400"
