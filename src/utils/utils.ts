@@ -1,3 +1,17 @@
+// Helper function to safely access nested properties with strict typing
+export const getNestedProperty = (
+  obj: Record<string, unknown>,
+  keys: string[],
+): unknown => {
+  return keys.reduce((acc: unknown, currentKey: string) => {
+    // Ensure acc is a Record<string, unknown> for safe nested access
+    if (acc && typeof acc === 'object' && currentKey in acc) {
+      return (acc as Record<string, unknown>)[currentKey];
+    }
+    return undefined;
+  }, obj);
+};
+
 export const groupBy = <T extends Record<string, unknown>>(
   array: T[],
   key: keyof T | string,
@@ -5,20 +19,6 @@ export const groupBy = <T extends Record<string, unknown>>(
   // Convert `key` to array of strings for strict indexing compatibility
   const nestedKeys =
     typeof key === 'string' ? key.split('.') : [key as unknown as string];
-
-  // Helper function to safely access nested properties with strict typing
-  const getNestedProperty = (
-    obj: Record<string, unknown>,
-    keys: string[],
-  ): unknown => {
-    return keys.reduce((acc: unknown, currentKey: string) => {
-      // Ensure acc is a Record<string, unknown> for safe nested access
-      if (acc && typeof acc === 'object' && currentKey in acc) {
-        return (acc as Record<string, unknown>)[currentKey];
-      }
-      return undefined;
-    }, obj);
-  };
 
   return array.reduce((acc: { [groupKey: string]: T[] }, obj: T) => {
     // Retrieve the group key by accessing nested properties
@@ -95,4 +95,22 @@ export const formatListDisjunction = (items: string[]): string => {
   if (items.length === 1) return items[0];
   if (items.length === 2) return `${items[0]} or ${items[1]}`;
   return `${items.slice(0, -1).join(', ')}, or ${items[items.length - 1]}`;
+};
+
+export const generateDistinctColors = (numColors: number): string[] => {
+  const colors: string[] = [];
+
+  const lightness = 30;
+  const saturation = 70;
+
+  for (let i = 0; i < numColors; i++) {
+    // Space hues to ensure colors are evenly distributed
+    const hue = (i * (360 / numColors)) % 360;
+
+    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+    colors.push(color);
+  }
+
+  return colors;
 };

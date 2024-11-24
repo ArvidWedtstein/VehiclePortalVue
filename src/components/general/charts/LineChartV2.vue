@@ -1,91 +1,172 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Dataset extends Record<string, unknown>">
+import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
 import { computed, ref, onMounted } from 'vue';
 
-interface Props {
-  data: number[];
+type Serie<T> = {
+  data?: number[];
+  /** Gets value from dataset */
+  dataKey?: keyof T;
+
+  label?: string;
+  /** Color of serie line */
+  color?: string;
+  /** TODO: implement */
+  area?: boolean;
+};
+
+type Props<T> = {
+  dataset?: T[];
+  series: Serie<T>[];
   width?: number;
   height?: number;
-  xTicks?: string[];
+  /** xAxis must be equal length to data */
+  xAxis?: { data: string[] | number[]; dataKey?: keyof T }[];
   yTicks?: number[];
   smooth?: boolean;
   animate?: boolean;
-}
+  grid?: {
+    vertical?: boolean;
+    horizontal?: boolean;
+  };
+  hidePoints?: boolean;
+};
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props<Dataset>>(), {
+  xAxis: () => [],
   yTicks: () => [],
+  grid: () => ({
+    vertical: false,
+    horizontal: false,
+  }),
+  hidePoints: false,
+  width: 500,
+  height: 300,
 });
 
-// Set default width, height, and padding
-const width = props.width ?? 400;
-const height = props.height ?? 200;
-const padding = 12; // Increased padding for better centering
+const padding = 50;
 
-// Default x-axis labels (e.g., based on data indices) if none provided
-const xLabels = computed(
-  () => props.xTicks ?? props.data.map((_, index) => (index + 1).toString()),
-);
-
-// Default y-axis ticks based on data range if none provided
-const yLabels = computed(() => {
-  if (props.yTicks.length) return [...props.yTicks].sort((a, b) => b - a);
-
-  const maxY = Math.max(...props.data);
-  const interval = maxY / 5;
-
-  // TODO: fix
-  const labels = Array.from({ length: 6 }, (_, i) =>
-    Math.round(i * interval),
-  ).reverse();
-
-  return labels;
+const chartBounds = computed(() => {
+  return {
+    top: padding,
+    bottom: props.height - padding,
+    left: padding,
+    right: props.width - padding,
+    width: props.width - padding * 2,
+    height: props.height - padding * 2,
+  };
 });
 
-// Scale functions for x and y axes (accounting for padding)
-const scaleX = (index: number) =>
-  padding + (index / (props.data.length - 1)) * (100 - 2 * padding);
-const scaleY = (value: number) =>
-  100 - padding - (value / Math.max(...props.data)) * (100 - 2 * padding);
+const seriesData = computed(() => {
+  const colors = generateDistinctColors(props.series.length);
+  return props.series.map((serie, index) => {
+    let data: number[] = serie.data || [];
 
-// Generate path data for the line chart
-const pathData = computed(() => {
-  if (props.data.length === 0) return '';
-
-  const points = props.data.map(
-    (value, index) => `${scaleX(index)},${scaleY(value)}`,
-  );
-
-  if (props.smooth) {
-    const path = [`M ${points[0]}`];
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const [x1, y1] = points[i].split(',').map(Number);
-      const [x2, y2] = points[i + 1].split(',').map(Number);
-
-      // Calculate the previous and next points
-      const prevPoint = i > 0 ? points[i - 1].split(',').map(Number) : [x1, y1];
-      const nextPoint =
-        i < points.length - 2 ? points[i + 2].split(',').map(Number) : [x2, y2];
-
-      // Calculate control points to smooth the curve
-      const controlPoint1 = [(x1 + prevPoint[0]) / 2, (y1 + prevPoint[1]) / 2];
-      const controlPoint2 = [(x2 + nextPoint[0]) / 2, (y2 + nextPoint[1]) / 2];
-
-      path.push(
-        `C ${controlPoint1[0]},${controlPoint1[1]} ${controlPoint2[0]},${controlPoint2[1]} ${x2},${y2}`,
+    if (serie.dataKey && props.dataset && props.dataset?.length) {
+      data = props.dataset.map(
+        p => getNestedProperty(p, [serie.dataKey?.toString() || '']) as number,
       );
     }
 
-    return path.join(' ');
-  }
+    return {
+      ...serie,
+      data,
+      color: serie.color || colors[index],
+    };
+  });
+});
 
-  // Straight line path
-  return (
-    `M ${points[0]} ` +
-    points
-      .slice(1)
-      .map(point => `L ${point}`)
-      .join(' ')
-  );
+const xAxisLabels = computed(() => {
+  // TODO: fix
+  // do not use data directly. data should only indicate x points
+  const labels = [
+    ...(props.xAxis.length
+      ? props.xAxis[0].data
+      : seriesData.value
+          .flatMap(({ data }) => data)
+          .map((_, index) => (index + 1).toString())),
+  ];
+
+  const stepWidth = chartBounds.value.width / (labels.length - 1);
+
+  const labelPoints = labels.map((label, index) => {
+    return {
+      label,
+      x: chartBounds.value.left + index * stepWidth,
+      y: 0,
+    };
+  });
+
+  return labelPoints;
+});
+
+// Default y-axis ticks based on data range if none provided
+const yAxisLabels = computed(() => {
+  const steps = 5;
+  const stepHeight = chartBounds.value.height / steps;
+
+  const maxYValue = Math.max(...seriesData.value.flatMap(({ data }) => data));
+
+  const labels = [
+    ...(props.yTicks.length
+      ? props.yTicks
+      : Array.from({ length: steps + 1 }, (_, i) => (maxYValue / steps) * i)),
+  ].sort((a, b) => b - a);
+
+  const labelPoints = labels.map((label, index) => {
+    return {
+      label,
+      x: 0,
+      y: chartBounds.value.top + index * stepHeight,
+    };
+  });
+
+  return labelPoints;
+});
+
+const seriesDataPoints = computed(() => {
+  const { bottom, width, height } = chartBounds.value;
+  const minVal = Math.min(...seriesData.value.flatMap(({ data }) => data));
+  const maxVal = Math.max(...seriesData.value.flatMap(({ data }) => data));
+
+  return seriesData.value.map(serie => {
+    const points = serie.data
+      .slice(0, xAxisLabels.value.length)
+      .map((value, index, data) => {
+        const x = width * (index / (data.length - 1)) + padding;
+        const y = bottom - ((value - minVal) / (maxVal - minVal)) * height;
+
+        return {
+          x,
+          y,
+        };
+      });
+
+    return {
+      ...serie,
+      points,
+    };
+  });
+});
+
+const paths = computed(() => {
+  const seriesPaths = seriesDataPoints.value.map(({ points }) => {
+    let path = `M ${points[0].x},${points[0].y}`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i];
+      const p1 = points[i + 1];
+      const cp1X = p0.x + (p1.x - p0.x) / 2;
+      const cp1Y = p0.y;
+      const cp2X = p1.x - (p1.x - p0.x) / 2;
+      const cp2Y = p1.y;
+
+      path += ` C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${p1.x},${p1.y}`;
+    }
+
+    return path;
+  });
+
+  return seriesPaths;
 });
 
 // Refs for animation setup
@@ -106,24 +187,67 @@ onMounted(() => {
     });
   }
 });
-
-// Line style with animation if enabled
-const lineStyle = computed(() => ({
-  strokeDasharray: props.animate ? dashArray.value : undefined,
-  strokeDashoffset: props.animate ? dashOffset.value : undefined,
-  transition: props.animate ? 'stroke-dashoffset 2s ease' : undefined,
-}));
 </script>
 
 <template>
-  <svg width="500" height="300" viewBox="0 0 500 300" class="w-full h-full">
+  <svg
+    :width="width"
+    :height="height"
+    :viewBox="`0 0 ${width} ${height}`"
+    class="w-full h-full"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <title></title>
     <desc></desc>
     <defs></defs>
-    <g class="MuiChartsGrid-root css-0"></g>
+    <g>
+      <template v-if="grid?.vertical">
+        <line
+          v-for="({ x }, index) in xAxisLabels"
+          :key="`grid-vertical-line-${index}`"
+          :y1="chartBounds.top"
+          :y2="chartBounds.bottom"
+          :x1="x"
+          :x2="x"
+          class="stroke-white/10 stroke-1"
+          shape-rendering="crispEdges"
+        />
+      </template>
+      <template v-if="grid?.horizontal">
+        <line
+          v-for="({ y }, index) in yAxisLabels"
+          :key="`grid-horizontal-line-${index}`"
+          :y1="y"
+          :y2="y"
+          :x1="chartBounds.left"
+          :x2="chartBounds.right"
+          class="stroke-white/10 stroke-1"
+          shape-rendering="crispEdges"
+        />
+      </template>
+    </g>
     <g clip-path="url(#:reb:-clip-path)">
+      <!-- For area -->
+      <g></g>
       <g>
-        <clipPath id=":rec:-auto-generated-id-0-line-clip">
+        <template
+          v-for="({ color }, index) in seriesDataPoints"
+          :key="`serie-${index}`"
+        >
+          <clipPath :id="`:auto-gen-id-${index}-line-clip`">
+            <rect x="0" y="0" :width="width" :height="height" />
+          </clipPath>
+          <g :clip-path="`url(#auto-gen-id-${index}-line-clip)`">
+            <path
+              cursor="unset"
+              stroke-linejoin="round"
+              :style="{ stroke: color }"
+              class="fill-transparent stroke-2"
+              :d="paths[index]"
+            />
+          </g>
+        </template>
+        <!-- <clipPath id=":rec:-auto-generated-id-0-line-clip">
           <rect x="0" y="0" width="500" height="300"></rect>
         </clipPath>
         <g clip-path="url(#:rec:-auto-generated-id-0-line-clip)">
@@ -133,22 +257,23 @@ const lineStyle = computed(() => ({
             class="stroke-white fill-transparent stroke-2"
             d="M50,210C64.815,175,79.63,140,94.444,140C109.259,140,124.074,210,138.889,210C168.519,210,198.148,80,227.778,80C272.222,80,316.667,220,361.111,220C390.741,220,420.37,185,450,150"
           ></path>
-        </g>
+        </g> -->
       </g>
     </g>
-    <g transform="translate(0, 250)">
+
+    <g :transform="`translate(0, ${chartBounds.bottom})`">
       <line
-        x1="50"
-        x2="450"
-        shape-rendering="crispedges"
+        :x1="chartBounds.left"
+        :x2="chartBounds.right"
+        shape-rendering="crispEdges"
         class="stroke-white"
       ></line>
       <g
-        v-for="(label, index) in xLabels"
+        v-for="({ label, x, y }, index) in xAxisLabels"
         :key="'x-tick-' + index"
-        :transform="`translate(${50 + index * (400 / (xLabels.length - 1))}, 0)`"
+        :transform="`translate(${x}, ${y})`"
       >
-        <line y2="6" shape-rendering="crispedges" class="stroke-white"></line>
+        <line y2="6" shape-rendering="crispEdges" class="stroke-white" />
         <text
           class="fill-white"
           x="0"
@@ -161,20 +286,20 @@ const lineStyle = computed(() => ({
         </text>
       </g>
     </g>
-    <g transform="translate(50, 0)">
+    <g :transform="`translate(${chartBounds.left}, 0)`">
       <line
-        y1="50"
-        y2="250"
-        shape-rendering="crispedges"
+        :y1="chartBounds.top"
+        :y2="chartBounds.bottom"
+        shape-rendering="crispEdges"
         class="stroke-white"
         stroke-linecap="square"
       ></line>
       <g
-        v-for="(label, index) in yLabels"
+        v-for="({ label, x, y }, index) in yAxisLabels"
         :key="'y-tick-' + index"
-        :transform="`translate(0, ${50 + index * (200 / (yLabels.length - 1))})`"
+        :transform="`translate(${x}, ${y})`"
       >
-        <line x2="-6" shape-rendering="crispedges" class="stroke-white"></line>
+        <line x2="-6" shape-rendering="crispEdges" class="stroke-white"></line>
         <text
           class="fill-white"
           x="-8"
@@ -188,67 +313,34 @@ const lineStyle = computed(() => ({
       </g>
     </g>
     <g data-drawing-container="true">
-      <g>
-        <g clip-path="url(#:rec:-auto-generated-id-0-line-clip)">
+      <g v-if="!hidePoints">
+        <g
+          v-for="({ color, points }, serieIndex) in seriesDataPoints"
+          :key="`serie-${serieIndex}-points`"
+          :clip-path="`url(#auto-generated-id-${serieIndex}-line-clip)`"
+        >
           <path
-            style="
-              transform: translate(50px, 210px);
-              transform-origin: 50px 210px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
+            v-for="({ x, y }, index) in points"
+            :key="`serie-${serieIndex}-point-${index}`"
+            :style="{
+              transform: `translate(${x}px, ${y}px)`,
+              'transform-origin': `${x}px ${y}px 0px`,
+              stroke: color,
+            }"
+            class="stroke-2 fill-base-100"
             d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
             cursor="unset"
-          ></path>
-          <path
-            style="
-              transform: translate(94.4444px, 140px);
-              transform-origin: 94.4444px 140px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          ></path>
-          <path
-            style="
-              transform: translate(138.889px, 210px);
-              transform-origin: 138.889px 210px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          ></path>
-          <path
-            style="
-              transform: translate(227.778px, 80px);
-              transform-origin: 227.778px 80px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          ></path>
-          <path
-            style="
-              transform: translate(361.111px, 220px);
-              transform-origin: 361.111px 220px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          ></path>
-          <path
-            style="
-              transform: translate(450px, 150px);
-              transform-origin: 450px 150px 0px;
-            "
-            class="stroke-2 stroke-white fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          ></path>
+          />
         </g>
       </g>
     </g>
-    <clipPath id=":reb:-clip-path">
-      <rect x="50" y="50" width="400" height="200"></rect>
+    <clipPath id="some-clip-path">
+      <rect
+        :x="chartBounds.left"
+        :y="chartBounds.top"
+        :width="chartBounds.width"
+        :height="chartBounds.height"
+      />
     </clipPath>
   </svg>
 </template>

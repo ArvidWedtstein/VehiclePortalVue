@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LineChart from '@/components/general/charts/LineChart.vue';
 import ServiceModal from './ServiceModal.vue';
 import { useServicesStore } from '@/stores/services';
 import { onMounted, ref, toRef } from 'vue';
@@ -37,6 +36,21 @@ const serviceModal = ref();
 //   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
 // });
 
+// const chartXAxisData = [
+//   'Jan',
+//   'Feb',
+//   'Mar',
+//   'Apr',
+//   'May',
+//   'Jun',
+//   'Jul',
+//   'Aug',
+//   'Sep',
+//   'Oct',
+//   'Nov',
+//   'Dec',
+// ];
+const chartXAxisData = [0, 3, 4, 5, 6, 8, 9, 10];
 onMounted(() => {
   getServices();
 });
@@ -57,46 +71,17 @@ onMounted(() => {
     </svg>
     Add Service
   </button>
-  <LineChart
-    :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
-    :width="400"
-    :height="400"
-    :xLabels="[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ]"
-    :yTicks="[0, 20, 40, 60, 80, 100]"
-    animate
-  />
+
   <LineChartV2
-    :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
-    :width="400"
-    :height="400"
-    :xLabels="[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+    :series="[
+      { data: [10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30] },
+      { data: [1, 7, 6, 9, 60, 32, 50, 40, 23, 11, 30] },
     ]"
-    :yTicks="[0, 20, 40, 60, 80, 100]"
+    :xAxis="[
+      {
+        data: chartXAxisData,
+      },
+    ]"
     animate
   />
   <ul class="mt-4 text-sm divide-y divide-base-100">
