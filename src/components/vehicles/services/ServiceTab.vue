@@ -50,7 +50,7 @@ const serviceModal = ref();
 //   'Nov',
 //   'Dec',
 // ];
-const chartXAxisData = [0, 2, 3, 5, 8, 10];
+const chartXAxisData = [1, 2, 3, 5, 8, 10];
 onMounted(() => {
   getServices();
 });
@@ -79,8 +79,10 @@ onMounted(() => {
         scaleType: 'linear',
       },
     ]"
-    :series="[{ data: [2, 5.5, 2, 8.5, 3, 5] }]"
-    animate
+    :series="[{ data: [2, 4, 6, 8.5, 5, 0] }]"
+    :grid="{
+      vertical: true,
+    }"
   />
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
