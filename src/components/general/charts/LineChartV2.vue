@@ -1,6 +1,14 @@
-<script setup lang="ts" generic="Dataset extends Record<string, unknown>">
+<script
+  setup
+  lang="ts"
+  generic="
+    Dataset extends Record<string, unknown>,
+    ScaleType extends ScaleTypes
+  "
+>
+import { generateTicks, type ScaleTypes } from '@/utils/lineChart';
 import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 
 type Serie<T> = {
   data?: number[];
@@ -12,6 +20,28 @@ type Serie<T> = {
   color?: string;
   /** TODO: implement */
   area?: boolean;
+
+  curve?: 'linear' | 'catmullRom';
+
+  showMark?: (index: number) => boolean;
+};
+
+type AxisDataType<S extends ScaleTypes> = S extends 'linear' | 'log' | 'sqrt'
+  ? number[]
+  : S extends 'time' | 'utc'
+    ? Date[]
+    : S extends 'band' | 'point'
+      ? (string | number)[]
+      : unknown[];
+
+type Axis<T, S extends ScaleTypes> = {
+  data?: AxisDataType<S>;
+  dataKey?: keyof T;
+  scaleType?: S;
+
+  position?: 'top' | 'bottom' | 'left' | 'right';
+
+  valueFormatter?: (value: AxisDataType<S>[number]) => string;
 };
 
 type Props<T> = {
@@ -19,8 +49,7 @@ type Props<T> = {
   series: Serie<T>[];
   width?: number;
   height?: number;
-  /** xAxis must be equal length to data */
-  xAxis?: { data: string[] | number[]; dataKey?: keyof T }[];
+  xAxis?: Axis<T, ScaleType>[];
   yTicks?: number[];
   smooth?: boolean;
   animate?: boolean;
@@ -75,12 +104,166 @@ const seriesData = computed(() => {
   });
 });
 
+const scale = <S extends ScaleTypes>(
+  value: number,
+  axis: 'x' | 'y' = 'x',
+  scaleType: S,
+  domain: Axis<Dataset, S>['data'] | undefined,
+) => {
+  const { left, bottom, width } = chartBounds.value;
+
+  const domainData = (domain || []) as AxisDataType<S>;
+
+  const domainMin =
+    scaleType === 'time' || scaleType === 'utc'
+      ? Math.min(...(domainData as Date[]).map(d => d.getTime()))
+      : Math.min(...(domainData as number[]));
+  const domainMax =
+    scaleType === 'time' || scaleType === 'utc'
+      ? Math.max(...(domainData as Date[]).map(d => d.getTime()))
+      : Math.max(...(domainData as number[]));
+
+  const rangeMin = axis === 'x' ? left : bottom;
+
+  if (scaleType === 'linear' && !!value) {
+    const step = width / (domainData.length - 1);
+    const index = domainData.indexOf(value as number & Date);
+    return rangeMin + index * step;
+  }
+
+  if (scaleType === 'log' && typeof value === 'number') {
+    const normalized =
+      (Math.log(value) - Math.log(domainMin)) /
+      (Math.log(domainMax) - Math.log(domainMin));
+    return rangeMin + normalized * width;
+  }
+
+  if (scaleType === 'sqrt' && typeof value === 'number') {
+    const normalized =
+      (Math.sqrt(value) - Math.sqrt(domainMin)) /
+      (Math.sqrt(domainMax) - Math.sqrt(domainMin));
+    return rangeMin + normalized * width;
+  }
+
+  if (scaleType === 'pow' && typeof value === 'number') {
+    const power = 2;
+    const normalized =
+      (Math.pow(value, power) - Math.pow(domainMin, power)) /
+      (Math.pow(domainMax, power) - Math.pow(domainMin, power));
+    return rangeMin + normalized * width;
+  }
+
+  if (scaleType === 'band' && typeof value === 'number') {
+    const step = width / domainData.length;
+    const index = domainData.indexOf(value as number & Date);
+
+    // TODO: fix
+
+    return rangeMin + index * step;
+  }
+
+  if (scaleType === 'point' && typeof value === 'number') {
+    const step = width / domainData.length;
+    const index = domainData.indexOf(value as number & Date);
+    return rangeMin + index * step;
+  }
+
+  if (scaleType === 'time' || (scaleType === 'utc' && !!value)) {
+    const normalized =
+      (new Date((value || '').toString()).getTime() - domainMin) /
+      (domainMax - domainMin);
+    return rangeMin + normalized * width;
+  }
+
+  return rangeMin;
+};
+
+const formatTick = (value: string | number | Date, scaleType: ScaleType) => {
+  if (scaleType === 'time' || scaleType === 'utc') {
+    return new Date(value).toISOString().split('T')[0];
+  }
+  return parseInt(value.toString());
+};
+
+const xAxes = computed(() => {
+  const { width, bottom } = chartBounds.value;
+
+  const xAxesWithData = props.xAxis.map(axis => {
+    const { scaleType, dataKey, data: axisData } = axis;
+    const axisSaleType = scaleType || ('linear' as ScaleType);
+    let data = (axisData as number[]) || [];
+
+    if (dataKey && props.dataset) {
+      data = props.dataset.map(
+        p => getNestedProperty(p, [dataKey?.toString() || '']) as number,
+      );
+    }
+
+    const seriesFlat = seriesData.value.flatMap(({ data }) => data);
+    const steps = data.length > 0 ? data.length - 1 : 5;
+
+    const min = Math.min(...(data.length > 0 ? data : seriesFlat));
+    const max = Math.max(...(data.length > 0 ? data : seriesFlat));
+
+    const ticks = generateTicks(min, max, steps, axisSaleType, data);
+
+    const stepWidth = width / steps;
+
+    const labelsPosition = ticks.map(label => {
+      const scaleX = scale(
+        label as number & Date,
+        'x',
+        axisSaleType,
+        ticks as AxisDataType<ScaleType>,
+      );
+
+      return {
+        label,
+        x: scaleX,
+        y: 0,
+        tickX: 0,
+        tickY: 6,
+        labelX: scaleType === 'band' ? stepWidth / 2 : 0,
+        labelY: 9,
+      };
+    });
+
+    const position = {
+      x: 0,
+      y: bottom,
+    };
+
+    return {
+      ...axis,
+      scaleType: axisSaleType,
+      data,
+      ...position,
+      labels: labelsPosition,
+    };
+  });
+
+  return xAxesWithData;
+});
+
 const xAxisLabels = computed(() => {
-  // TODO: fix
-  // do not use data directly. data should only indicate x points
+  const xAxis = props.xAxis.map(axis => {
+    let data = (axis.data || []) as AxisDataType<ScaleType>;
+
+    if (axis.dataKey && props.dataset) {
+      data = props.dataset.map(p =>
+        getNestedProperty(p, [axis.dataKey?.toString() || '']),
+      ) as AxisDataType<ScaleType>;
+    }
+
+    return {
+      ...axis,
+      data,
+    };
+  });
+
   const labels = [
-    ...(props.xAxis.length
-      ? props.xAxis[0].data
+    ...(xAxis.flatMap(({ data }) => data).length
+      ? xAxis[0].data
       : seriesData.value
           .flatMap(({ data }) => data)
           .map((_, index) => (index + 1).toString())),
@@ -99,10 +282,11 @@ const xAxisLabels = computed(() => {
   return labelPoints;
 });
 
-// Default y-axis ticks based on data range if none provided
 const yAxisLabels = computed(() => {
+  const { height, top } = chartBounds.value;
+
   const steps = 5;
-  const stepHeight = chartBounds.value.height / steps;
+  const stepHeight = height / steps;
 
   const maxYValue = Math.max(...seriesData.value.flatMap(({ data }) => data));
 
@@ -116,7 +300,7 @@ const yAxisLabels = computed(() => {
     return {
       label,
       x: 0,
-      y: chartBounds.value.top + index * stepHeight,
+      y: top + index * stepHeight,
     };
   });
 
@@ -132,6 +316,10 @@ const seriesDataPoints = computed(() => {
     const points = serie.data
       .slice(0, xAxisLabels.value.length)
       .map((value, index, data) => {
+        // const axisPosition = xAxes.value[0].labels.find(
+        //   ({ label }) => parseInt(label.toString()) === value,
+        // );
+
         const x = width * (index / (data.length - 1)) + padding;
         const y = bottom - ((value - minVal) / (maxVal - minVal)) * height;
 
@@ -167,25 +355,6 @@ const paths = computed(() => {
   });
 
   return seriesPaths;
-});
-
-// Refs for animation setup
-const chartPath = ref<SVGPathElement | null>(null);
-const dashArray = ref('0');
-const dashOffset = ref('0');
-
-// Animation handler
-onMounted(() => {
-  if (props.animate && chartPath.value) {
-    const length = chartPath.value.getTotalLength();
-    dashArray.value = length.toString();
-    dashOffset.value = length.toString();
-
-    // Trigger the animation
-    requestAnimationFrame(() => {
-      dashOffset.value = '0';
-    });
-  }
 });
 </script>
 
@@ -247,44 +416,57 @@ onMounted(() => {
             />
           </g>
         </template>
-        <!-- <clipPath id=":rec:-auto-generated-id-0-line-clip">
-          <rect x="0" y="0" width="500" height="300"></rect>
-        </clipPath>
-        <g clip-path="url(#:rec:-auto-generated-id-0-line-clip)">
-          <path
-            cursor="unset"
-            stroke-linejoin="round"
-            class="stroke-white fill-transparent stroke-2"
-            d="M50,210C64.815,175,79.63,140,94.444,140C109.259,140,124.074,210,138.889,210C168.519,210,198.148,80,227.778,80C272.222,80,316.667,220,361.111,220C390.741,220,420.37,185,450,150"
-          ></path>
-        </g> -->
       </g>
     </g>
 
-    <g :transform="`translate(0, ${chartBounds.bottom})`">
+    <g
+      v-for="(axis, axisIndex) in xAxes"
+      :key="`x-axis-${axisIndex}`"
+      :transform="`translate(${axis.x}, ${axis.y})`"
+    >
       <line
         :x1="chartBounds.left"
         :x2="chartBounds.right"
         shape-rendering="crispEdges"
         class="stroke-white"
       ></line>
+
       <g
+        v-for="(
+          { label, x, y, tickX, tickY, labelX, labelY }, index
+        ) in axis.labels"
+        :key="`x-axis-${axisIndex}-ticks-${index}`"
+        :transform="`translate(${x}, ${y})`"
+      >
+        <!-- Tick Lines -->
+        <line :x1="tickX" :x2="tickX" :y2="tickY" stroke="white" />
+        <!-- Labels -->
+        <text
+          :x="labelX"
+          :y="labelY"
+          class="text-xs fill-white"
+          text-anchor="middle"
+          dominant-baseline="hanging"
+        >
+          {{ formatTick(label, axis.scaleType) }}
+        </text>
+      </g>
+      <!-- <g
         v-for="({ label, x, y }, index) in xAxisLabels"
         :key="'x-tick-' + index"
         :transform="`translate(${x}, ${y})`"
       >
         <line y2="6" shape-rendering="crispEdges" class="stroke-white" />
         <text
-          class="fill-white"
+          class="fill-white text-xs"
           x="0"
           y="9"
           text-anchor="middle"
           dominant-baseline="hanging"
-          style="font-size: 12px"
         >
           <tspan x="0" dy="0px" dominant-baseline="hanging">{{ label }}</tspan>
         </text>
-      </g>
+      </g> -->
     </g>
     <g :transform="`translate(${chartBounds.left}, 0)`">
       <line
@@ -293,7 +475,24 @@ onMounted(() => {
         shape-rendering="crispEdges"
         class="stroke-white"
         stroke-linecap="square"
-      ></line>
+      />
+      <!-- <g
+        v-for="(value, index) in yAxisTicks"
+        :key="'y-axis-' + index"
+        :transform="`translate(0, ${mapToSvg('y', value)})`"
+      >
+        <line x2="-6" stroke="white" />
+        <text
+          x="-8"
+          y="0"
+          class="text-xs fill-white"
+          text-anchor="end"
+          dominant-baseline="central"
+        >
+          {{ formatTick(value, 'linear') }}
+        </text>
+      </g> -->
+
       <g
         v-for="({ label, x, y }, index) in yAxisLabels"
         :key="'y-tick-' + index"
@@ -301,12 +500,11 @@ onMounted(() => {
       >
         <line x2="-6" shape-rendering="crispEdges" class="stroke-white"></line>
         <text
-          class="fill-white"
+          class="text-xs fill-white"
           x="-8"
           y="0"
           text-anchor="end"
           dominant-baseline="central"
-          style="font-size: 12px"
         >
           <tspan x="-8" dy="0px" dominant-baseline="central">{{ label }}</tspan>
         </text>

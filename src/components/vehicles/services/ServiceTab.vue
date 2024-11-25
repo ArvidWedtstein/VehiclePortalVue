@@ -50,7 +50,7 @@ const serviceModal = ref();
 //   'Nov',
 //   'Dec',
 // ];
-const chartXAxisData = [0, 3, 4, 5, 6, 8, 9, 10];
+const chartXAxisData = [0, 2, 3, 5, 8, 10];
 onMounted(() => {
   getServices();
 });
@@ -73,15 +73,13 @@ onMounted(() => {
   </button>
 
   <LineChartV2
-    :series="[
-      { data: [10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30] },
-      { data: [1, 7, 6, 9, 60, 32, 50, 40, 23, 11, 30] },
-    ]"
     :xAxis="[
       {
         data: chartXAxisData,
+        scaleType: 'linear',
       },
     ]"
+    :series="[{ data: [2, 5.5, 2, 8.5, 3, 5] }]"
     animate
   />
   <ul class="mt-4 text-sm divide-y divide-base-100">
