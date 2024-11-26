@@ -1,186 +1,621 @@
-<template>
-  <svg :width="width" :height="height" viewBox="0 0 100 100">
-    <!-- Y Axis Ticks and Labels -->
-    <g v-for="(tick, index) in yTicks" :key="'y-tick-' + index">
-      <line
-        :x1="padding"
-        :x2="100 - padding"
-        :y1="scaleY(tick)"
-        :y2="scaleY(tick)"
-        stroke="#dddddd33"
-        stroke-width="0.5"
-      />
-      <text
-        :x="padding - 2"
-        :y="scaleY(tick) + 2"
-        text-anchor="end"
-        font-size="2"
-        class="fill-current"
-      >
-        {{ tick }}
-      </text>
-    </g>
+<script
+  setup
+  lang="ts"
+  generic="
+    Dataset extends Record<string, unknown>,
+    ScaleType extends ScaleTypes
+  "
+>
+import {
+  generatePath,
+  generateTicks,
+  type ScaleTypes,
+} from '@/utils/lineChart';
+import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
+import { computed } from 'vue';
 
-    <!-- X Axis Ticks and Labels -->
-    <g v-for="(label, index) in xLabels" :key="'x-tick-' + index">
-      <line
-        :x1="scaleX(index)"
-        :x2="scaleX(index)"
-        :y1="100 - padding"
-        :y2="100 - padding + 2"
-        class="stroke-current"
-        stroke-linecap="round"
-        stroke-width="0.5"
-      />
-      <text
-        :x="scaleX(index)"
-        :y="100 - padding + 5"
-        text-anchor="middle"
-        font-size="2"
-        class="fill-current"
-      >
-        {{ label }}
-      </text>
-    </g>
+type Serie<T> = {
+  data?: number[];
+  /** Gets value from dataset */
+  dataKey?: keyof T;
 
-    <!-- Animated Line Chart Path -->
-    <path
-      ref="chartPath"
-      :d="pathData"
-      fill="none"
-      stroke="red"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      :style="lineStyle"
-    />
+  label?: string;
+  /** Color of serie line */
+  color?: string;
+  /** TODO: implement */
+  area?: boolean;
 
-    <!-- X and Y Axis Lines -->
-    <line
-      :x1="padding"
-      :x2="padding"
-      :y1="padding"
-      :y2="100 - padding"
-      class="stroke-current"
-      stroke-linecap="round"
-      stroke-width="0.5"
-    />
-    <line
-      :x1="padding"
-      :x2="100 - padding"
-      :y1="100 - padding"
-      :y2="100 - padding"
-      class="stroke-current"
-      stroke-linecap="round"
-      stroke-width="0.5"
-    />
-  </svg>
-</template>
+  curve?:
+    | 'catmullRom'
+    | 'linear'
+    | 'monotoneX'
+    | 'monotoneY'
+    | 'natural'
+    | 'step'
+    | 'stepBefore'
+    | 'stepAfter';
 
-<script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+  showMark?: (index: number) => boolean;
+};
 
-interface Props {
-  data: number[];
+type AxisDataType<S extends ScaleTypes> = S extends 'linear' | 'log' | 'sqrt'
+  ? number[]
+  : S extends 'time' | 'utc'
+    ? Date[]
+    : S extends 'band' | 'point'
+      ? (string | number)[]
+      : unknown[];
+
+type Axis<T, S extends ScaleTypes> = {
+  data?: AxisDataType<S>;
+  dataKey?: keyof T;
+  scaleType?: S;
+
+  position?: 'top' | 'bottom' | 'left' | 'right';
+
+  valueFormatter?: (value: AxisDataType<S>[number]) => string;
+};
+
+type Props<T> = {
+  dataset?: T[];
+  series: Serie<T>[];
   width?: number;
   height?: number;
-  xLabels?: string[];
+  xAxis?: Axis<T, ScaleType>[];
+  yAxis?: Axis<T, ScaleType>[];
   yTicks?: number[];
   smooth?: boolean;
   animate?: boolean;
-}
+  grid?: {
+    vertical?: boolean;
+    horizontal?: boolean;
+  };
+  hidePoints?: boolean;
+};
 
-const props = defineProps<Props>();
-
-// Set default width, height, and padding
-const width = props.width ?? 400;
-const height = props.height ?? 200;
-const padding = 12; // Increased padding for better centering
-
-// Default x-axis labels (e.g., based on data indices) if none provided
-const xLabels = computed(
-  () => props.xLabels ?? props.data.map((_, index) => (index + 1).toString()),
-);
-
-// Default y-axis ticks based on data range if none provided
-const yTicks = computed(() => {
-  if (props.yTicks) return props.yTicks;
-  const maxY = Math.max(...props.data);
-  const interval = maxY / 5;
-  return Array.from({ length: 6 }, (_, i) => Math.round(i * interval));
+const props = withDefaults(defineProps<Props<Dataset>>(), {
+  xAxis: () => [],
+  yAxis: () => [
+    {
+      position: 'left',
+      scaleType: 'linear' as ScaleType,
+    },
+  ],
+  grid: () => ({
+    vertical: false,
+    horizontal: false,
+  }),
+  hidePoints: false,
+  width: 500,
+  height: 300,
 });
 
-// Scale functions for x and y axes (accounting for padding)
-const scaleX = (index: number) =>
-  padding + (index / (props.data.length - 1)) * (100 - 2 * padding);
-const scaleY = (value: number) =>
-  100 - padding - (value / Math.max(...props.data)) * (100 - 2 * padding);
+const padding = 50;
 
-// Generate path data for the line chart
-const pathData = computed(() => {
-  if (props.data.length === 0) return '';
+const chartBounds = computed(() => {
+  return {
+    top: padding,
+    bottom: props.height - padding,
+    left: padding,
+    right: props.width - padding,
+    width: props.width - padding * 2,
+    height: props.height - padding * 2,
+  };
+});
 
-  const points = props.data.map(
-    (value, index) => `${scaleX(index)},${scaleY(value)}`,
-  );
+const seriesData = computed(() => {
+  const colors = generateDistinctColors(props.series.length);
+  return props.series.map((serie, index) => {
+    let data: number[] = serie.data || [];
 
-  if (props.smooth) {
-    const path = [`M ${points[0]}`];
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const [x1, y1] = points[i].split(',').map(Number);
-      const [x2, y2] = points[i + 1].split(',').map(Number);
-
-      // Calculate the previous and next points
-      const prevPoint = i > 0 ? points[i - 1].split(',').map(Number) : [x1, y1];
-      const nextPoint =
-        i < points.length - 2 ? points[i + 2].split(',').map(Number) : [x2, y2];
-
-      // Calculate control points to smooth the curve
-      const controlPoint1 = [(x1 + prevPoint[0]) / 2, (y1 + prevPoint[1]) / 2];
-      const controlPoint2 = [(x2 + nextPoint[0]) / 2, (y2 + nextPoint[1]) / 2];
-
-      path.push(
-        `C ${controlPoint1[0]},${controlPoint1[1]} ${controlPoint2[0]},${controlPoint2[1]} ${x2},${y2}`,
+    if (serie.dataKey && props.dataset && props.dataset?.length) {
+      data = props.dataset.map(
+        p => getNestedProperty(p, [serie.dataKey?.toString() || '']) as number,
       );
     }
 
-    return path.join(' ');
-  }
-
-  // Straight line path
-  return (
-    `M ${points[0]} ` +
-    points
-      .slice(1)
-      .map(point => `L ${point}`)
-      .join(' ')
-  );
+    return {
+      ...serie,
+      data,
+      color: serie.color || colors[index],
+      curve: serie.curve || 'natural',
+    };
+  });
 });
 
-// Refs for animation setup
-const chartPath = ref<SVGPathElement | null>(null);
-const dashArray = ref('0');
-const dashOffset = ref('0');
+const offsetRatio = {
+  start: 0,
+  extremities: 0,
+  end: 1,
+  middle: 0.5,
+} as const;
 
-// Animation handler
-onMounted(() => {
-  if (props.animate && chartPath.value) {
-    const length = chartPath.value.getTotalLength();
-    dashArray.value = length.toString();
-    dashOffset.value = length.toString();
+const scale = <S extends ScaleTypes>(
+  value: number,
+  axis: 'x' | 'y' = 'x',
+  scaleType: S,
+  ticks: {
+    value: number | Date;
+    index: number;
+  }[],
+  tickPlacement: 'start' | 'end' | 'middle' | 'extremities' = 'extremities',
+  tickLabelPlacement: 'middle' | 'tick' = 'tick',
+) => {
+  const { left, right, top, bottom, width, height } = chartBounds.value;
 
-    // Trigger the animation
-    requestAnimationFrame(() => {
-      dashOffset.value = '0';
+  const scaleSize = axis === 'x' ? width : height;
+  const rangeMin = axis === 'x' ? left : top;
+
+  const rangeMax = axis === 'x' ? right : bottom;
+
+  if (ticks.length === 0) {
+    return {
+      coord: rangeMin,
+      labelOffset: 0,
+    };
+  }
+
+  if (
+    scaleType === 'linear' ||
+    scaleType === 'log' ||
+    scaleType === 'sqrt' ||
+    scaleType === 'pow'
+  ) {
+    const domainMin = Math.min(
+      ...(ticks.map(({ value }) => value) as number[]),
+    );
+    const domainMax = Math.max(
+      ...(ticks.map(({ value }) => value) as number[]),
+    );
+
+    if (scaleType === 'linear') {
+      if (typeof value !== 'number') return { coord: rangeMin, labelOffset: 0 };
+
+      const normalized = (value - domainMin) / (domainMax - domainMin);
+      const scaledValue = rangeMin + normalized * scaleSize;
+
+      console.log(
+        'axis',
+        axis,
+        value,
+        scaledValue,
+        normalized,
+        domainMin,
+        domainMax,
+        scaleSize,
+      );
+      return {
+        coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
+        labelOffset: 0,
+      };
+    }
+
+    if (scaleType === 'log' && typeof value === 'number') {
+      const normalized =
+        (Math.log(value) - Math.log(domainMin)) /
+        (Math.log(domainMax) - Math.log(domainMin));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+
+    if (scaleType === 'sqrt' && typeof value === 'number') {
+      const normalized =
+        (Math.sqrt(value) - Math.sqrt(domainMin)) /
+        (Math.sqrt(domainMax) - Math.sqrt(domainMin));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+
+    if (scaleType === 'pow' && typeof value === 'number') {
+      const power = 2; // Adjust power as needed
+      const normalized =
+        (Math.pow(value, power) - Math.pow(domainMin, power)) /
+        (Math.pow(domainMax, power) - Math.pow(domainMin, power));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+  }
+
+  if (scaleType === 'band' || scaleType === 'point') {
+    const step = scaleSize / ticks.length;
+    const tickIndex = ticks.findIndex(
+      ({ value: tickValue }) => tickValue === value,
+    );
+
+    if (tickIndex === -1) {
+      return { coord: rangeMin, labelOffset: 0 };
+    }
+
+    const labelOffset =
+      tickLabelPlacement === 'tick'
+        ? 0
+        : step * (offsetRatio[tickLabelPlacement] - offsetRatio[tickPlacement]);
+
+    const scaledValue = rangeMin + tickIndex * step;
+
+    return {
+      coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
+      labelOffset,
+    };
+  }
+
+  if (scaleType === 'time' || scaleType === 'utc') {
+    const domainMin = Math.min(
+      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
+        new Date(d).getTime(),
+      ),
+    );
+    const domainMax = Math.max(
+      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
+        new Date(d).getTime(),
+      ),
+    );
+    const normalized =
+      (new Date(value).getTime() - domainMin) / (domainMax - domainMin);
+
+    return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+  }
+
+  return { coord: rangeMin, labelOffset: 0 };
+};
+
+const formatTick = (value: string | number | Date, scaleType: ScaleType) => {
+  if (scaleType === 'time' || scaleType === 'utc') {
+    return new Date(value).toISOString().split('T')[0];
+  }
+  return parseInt(value.toString());
+};
+
+const xAxes = computed(() => {
+  const { bottom } = chartBounds.value;
+
+  const xAxesWithData = props.xAxis.map(axis => {
+    const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
+    let data = (axisData || []) as AxisDataType<ScaleType>;
+
+    if (dataKey && props.dataset) {
+      data = props.dataset.map(
+        p => getNestedProperty(p, [dataKey?.toString() || '']) as number,
+      ) as AxisDataType<ScaleType>;
+    }
+
+    const steps = data.length > 0 ? data.length - 1 : 5;
+
+    const min = Math.min(...(data as number[]));
+    const max = Math.max(...(data as number[]));
+
+    const ticks = generateTicks(min, max, steps, scaleType);
+
+    const ticksPosition = ticks.map(({ value, index }) => {
+      const { coord: scaleX, labelOffset } = scale(
+        value as number & Date,
+        'x',
+        scaleType,
+        ticks,
+        'extremities',
+        scaleType === 'band' ? 'middle' : 'tick',
+      );
+
+      return {
+        index,
+        label: value,
+        x: scaleX,
+        y: 0,
+        tickX: 0,
+        tickY: 6,
+        labelX: labelOffset,
+        labelY: 9,
+      };
     });
-  }
+
+    // TODO: fix position
+    const position = {
+      x: 0,
+      y: bottom,
+    };
+
+    return {
+      ...axis,
+      scaleType,
+      data,
+      ...position,
+      ticks: ticksPosition,
+    };
+  });
+
+  return xAxesWithData;
 });
 
-// Line style with animation if enabled
-const lineStyle = computed(() => ({
-  strokeDasharray: props.animate ? dashArray.value : undefined,
-  strokeDashoffset: props.animate ? dashOffset.value : undefined,
-  transition: props.animate ? 'stroke-dashoffset 2s ease' : undefined,
-}));
+const yAxes = computed(() => {
+  const { height, left } = chartBounds.value;
+
+  const yAxesWithData = props.yAxis.map(axis => {
+    const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
+    let data = (axisData as number[]) || [];
+
+    if (dataKey && props.dataset) {
+      data = props.dataset.map(
+        p => getNestedProperty(p, [dataKey?.toString() || '']) as number,
+      );
+    }
+
+    const seriesFlat = seriesData.value.flatMap(({ data }) => data);
+    const steps = data.length > 0 ? data.length - 1 : 5;
+
+    const min = Math.min(...(data.length > 0 ? data : seriesFlat));
+    const max = Math.max(...(data.length > 0 ? data : seriesFlat));
+
+    const ticks = generateTicks(min, max, steps, scaleType);
+    const stepHeight = height / steps;
+
+    const ticksPosition = ticks.map(({ value, index }) => {
+      const { coord: scaleY } = scale(
+        value as number & Date,
+        'y',
+        scaleType,
+        ticks,
+      );
+
+      return {
+        index,
+        label: value,
+        x: 0,
+        y: scaleY,
+        tickX: -6,
+        tickY: 0,
+        labelX: -8,
+        labelY: scaleType === 'band' ? stepHeight / 2 : 0,
+      };
+    });
+
+    // TODO: fix position
+    const position = {
+      x: left,
+      y: 0,
+    };
+
+    return {
+      ...axis,
+      scaleType,
+      data,
+      ...position,
+      ticks: ticksPosition,
+    };
+  });
+
+  return yAxesWithData;
+});
+
+const seriesDataPoints = computed(() => {
+  const xAxis = xAxes.value[0];
+  const yAxis = yAxes.value[0];
+
+  return seriesData.value.map(serie => {
+    const points = serie.data
+      .slice(0, xAxes.value[0].data.length)
+      .map((value, index) => {
+        const xPos = xAxis.ticks.find((_, i) => i === index);
+
+        const { coord: yScale } = scale(
+          value,
+          'y',
+          yAxis.scaleType,
+          yAxis.ticks.map(({ label, index }) => ({ value: label, index })),
+        );
+
+        return {
+          x: (xPos?.x || 0) + (xPos?.labelX || 0),
+          y: yScale,
+        };
+      });
+
+    return {
+      ...serie,
+      points,
+    };
+  });
+});
+
+const paths = computed(() => {
+  const seriesPaths = seriesDataPoints.value.map(({ curve, points }) => {
+    const path = generatePath(points, curve);
+    // let path = `M ${points[0].x},${points[0].y}`;
+
+    // for (let i = 0; i < points.length - 1; i++) {
+    //   const p0 = points[i];
+    //   const p1 = points[i + 1];
+    //   const cp1X = p0.x + (p1.x - p0.x) / 2;
+    //   const cp1Y = p0.y;
+    //   const cp2X = p1.x - (p1.x - p0.x) / 2;
+    //   const cp2Y = p1.y;
+
+    //   path += ` C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${p1.x},${p1.y}`;
+    // }
+
+    return path;
+  });
+
+  return seriesPaths;
+});
 </script>
+
+<template>
+  <svg
+    :width="width"
+    :height="height"
+    :viewBox="`0 0 ${width} ${height}`"
+    class="w-full h-full"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <title></title>
+    <desc></desc>
+    <defs></defs>
+    <g>
+      <template v-if="grid?.vertical">
+        <line
+          v-for="({ x }, index) in xAxes[0].ticks"
+          :key="`grid-vertical-line-${index}`"
+          :y1="chartBounds.top"
+          :y2="chartBounds.bottom"
+          :x1="x"
+          :x2="x"
+          class="stroke-white/10 stroke-1"
+          shape-rendering="crispEdges"
+        />
+      </template>
+      <template v-if="grid?.horizontal">
+        <line
+          v-for="({ y }, index) in yAxes[0].ticks"
+          :key="`grid-horizontal-line-${index}`"
+          :y1="y"
+          :y2="y"
+          :x1="chartBounds.left"
+          :x2="chartBounds.right"
+          class="stroke-white/10 stroke-1"
+          shape-rendering="crispEdges"
+        />
+      </template>
+    </g>
+    <g clip-path="url(#:reb:-clip-path)">
+      <!-- For area -->
+      <g></g>
+      <g>
+        <template
+          v-for="({ color }, index) in seriesDataPoints"
+          :key="`serie-${index}`"
+        >
+          <clipPath :id="`:auto-gen-id-${index}-line-clip`">
+            <rect x="0" y="0" :width="width" :height="height" />
+          </clipPath>
+          <g :clip-path="`url(#auto-gen-id-${index}-line-clip)`">
+            <path
+              cursor="unset"
+              stroke-linejoin="round"
+              :style="{ stroke: color }"
+              class="fill-transparent stroke-2"
+              :d="paths[index]"
+            />
+          </g>
+        </template>
+      </g>
+    </g>
+
+    <g
+      v-for="(axis, axisIndex) in xAxes"
+      :key="`x-axis-${axisIndex}`"
+      :transform="`translate(${axis.x}, ${axis.y})`"
+    >
+      <line
+        :x1="chartBounds.left"
+        :x2="chartBounds.right"
+        shape-rendering="crispEdges"
+        class="stroke-white"
+      ></line>
+
+      <g
+        v-for="(
+          { label, x, y, tickX, tickY, labelX, labelY }, index
+        ) in axis.ticks"
+        :key="`x-axis-${axisIndex}-ticks-${index}`"
+        :transform="`translate(${x}, ${y})`"
+      >
+        <!-- Tick Lines -->
+        <line :x1="tickX" :x2="tickX" :y2="tickY" stroke="white" />
+        <!-- Labels -->
+        <text
+          :x="labelX"
+          :y="labelY"
+          class="text-xs fill-white"
+          text-anchor="middle"
+          dominant-baseline="hanging"
+        >
+          {{ formatTick(label as number | string | Date, axis.scaleType) }}
+        </text>
+      </g>
+      <!-- <g
+        v-for="({ label, x, y }, index) in xAxisLabels"
+        :key="'x-tick-' + index"
+        :transform="`translate(${x}, ${y})`"
+      >
+        <line y2="6" shape-rendering="crispEdges" class="stroke-white" />
+        <text
+          class="fill-white text-xs"
+          x="0"
+          y="9"
+          text-anchor="middle"
+          dominant-baseline="hanging"
+        >
+          <tspan x="0" dy="0px" dominant-baseline="hanging">{{ label }}</tspan>
+        </text>
+      </g> -->
+    </g>
+    <g
+      v-for="(axis, axisIndex) in yAxes"
+      :key="`y-axis-${axisIndex}`"
+      :transform="`translate(${axis.x}, ${axis.y})`"
+    >
+      <line
+        :y1="chartBounds.top"
+        :y2="chartBounds.bottom"
+        shape-rendering="crispEdges"
+        class="stroke-white"
+        stroke-linecap="square"
+      />
+
+      <g
+        v-for="(
+          { label, x, y, tickX, tickY, labelX, labelY }, index
+        ) in axis.ticks"
+        :key="'y-tick-' + index"
+        :transform="`translate(${x}, ${y})`"
+      >
+        <line
+          :x2="tickX"
+          :y2="tickY"
+          shape-rendering="crispEdges"
+          class="stroke-white"
+        ></line>
+        <text
+          class="text-xs fill-white"
+          :x="labelX"
+          :y="labelY"
+          text-anchor="end"
+          dominant-baseline="central"
+        >
+          <tspan x="-8" dy="0px" dominant-baseline="central">{{ label }}</tspan>
+        </text>
+      </g>
+    </g>
+    <g data-drawing-container="true">
+      <g v-if="!hidePoints">
+        <g
+          v-for="({ color, points }, serieIndex) in seriesDataPoints"
+          :key="`serie-${serieIndex}-points`"
+          :clip-path="`url(#auto-generated-id-${serieIndex}-line-clip)`"
+        >
+          <!-- todo: make fill transparent-->
+          <path
+            v-for="({ x, y }, index) in points"
+            :key="`serie-${serieIndex}-point-${index}`"
+            :style="{
+              transform: `translate(${x}px, ${y}px)`,
+              'transform-origin': `${x}px ${y}px 0px`,
+              stroke: color,
+            }"
+            class="stroke-2 fill-base-100"
+            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
+            cursor="unset"
+          />
+        </g>
+      </g>
+    </g>
+    <clipPath id="some-clip-path">
+      <rect
+        :x="chartBounds.left"
+        :y="chartBounds.top"
+        :width="chartBounds.width"
+        :height="chartBounds.height"
+      />
+    </clipPath>
+  </svg>
+</template>

@@ -3,7 +3,7 @@ import ServiceModal from './ServiceModal.vue';
 import { useServicesStore } from '@/stores/services';
 import { onMounted, ref, toRef } from 'vue';
 import { formatDate } from '@/utils/date';
-import LineChartV2 from '@/components/general/charts/LineChartV2.vue';
+import LineChart from '@/components/general/charts/LineChart.vue';
 
 const servicesStore = useServicesStore();
 
@@ -72,14 +72,14 @@ onMounted(() => {
     Add Service
   </button>
 
-  <LineChartV2
+  <LineChart
     :xAxis="[
       {
         data: chartXAxisData,
         scaleType: 'linear',
       },
     ]"
-    :series="[{ data: [2, 4, 6, 8.5, 5, 0] }]"
+    :series="[{ data: [2, 5.5, 2, 8.5, 1.5, 5], curve: 'natural' }]"
     :grid="{
       vertical: true,
     }"
