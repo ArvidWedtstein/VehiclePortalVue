@@ -8,6 +8,15 @@ export type ScaleTypes =
   | 'time'
   | 'utc';
 
+export type ChartBounds = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  height: number;
+};
+
 export const generateTicks = (
   min: number,
   max: number,
@@ -29,6 +38,7 @@ export const generateTicks = (
 
   if (scaleType === 'time' || scaleType === 'utc') {
     const step = (max - min) / (numTicks - 1);
+
     return Array.from({ length: numTicks }, (_, i) => ({
       value: new Date(new Date(min).getTime() + i * step),
       index: i,
@@ -53,6 +63,133 @@ export const generateTicks = (
   }
 
   return ticks;
+};
+
+const offsetRatio = {
+  start: 0,
+  extremities: 0,
+  end: 1,
+  middle: 0.5,
+} as const;
+
+export const scale = <S extends ScaleTypes>(
+  value: number,
+  axis: 'x' | 'y' = 'x',
+  scaleType: S,
+  ticks: {
+    value: number | Date;
+    index: number;
+  }[],
+  chartBounds: ChartBounds,
+  tickPlacement: 'start' | 'end' | 'middle' | 'extremities' = 'extremities',
+  tickLabelPlacement: 'middle' | 'tick' = 'tick',
+) => {
+  const { left, right, top, bottom, width, height } = chartBounds;
+
+  const scaleSize = axis === 'x' ? width : height;
+  const rangeMin = axis === 'x' ? left : top;
+
+  const rangeMax = axis === 'x' ? right : bottom;
+
+  if (ticks.length === 0) {
+    return {
+      coord: rangeMin,
+      labelOffset: 0,
+    };
+  }
+
+  if (
+    scaleType === 'linear' ||
+    scaleType === 'log' ||
+    scaleType === 'sqrt' ||
+    scaleType === 'pow'
+  ) {
+    const domainMin = Math.min(
+      ...(ticks.map(({ value }) => value) as number[]),
+    );
+    const domainMax = Math.max(
+      ...(ticks.map(({ value }) => value) as number[]),
+    );
+
+    if (scaleType === 'linear') {
+      if (typeof value !== 'number') return { coord: rangeMin, labelOffset: 0 };
+
+      const normalized = (value - domainMin) / (domainMax - domainMin);
+      const scaledValue = rangeMin + normalized * scaleSize;
+
+      return {
+        coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
+        labelOffset: 0,
+      };
+    }
+
+    if (scaleType === 'log' && typeof value === 'number') {
+      const normalized =
+        (Math.log(value) - Math.log(domainMin)) /
+        (Math.log(domainMax) - Math.log(domainMin));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+
+    if (scaleType === 'sqrt' && typeof value === 'number') {
+      const normalized =
+        (Math.sqrt(value) - Math.sqrt(domainMin)) /
+        (Math.sqrt(domainMax) - Math.sqrt(domainMin));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+
+    if (scaleType === 'pow' && typeof value === 'number') {
+      const power = 2; // Adjust power as needed
+      const normalized =
+        (Math.pow(value, power) - Math.pow(domainMin, power)) /
+        (Math.pow(domainMax, power) - Math.pow(domainMin, power));
+
+      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+    }
+  }
+
+  if (scaleType === 'band' || scaleType === 'point') {
+    const step = scaleSize / ticks.length;
+    const tickIndex = ticks.findIndex(
+      ({ value: tickValue }) => tickValue === value,
+    );
+
+    if (tickIndex === -1) {
+      return { coord: rangeMin, labelOffset: 0 };
+    }
+
+    const labelOffset =
+      tickLabelPlacement === 'tick'
+        ? 0
+        : step * (offsetRatio[tickLabelPlacement] - offsetRatio[tickPlacement]);
+
+    const scaledValue = rangeMin + tickIndex * step;
+
+    return {
+      coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
+      labelOffset,
+    };
+  }
+
+  if (scaleType === 'time' || scaleType === 'utc') {
+    const domainMin = Math.min(
+      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
+        new Date(d).getTime(),
+      ),
+    );
+    const domainMax = Math.max(
+      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
+        new Date(d).getTime(),
+      ),
+    );
+    const normalized =
+      (new Date(value).getTime() - domainMin) / (domainMax - domainMin);
+
+    return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
+  }
+
+  return { coord: rangeMin, labelOffset: 0 };
 };
 
 export const generatePath = (
@@ -176,7 +313,9 @@ const calculateMonotonePath = (
 };
 
 const calculateNaturalSpline = (points: { x: number; y: number }[]): string => {
-  const paths = [`M ${points[0].x},${points[0].y}`];
+  if (!points.length) return '';
+
+  const paths = [`M${points[0].x},${points[0].y}`];
 
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i];
@@ -186,7 +325,7 @@ const calculateNaturalSpline = (points: { x: number; y: number }[]): string => {
     const cp2X = p1.x - (p1.x - p0.x) / 2;
     const cp2Y = p1.y;
 
-    paths.push(`C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${p1.x},${p1.y}`);
+    paths.push(`C${cp1X},${cp1Y} ${cp2X},${cp2Y} ${p1.x},${p1.y}`);
   }
 
   return paths.join(' ');

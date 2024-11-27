@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import ExpenseModal from './ExpenseModal.vue';
-import { onMounted, ref, toRefs } from 'vue';
-import { formatDate } from '@/utils/date';
+import { computed, onMounted, ref, toRefs } from 'vue';
+import { formatDate, getLastNTimePeriods } from '@/utils/date';
 import { useExpensesStore } from '@/stores/expenses';
+import LineChart from '@/components/general/charts/LineChart.vue';
+import { getLanguage, groupBy } from '@/utils/utils';
 
 const expenseStore = useExpensesStore();
 
@@ -38,6 +40,52 @@ const expenseModal = ref();
 //   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
 // });
 
+const months = getLastNTimePeriods(12, 'months')
+  .reverse()
+  .map(({ year, month }) => {
+    const monthYear = new Date(`${year}-${('0' + month).slice(-2)}`);
+
+    return monthYear;
+  });
+
+const expenseData = computed(() => {
+  const language = getLanguage();
+
+  const expensesGroupedByMonth = groupBy(
+    expenses.value.map(s => {
+      const monthYear = new Date(s.expense_date).toLocaleDateString(language, {
+        month: 'short',
+        year: 'numeric',
+      });
+
+      return {
+        ...s,
+        monthYear,
+      };
+    }),
+    'monthYear',
+  );
+
+  const costGrouped = months.map(date => {
+    const monthYear = date.toLocaleDateString(getLanguage(), {
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const items = expensesGroupedByMonth[monthYear] || [];
+
+    return {
+      monthYear,
+      cost: items.reduce(
+        (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
+        0,
+      ),
+    };
+  }, []);
+
+  return costGrouped;
+});
+
 onMounted(() => {
   getExpenses();
 });
@@ -58,28 +106,46 @@ onMounted(() => {
     </svg>
     Add Expense
   </button>
-  <!-- :data="fuelData" -->
-  <!-- <LineChart
-    :data="[10, 25, 40, 30, 50, 35, 70, 40, 20, 50, 80, 30]"
-    :width="400"
-    :height="400"
-    :xLabels="[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ]"
-    :yTicks="[0, 20, 40, 60, 80, 100]"
-    animate
-  /> -->
+  <div class="flex">
+    <LineChart
+      :xAxis="[
+        {
+          data: months,
+          scaleType: 'time',
+          valueFormatter: value =>
+            new Date(value).toLocaleDateString(getLanguage(), {
+              month: 'short',
+              year: '2-digit',
+            }),
+        },
+      ]"
+      :dataset="expenseData"
+      :series="[
+        {
+          dataKey: 'cost',
+        },
+      ]"
+      :grid="{
+        vertical: true,
+      }"
+      :margin="{ top: 10, right: 10 }"
+    />
+    <div class="join join-vertical">
+      <input
+        class="join-item btn"
+        type="radio"
+        name="options"
+        checked
+        aria-label="Cost / 12 mnd"
+      />
+      <input
+        class="join-item btn text-nowrap"
+        type="radio"
+        name="options"
+        aria-label="Gas Price"
+      />
+    </div>
+  </div>
 
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li

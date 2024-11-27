@@ -94,3 +94,75 @@ export const formatDate = (
 
   return formattedDateTime;
 };
+
+/**
+ * Get the year, month, day, or week for the last n time periods.
+ *
+ * @param n - The number of time periods to go back.
+ * @param unit - The unit of time ("days", "weeks", "months", "years").
+ * @returns An array of objects, each containing year, month, day, or week based on the unit.
+ */
+export const getLastNTimePeriods = (
+  n: number,
+  unit: 'days' | 'weeks' | 'months' | 'years',
+): { year: number; month?: number; day?: number; week?: number }[] => {
+  const result: {
+    year: number;
+    month?: number;
+    day?: number;
+    week?: number;
+  }[] = [];
+  const currentDate = new Date();
+
+  for (let i = 0; i < n; i++) {
+    let date: Date;
+
+    switch (unit) {
+      case 'days':
+        date = new Date(currentDate);
+        date.setDate(currentDate.getDate() - i);
+        result.push({
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          day: date.getDate(),
+        });
+        break;
+
+      case 'weeks':
+        date = new Date(currentDate);
+        date.setDate(currentDate.getDate() - i * 7);
+        result.push({
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          week: Math.ceil(date.getDate() / 7), // Approximation of the week within the month
+        });
+        break;
+
+      case 'months':
+        date = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() - i,
+          1,
+        );
+        result.push({
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+        });
+        break;
+
+      case 'years':
+        date = new Date(currentDate.getFullYear() - i, 0, 1); // Start of the year
+        result.push({
+          year: date.getFullYear(),
+        });
+        break;
+
+      default:
+        throw new Error(
+          "Invalid unit specified. Use 'days', 'weeks', 'months', or 'years'.",
+        );
+    }
+  }
+
+  return result;
+};

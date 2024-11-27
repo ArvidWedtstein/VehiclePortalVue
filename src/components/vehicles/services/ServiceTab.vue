@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import ServiceModal from './ServiceModal.vue';
 import { useServicesStore } from '@/stores/services';
-import { onMounted, ref, toRef } from 'vue';
-import { formatDate } from '@/utils/date';
+import { computed, onMounted, ref, toRef } from 'vue';
+import { formatDate, getLastNTimePeriods } from '@/utils/date';
 import LineChart from '@/components/general/charts/LineChart.vue';
+import { getLanguage, groupBy } from '@/utils/utils';
 
 const servicesStore = useServicesStore();
 
@@ -11,48 +12,57 @@ const services = toRef(servicesStore, 'services');
 const { getServices, deleteService } = servicesStore;
 
 const serviceModal = ref();
-// const fuelData = computed(() => {
-//   const dataPoints = [];
 
-//   for (let i = 1; i < expenses.length; i++) {
-//     const current = expenses[i];
-//     const previous = expenses[i - 1];
+const months = getLastNTimePeriods(12, 'months')
+  .reverse()
+  .map(({ year, month }) => {
+    const monthYear = new Date(`${year}-${('0' + month).slice(-2)}`);
 
-//     // Calculate distance traveled
-//     const distance = current.mileage - previous.mileage;
+    return monthYear;
+  });
 
-//     // Calculate fuel economy in liters per 100 km
-//     const fuelUsed = current.amount; // In liters
-//     const fuelEconomy = (fuelUsed / distance) * 100; // L/100km
+const serviceData = computed(() => {
+  const language = getLanguage();
 
-//     dataPoints.push({
-//       month: new Date(current.expense_date).getMonth(),
-//       fuelEconomy: Math.round(fuelEconomy * 100) / 100,
-//     });
-//   }
+  const servicesGroupedByMonth = groupBy(
+    services.value.map(s => {
+      const monthYear = new Date(s.service_date).toLocaleDateString(language, {
+        month: 'short',
+        year: 'numeric',
+      });
 
-//   console.log(Object.values(groupBy(dataPoints, 'month')));
+      return {
+        ...s,
+        monthYear,
+      };
+    }),
+    'monthYear',
+  );
 
-//   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
-// });
+  const costGrouped = months.map(date => {
+    const monthYear = date.toLocaleDateString(getLanguage(), {
+      month: 'short',
+      year: 'numeric',
+    });
 
-// const chartXAxisData = [
-//   'Jan',
-//   'Feb',
-//   'Mar',
-//   'Apr',
-//   'May',
-//   'Jun',
-//   'Jul',
-//   'Aug',
-//   'Sep',
-//   'Oct',
-//   'Nov',
-//   'Dec',
-// ];
-const chartXAxisData = [1, 2, 3, 5, 8, 10];
-onMounted(() => {
-  getServices();
+    const items = servicesGroupedByMonth[monthYear] || [];
+
+    return {
+      monthYear,
+      cost: items.reduce(
+        (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
+        0,
+      ),
+    };
+  }, []);
+
+  console.log(costGrouped);
+
+  return costGrouped;
+});
+
+onMounted(async () => {
+  await getServices();
 });
 </script>
 
@@ -72,20 +82,31 @@ onMounted(() => {
     Add Service
   </button>
 
-  <LineChart
-    :xAxis="[
-      {
-        data: chartXAxisData,
-        scaleType: 'linear',
-      },
-    ]"
-    :series="[
-      { data: [2, -5.5, 2, -7.5, 1.5, 6], curve: 'natural', area: true },
-    ]"
-    :grid="{
-      vertical: true,
-    }"
-  />
+  <div class="flex">
+    <LineChart
+      :xAxis="[
+        {
+          data: months,
+          scaleType: 'time',
+          valueFormatter: value =>
+            new Date(value).toLocaleDateString(getLanguage(), {
+              month: 'short',
+              year: '2-digit',
+            }),
+        },
+      ]"
+      :dataset="serviceData"
+      :series="[
+        {
+          dataKey: 'cost',
+        },
+      ]"
+      :grid="{
+        vertical: true,
+      }"
+      :margin="{ top: 10, right: 10 }"
+    />
+  </div>
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
       class="relative flex space-x-6 py-6 xl:static"

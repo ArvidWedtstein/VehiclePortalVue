@@ -9,6 +9,7 @@
 import {
   generatePath,
   generateTicks,
+  scale,
   type ScaleTypes,
 } from '@/utils/lineChart';
 import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
@@ -22,9 +23,12 @@ type Serie<T> = {
   label?: string;
   /** Color of serie line */
   color?: string;
-  /** TODO: implement */
+  /** Displays area of line */
   area?: boolean;
+  /** Baseline for area. Default is min */
+  baseline?: 'min' | 'max';
 
+  /** Curve Style */
   curve?:
     | 'catmullRom'
     | 'linear'
@@ -70,6 +74,12 @@ type Props<T> = {
     vertical?: boolean;
     horizontal?: boolean;
   };
+  margin?: {
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+  };
   hidePoints?: boolean;
 };
 
@@ -85,21 +95,37 @@ const props = withDefaults(defineProps<Props<Dataset>>(), {
     vertical: false,
     horizontal: false,
   }),
+  margin: () => ({
+    top: 50,
+    bottom: 50,
+    left: 50,
+    right: 50,
+  }),
   hidePoints: false,
   width: 500,
   height: 300,
 });
 
-const padding = 50;
-
 const chartBounds = computed(() => {
+  const defaultMargins = {
+    top: 50,
+    bottom: 50,
+    left: 50,
+    right: 50,
+  };
+
+  const { top, bottom, left, right } = Object.assign(
+    defaultMargins,
+    props.margin,
+  );
+
   return {
-    top: padding,
-    bottom: props.height - padding,
-    left: padding,
-    right: props.width - padding,
-    width: props.width - padding * 2,
-    height: props.height - padding * 2,
+    top: top,
+    bottom: props.height - bottom,
+    left: left,
+    right: props.width - right,
+    width: props.width - left - right,
+    height: props.height - left - right,
   };
 });
 
@@ -118,150 +144,22 @@ const seriesData = computed(() => {
     return {
       ...serie,
       data,
+      baseline: serie.baseline ?? 'min',
       color: serie.color || colors[index],
       curve: serie.curve || 'natural',
     };
   });
 });
 
-const offsetRatio = {
-  start: 0,
-  extremities: 0,
-  end: 1,
-  middle: 0.5,
-} as const;
-
-const scale = <S extends ScaleTypes>(
-  value: number,
-  axis: 'x' | 'y' = 'x',
-  scaleType: S,
-  ticks: {
-    value: number | Date;
-    index: number;
-  }[],
-  tickPlacement: 'start' | 'end' | 'middle' | 'extremities' = 'extremities',
-  tickLabelPlacement: 'middle' | 'tick' = 'tick',
+const formatTick = (
+  value: string | number | Date,
+  axis: Axis<Dataset, ScaleType>,
 ) => {
-  const { left, right, top, bottom, width, height } = chartBounds.value;
-
-  const scaleSize = axis === 'x' ? width : height;
-  const rangeMin = axis === 'x' ? left : top;
-
-  const rangeMax = axis === 'x' ? right : bottom;
-
-  if (ticks.length === 0) {
-    return {
-      coord: rangeMin,
-      labelOffset: 0,
-    };
+  if (axis.valueFormatter) {
+    return axis.valueFormatter(value);
   }
 
-  if (
-    scaleType === 'linear' ||
-    scaleType === 'log' ||
-    scaleType === 'sqrt' ||
-    scaleType === 'pow'
-  ) {
-    const domainMin = Math.min(
-      ...(ticks.map(({ value }) => value) as number[]),
-    );
-    const domainMax = Math.max(
-      ...(ticks.map(({ value }) => value) as number[]),
-    );
-
-    if (scaleType === 'linear') {
-      if (typeof value !== 'number') return { coord: rangeMin, labelOffset: 0 };
-
-      const normalized = (value - domainMin) / (domainMax - domainMin);
-      const scaledValue = rangeMin + normalized * scaleSize;
-
-      console.log(
-        'axis',
-        axis,
-        value,
-        scaledValue,
-        normalized,
-        domainMin,
-        domainMax,
-        scaleSize,
-      );
-      return {
-        coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
-        labelOffset: 0,
-      };
-    }
-
-    if (scaleType === 'log' && typeof value === 'number') {
-      const normalized =
-        (Math.log(value) - Math.log(domainMin)) /
-        (Math.log(domainMax) - Math.log(domainMin));
-
-      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
-    }
-
-    if (scaleType === 'sqrt' && typeof value === 'number') {
-      const normalized =
-        (Math.sqrt(value) - Math.sqrt(domainMin)) /
-        (Math.sqrt(domainMax) - Math.sqrt(domainMin));
-
-      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
-    }
-
-    if (scaleType === 'pow' && typeof value === 'number') {
-      const power = 2; // Adjust power as needed
-      const normalized =
-        (Math.pow(value, power) - Math.pow(domainMin, power)) /
-        (Math.pow(domainMax, power) - Math.pow(domainMin, power));
-
-      return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
-    }
-  }
-
-  if (scaleType === 'band' || scaleType === 'point') {
-    const step = scaleSize / ticks.length;
-    const tickIndex = ticks.findIndex(
-      ({ value: tickValue }) => tickValue === value,
-    );
-
-    if (tickIndex === -1) {
-      return { coord: rangeMin, labelOffset: 0 };
-    }
-
-    const labelOffset =
-      tickLabelPlacement === 'tick'
-        ? 0
-        : step * (offsetRatio[tickLabelPlacement] - offsetRatio[tickPlacement]);
-
-    const scaledValue = rangeMin + tickIndex * step;
-
-    return {
-      coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
-      labelOffset,
-    };
-  }
-
-  if (scaleType === 'time' || scaleType === 'utc') {
-    const domainMin = Math.min(
-      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
-        new Date(d).getTime(),
-      ),
-    );
-    const domainMax = Math.max(
-      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
-        new Date(d).getTime(),
-      ),
-    );
-    const normalized =
-      (new Date(value).getTime() - domainMin) / (domainMax - domainMin);
-
-    return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
-  }
-
-  return { coord: rangeMin, labelOffset: 0 };
-};
-
-const formatTick = (value: string | number | Date, scaleType: ScaleType) => {
-  if (scaleType === 'time' || scaleType === 'utc') {
+  if (axis.scaleType === 'time' || axis.scaleType === 'utc') {
     return new Date(value).toISOString().split('T')[0];
   }
   return parseInt(value.toString());
@@ -280,10 +178,10 @@ const xAxes = computed(() => {
       ) as AxisDataType<ScaleType>;
     }
 
-    const steps = data.length > 0 ? data.length - 1 : 5;
+    const steps = data.length > 0 ? data.length : 5;
 
-    const min = Math.min(...(data as number[]));
-    const max = Math.max(...(data as number[]));
+    const min = Math.min(...((data || [0]) as number[]));
+    const max = Math.max(...((data || [10]) as number[]));
 
     const ticks = generateTicks(min, max, steps, scaleType);
 
@@ -293,6 +191,7 @@ const xAxes = computed(() => {
         'x',
         scaleType,
         ticks,
+        chartBounds.value,
         'extremities',
         scaleType === 'band' ? 'middle' : 'tick',
       );
@@ -328,7 +227,7 @@ const xAxes = computed(() => {
 });
 
 const yAxes = computed(() => {
-  const { height, left } = chartBounds.value;
+  const { left } = chartBounds.value;
 
   const yAxesWithData = props.yAxis.map(axis => {
     const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
@@ -341,20 +240,22 @@ const yAxes = computed(() => {
     }
 
     const seriesFlat = seriesData.value.flatMap(({ data }) => data);
-    const steps = data.length > 0 ? data.length - 1 : 5;
+    const steps = data.length > 0 ? data.length : 5;
 
     const min = Math.min(...(data.length > 0 ? data : seriesFlat));
     const max = Math.max(...(data.length > 0 ? data : seriesFlat));
 
     const ticks = generateTicks(min, max, steps, scaleType);
-    const stepHeight = height / steps;
 
     const ticksPosition = ticks.map(({ value, index }) => {
-      const { coord: scaleY } = scale(
+      const { coord: scaleY, labelOffset } = scale(
         value as number & Date,
         'y',
         scaleType,
         ticks,
+        chartBounds.value,
+        'extremities',
+        scaleType === 'band' ? 'middle' : 'tick',
       );
 
       return {
@@ -365,7 +266,7 @@ const yAxes = computed(() => {
         tickX: -6,
         tickY: 0,
         labelX: -8,
-        labelY: scaleType === 'band' ? stepHeight / 2 : 0,
+        labelY: labelOffset,
       };
     });
 
@@ -388,7 +289,7 @@ const yAxes = computed(() => {
 });
 
 const seriesDataPoints = computed(() => {
-  const { top, bottom, left, right } = chartBounds.value;
+  const { top, bottom } = chartBounds.value;
 
   const xAxis = xAxes.value[0];
   const yAxis = yAxes.value[0];
@@ -404,6 +305,7 @@ const seriesDataPoints = computed(() => {
           'y',
           yAxis.scaleType,
           yAxis.ticks.map(({ label, index }) => ({ value: label, index })),
+          chartBounds.value,
         );
 
         return {
@@ -414,10 +316,16 @@ const seriesDataPoints = computed(() => {
 
     const path = generatePath(points, serie.curve);
 
+    const pathRegex = /M\s*(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)/;
+
+    const firstX = path.match(pathRegex)?.[0].split(',')[0].replace('M', '');
+    const lastX = path.substring(path.lastIndexOf(' '), path.lastIndexOf(','));
+
+    const yPos =
+      serie.baseline === 'min' ? bottom : serie.baseline === 'max' ? top : 0;
+
     const areaPath = serie.area
-      ? // ? path + `L${right},${bottom} Z`
-        path +
-        `L450,250 C420.37,250,390.741,250,361.111,250 C316.667,250,272.222,250,227.778,250 C198.148,250,168.519,250,138.889,250 C124.074,250,109.259,250,94.444,250 C79.63,250,64.815,250, ${left},${bottom}Z`
+      ? path + `L${lastX},${yPos} ${firstX},${yPos}Z`
       : '';
 
     return {
@@ -486,8 +394,8 @@ const seriesDataPoints = computed(() => {
             <path
               cursor="unset"
               stroke-linejoin="round"
-              :style="{ stroke: color }"
-              class="fill-transparent stroke-2"
+              :style="{ fill: color }"
+              class="stroke-none"
               :d="areaPath"
             />
           </g>
@@ -543,25 +451,9 @@ const seriesDataPoints = computed(() => {
           text-anchor="middle"
           dominant-baseline="hanging"
         >
-          {{ formatTick(label as number | string | Date, axis.scaleType) }}
+          {{ formatTick(label as number | string | Date, axis) }}
         </text>
       </g>
-      <!-- <g
-        v-for="({ label, x, y }, index) in xAxisLabels"
-        :key="'x-tick-' + index"
-        :transform="`translate(${x}, ${y})`"
-      >
-        <line y2="6" shape-rendering="crispEdges" class="stroke-white" />
-        <text
-          class="fill-white text-xs"
-          x="0"
-          y="9"
-          text-anchor="middle"
-          dominant-baseline="hanging"
-        >
-          <tspan x="0" dy="0px" dominant-baseline="hanging">{{ label }}</tspan>
-        </text>
-      </g> -->
     </g>
     <g
       v-for="(axis, axisIndex) in yAxes"
@@ -607,7 +499,6 @@ const seriesDataPoints = computed(() => {
           :key="`serie-${serieIndex}-points`"
           :clip-path="`url(#auto-generated-id-${serieIndex}-line-clip)`"
         >
-          <!-- todo: make fill transparent-->
           <path
             v-for="({ x, y }, index) in points"
             :key="`serie-${serieIndex}-point-${index}`"
