@@ -105,6 +105,7 @@ const chartBounds = computed(() => {
 
 const seriesData = computed(() => {
   const colors = generateDistinctColors(props.series.length);
+
   return props.series.map((serie, index) => {
     let data: number[] = serie.data || [];
 
@@ -387,10 +388,12 @@ const yAxes = computed(() => {
 });
 
 const seriesDataPoints = computed(() => {
+  const { top, bottom, left, right } = chartBounds.value;
+
   const xAxis = xAxes.value[0];
   const yAxis = yAxes.value[0];
 
-  return seriesData.value.map(serie => {
+  const series = seriesData.value.map(serie => {
     const points = serie.data
       .slice(0, xAxes.value[0].data.length)
       .map((value, index) => {
@@ -409,33 +412,23 @@ const seriesDataPoints = computed(() => {
         };
       });
 
+    const path = generatePath(points, serie.curve);
+
+    const areaPath = serie.area
+      ? // ? path + `L${right},${bottom} Z`
+        path +
+        `C272.222,225,316.667,160.5,361.111,135 C390.741,118,420.37,104,450,90L450,250 C420.37,250,390.741,250,361.111,250 C316.667,250,272.222,250,227.778,250 C198.148,250,168.519,250,138.889,250 C124.074,250,109.259,250,94.444,250 C79.63,250,64.815,250, ${left},${bottom}Z`
+      : '';
+
     return {
       ...serie,
+      path,
+      areaPath,
       points,
     };
   });
-});
 
-const paths = computed(() => {
-  const seriesPaths = seriesDataPoints.value.map(({ curve, points }) => {
-    const path = generatePath(points, curve);
-    // let path = `M ${points[0].x},${points[0].y}`;
-
-    // for (let i = 0; i < points.length - 1; i++) {
-    //   const p0 = points[i];
-    //   const p1 = points[i + 1];
-    //   const cp1X = p0.x + (p1.x - p0.x) / 2;
-    //   const cp1Y = p0.y;
-    //   const cp2X = p1.x - (p1.x - p0.x) / 2;
-    //   const cp2Y = p1.y;
-
-    //   path += ` C ${cp1X},${cp1Y} ${cp2X},${cp2Y} ${p1.x},${p1.y}`;
-    // }
-
-    return path;
-  });
-
-  return seriesPaths;
+  return series;
 });
 </script>
 
@@ -476,13 +469,34 @@ const paths = computed(() => {
         />
       </template>
     </g>
-    <g clip-path="url(#:reb:-clip-path)">
+    <g>
       <!-- For area -->
-      <g></g>
       <g>
         <template
-          v-for="({ color }, index) in seriesDataPoints"
-          :key="`serie-${index}`"
+          v-for="({ color, areaPath }, index) in seriesDataPoints.filter(
+            ({ area }) => area,
+          )"
+          :key="`serie-area-${index}`"
+        >
+          <clipPath :id="`:auto-gen-id-${index}-area-clip`">
+            <rect x="0" y="0" :width="width" :height="height" />
+          </clipPath>
+
+          <g :clip-path="`url(#auto-gen-id-${index}-area-clip)`">
+            <path
+              cursor="unset"
+              stroke-linejoin="round"
+              :style="{ stroke: color }"
+              class="fill-transparent stroke-2"
+              :d="areaPath"
+            />
+          </g>
+        </template>
+      </g>
+      <g>
+        <template
+          v-for="({ color, path }, index) in seriesDataPoints"
+          :key="`serie-line-${index}`"
         >
           <clipPath :id="`:auto-gen-id-${index}-line-clip`">
             <rect x="0" y="0" :width="width" :height="height" />
@@ -493,7 +507,7 @@ const paths = computed(() => {
               stroke-linejoin="round"
               :style="{ stroke: color }"
               class="fill-transparent stroke-2"
-              :d="paths[index]"
+              :d="path"
             />
           </g>
         </template>

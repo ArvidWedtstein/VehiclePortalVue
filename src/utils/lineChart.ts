@@ -67,9 +67,7 @@ export const generatePath = (
     | 'stepBefore'
     | 'stepAfter',
 ): string => {
-  console.log('NATURLA', interpolation);
   if (interpolation === 'linear') {
-    // Create a simple linear path
     return points
       .map((point, i) =>
         i === 0 ? `M${point.x},${point.y}` : `L${point.x},${point.y}`,
@@ -82,7 +80,6 @@ export const generatePath = (
   }
 
   if (interpolation === 'monotoneX' || interpolation === 'monotoneY') {
-    // Monotone cubic spline
     // Uses d3-style interpolation logic; you can implement a manual version or leverage d3
     return calculateMonotonePath(points, interpolation === 'monotoneY');
   }
@@ -92,7 +89,6 @@ export const generatePath = (
   }
 
   if (interpolation === 'step') {
-    // Step interpolation
     return points.reduce(
       (path, point, i) =>
         i === 0 ? `M${point.x},${point.y}` : `${path} H${point.x} V${point.y}`,
@@ -101,7 +97,6 @@ export const generatePath = (
   }
 
   if (interpolation === 'stepBefore') {
-    // Step-before interpolation
     return points.reduce(
       (path, point, i, arr) =>
         i === 0
@@ -112,7 +107,6 @@ export const generatePath = (
   }
 
   if (interpolation === 'stepAfter') {
-    // Step-after interpolation
     return points.reduce(
       (path, point, i) =>
         i === 0 ? `M${point.x},${point.y}` : `${path} H${point.x} V${point.y}`,
@@ -120,7 +114,6 @@ export const generatePath = (
     );
   }
 
-  // Default fallback (linear)
   return points
     .map((point, i) =>
       i === 0 ? `M${point.x},${point.y}` : `L${point.x},${point.y}`,

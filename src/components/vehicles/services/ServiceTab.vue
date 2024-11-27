@@ -79,7 +79,9 @@ onMounted(() => {
         scaleType: 'linear',
       },
     ]"
-    :series="[{ data: [2, 5.5, 2, 8.5, 1.5, 5], curve: 'natural' }]"
+    :series="[
+      { data: [2, -5.5, 2, -7.5, 1.5, 6], curve: 'natural', area: true },
+    ]"
     :grid="{
       vertical: true,
     }"
