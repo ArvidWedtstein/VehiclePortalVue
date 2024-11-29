@@ -11,6 +11,7 @@ import LineChart from '@/components/general/charts/LineChart.vue';
 import { getLanguage, groupBy } from '@/utils/utils';
 import { formatNumber } from '@/utils/format';
 import { average, sum } from '@/utils/math';
+import type { Tables } from '@/database.types';
 
 const expenseStore = useExpensesStore();
 
@@ -19,35 +20,25 @@ const { getExpenses, deleteExpense } = expenseStore;
 
 const expenseModal = ref();
 
-// const vehicle = vehicles.find(({ id: vehicle_id }) => vehicle_id === props.id);
-
-// const fuelData = computed(() => {
-//   const dataPoints = [];
-
-//   for (let i = 1; i < expenses.length; i++) {
-//     const current = expenses[i];
-//     const previous = expenses[i - 1];
-
-//     // Calculate distance traveled
-//     const distance = current.mileage - previous.mileage;
-
-//     // Calculate fuel economy in liters per 100 km
-//     const fuelUsed = current.amount; // In liters
-//     const fuelEconomy = (fuelUsed / distance) * 100; // L/100km
-
-//     dataPoints.push({
-//       month: new Date(current.expense_date).getMonth(),
-//       fuelEconomy: Math.round(fuelEconomy * 100) / 100,
-//     });
-//   }
-
-//   console.log(Object.values(groupBy(dataPoints, 'month')));
-
-//   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
-// });
-
-const chartSettings = reactive({
+const chartSettings = reactive<{
+  selectedMode: 'gasPrice' | 'costThisYear' | 'fuelEconomy';
+  currencyFormatOptions: Intl.NumberFormatOptions;
+  unitFormatOptions: Intl.NumberFormatOptions;
+}>({
   selectedMode: 'costThisYear',
+  currencyFormatOptions: {
+    style: 'currency',
+    currency: 'NOK',
+    currencyDisplay: 'narrowSymbol',
+    maximumFractionDigits: 0,
+  },
+  unitFormatOptions: {
+    style: 'unit',
+    unit: 'kilometer-per-liter', //'consumption-liter-per-kilometer',
+    unitDisplay: 'narrow',
+    compactDisplay: 'long',
+    maximumFractionDigits: 2,
+  },
 });
 
 const monthsThisYear = computed(() => {
@@ -58,8 +49,6 @@ const monthsThisYear = computed(() => {
     'date',
   );
 });
-
-console.log('Months', monthsThisYear.value);
 
 const chartData = computed(() => {
   const language = getLanguage();
@@ -79,37 +68,75 @@ const chartData = computed(() => {
     'monthYear',
   );
 
-  const costGrouped = monthsThisYear.value.map(date => {
-    const monthYear = new Date(date).toLocaleDateString(language, {
-      month: 'short',
-      year: 'numeric',
-    });
+  const dataGrouped = monthsThisYear.value.reduce(
+    (prev, date) => {
+      const monthYear = new Date(date).toLocaleDateString(language, {
+        month: 'short',
+        year: 'numeric',
+      });
 
-    const items = expensesGroupedByMonth[monthYear] || [];
+      const items = expensesGroupedByMonth[monthYear] || [];
 
-    const totalPrice = sum(items, 'cost');
-    const averagePricePerLitre = average(
-      items.map(({ price_per_litre }) => price_per_litre || 0),
-    );
+      // Sort by date to ensure chronological mileage calculation
+      const sortedItems = items.sort(
+        (a, b) =>
+          new Date(a.expense_date).getTime() -
+          new Date(b.expense_date).getTime(),
+      );
+      const prevSortedItems = ((prev[prev.length - 1] || [])?.items || []).sort(
+        (a, b) =>
+          new Date(a.expense_date).getTime() -
+          new Date(b.expense_date).getTime(),
+      );
 
-    const value =
-      chartSettings.selectedMode === 'costThisYear'
-        ? totalPrice
-        : averagePricePerLitre;
+      let mileageDriven = 0;
+      const d = [...prevSortedItems, ...sortedItems];
+      const fuelUsed = sum(d, 'amount');
 
-    return {
-      monthYear,
-      cost: value > 0 ? value : null,
-    };
-  }, []);
+      // Calculate mileage driven and fuel used in the month
+      for (let i = 1; i < d.length; i++) {
+        const previous = d[i - 1];
+        const current = d[i];
 
-  return costGrouped;
+        const currMileage = current.mileage || 0;
+        const prevMileage = previous.mileage || 0;
+        if (currMileage > prevMileage && current.monthYear === monthYear) {
+          mileageDriven += currMileage - prevMileage;
+        }
+      }
+
+      const totalCost = sum(items, 'cost');
+      const averagePricePerLitre = average(
+        items.map(({ price_per_litre }) => price_per_litre || 0),
+      );
+      const fuelEconomy = mileageDriven / fuelUsed;
+
+      return [
+        ...prev,
+        {
+          monthYear,
+          cost: totalCost > 0 ? totalCost : null,
+          fuelEconomy: fuelEconomy > 0 ? fuelEconomy : null,
+          averagePricePerLitre:
+            averagePricePerLitre > 0 ? averagePricePerLitre : null,
+          items,
+        },
+      ];
+    },
+    [] as {
+      monthYear: string;
+      cost: number | null;
+      fuelEconomy: number | null;
+      averagePricePerLitre: number | null;
+      items: (Tables<'VehicleExpenses'> & { monthYear: string })[];
+    }[],
+  );
+
+  return dataGrouped;
 });
 
 onMounted(() => {
   getExpenses();
-
-  console.log(monthsThisYear.value);
 });
 </script>
 
@@ -128,8 +155,10 @@ onMounted(() => {
     </svg>
     Add Expense
   </button>
+
   <div class="flex">
     <LineChart
+      :key="chartSettings.selectedMode"
       :xAxis="[
         {
           data: monthsThisYear.map(p => {
@@ -138,37 +167,39 @@ onMounted(() => {
           }),
           scaleType: 'utc',
           valueFormatter: value => {
-            // console.log(
-            //   value,
-            //   new Date(value || '').toLocaleDateString(getLanguage(), {
-            //     month: 'short',
-            //   }),
-            // );
             return value === null
               ? ''
-              : new Date(value).toLocaleDateString(getLanguage(), {
-                  month: 'short',
-                });
+              : new Date(value as number | Date).toLocaleDateString(
+                  getLanguage(),
+                  {
+                    month: 'short',
+                  },
+                );
           },
         },
       ]"
       :yAxis="[
         {
-          valueFormatter: value =>
-            value === null
-              ? ''
-              : formatNumber(parseInt(value.toString()), {
-                  style: 'currency',
-                  currency: 'NOK',
-                  currencyDisplay: 'narrowSymbol',
-                  maximumFractionDigits: 0,
-                }),
+          valueFormatter: value => {
+            const formattedNumber = formatNumber(
+              parseInt((value || 0).toString()),
+              chartSettings.selectedMode === 'fuelEconomy'
+                ? chartSettings.unitFormatOptions
+                : chartSettings.currencyFormatOptions,
+            );
+            return value === null ? '' : formattedNumber;
+          },
         },
       ]"
       :dataset="chartData"
       :series="[
         {
-          dataKey: 'cost',
+          dataKey:
+            chartSettings.selectedMode === 'costThisYear'
+              ? 'cost'
+              : chartSettings.selectedMode === 'gasPrice'
+                ? 'averagePricePerLitre'
+                : 'fuelEconomy',
         },
       ]"
       :grid="{
@@ -191,6 +222,14 @@ onMounted(() => {
         name="options"
         value="gasPrice"
         aria-label="Gas Price"
+        v-model="chartSettings.selectedMode"
+      />
+      <input
+        class="join-item btn text-nowrap"
+        type="radio"
+        name="options"
+        value="fuelEconomy"
+        aria-label="Fuel Economy"
         v-model="chartSettings.selectedMode"
       />
     </div>

@@ -1,5 +1,3 @@
-import { getRangeBetweenDates } from './date';
-
 export type ScaleTypes =
   | 'band'
   | 'linear'

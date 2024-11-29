@@ -12,8 +12,12 @@ import {
   scale,
   type ScaleTypes,
 } from '@/utils/lineChart';
-import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
-import { computed } from 'vue';
+import {
+  debounce,
+  generateDistinctColors,
+  getNestedProperty,
+} from '@/utils/utils';
+import { computed, ref } from 'vue';
 
 type Serie<T> = {
   data?: number[];
@@ -195,7 +199,6 @@ const xAxes = computed(() => {
 
     const ticks = generateTicks(min, max, steps, scaleType);
 
-    console.log('tick', ticks);
     const ticksPosition = ticks.map(({ value, index }) => {
       const { coord: scaleX, labelOffset } = scale(
         value as number & Date,
@@ -218,7 +221,6 @@ const xAxes = computed(() => {
         labelY: 9,
       };
     });
-    // console.log('axis', ticksPosition);
 
     // TODO: fix position
     const position = {
@@ -316,6 +318,7 @@ const seriesDataPoints = computed(() => {
     const points = serie.data
       .slice(0, xAxis.data.length)
       .map((value, index) => {
+        // TODO: replace this with gap between lines instead
         if (value === null || value === undefined) return undefined;
 
         const xPos = xAxis.ticks.find((_, i) => i === index);
@@ -359,6 +362,76 @@ const seriesDataPoints = computed(() => {
 
   return series;
 });
+
+type Tooltip = {
+  nearestX?: number;
+  visible: boolean;
+  x: number;
+  y: number;
+  content: string;
+};
+
+const tooltip = ref<Tooltip>({
+  visible: false,
+  x: 0,
+  y: 0,
+  content: '',
+});
+
+const handlePointerMove = (event: PointerEvent) => {
+  // TODO: fix
+  // const target = event.currentTarget as SVGElement;
+  // const isValid = target && target.hasPointerCapture(event.pointerId);
+
+  // if (!isValid) return;
+
+  // console.log(
+  //   'pointer',
+  //   event,
+  //   isValid,
+  //   target.hasPointerCapture(event.pointerId),
+  //   target.releasePointerCapture(event.pointerId),
+  // );
+
+  const bounds = chartBounds.value; // Use chart bounds for accurate positioning
+  const mouseX = event.offsetX - bounds.left;
+  const mouseY = event.offsetY - bounds.top;
+
+  const nearestX = getNearestX(mouseX);
+  if (!nearestX) return;
+
+  const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
+
+  const content = `
+    ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
+    `;
+
+  tooltip.value = {
+    nearestX: nearestX.x,
+    // nearestX: mouseX,
+    visible: false,
+    x: mouseX,
+    y: mouseY,
+    content,
+  };
+};
+
+const handlePointerHide = () => {
+  // tooltip.value.visible = false;
+};
+
+const getNearestX = (mouseX: number) => {
+  const xAxis = xAxes.value[0];
+
+  const { ticks } = xAxis;
+
+  // Find the nearest x-axis tick to the mouse position
+  const nearest = ticks.reduce((prev, curr) =>
+    Math.abs(curr.x - mouseX) < Math.abs(prev.x - mouseX) ? curr : prev,
+  );
+
+  return nearest;
+};
 </script>
 
 <template>
@@ -366,8 +439,11 @@ const seriesDataPoints = computed(() => {
     :width="width"
     :height="height"
     :viewBox="`0 0 ${width} ${height}`"
-    class="w-full h-full"
+    class="relative w-full h-full"
     xmlns="http://www.w3.org/2000/svg"
+    @pointermove="$event => debounce(() => handlePointerMove($event), 100)()"
+    @pointerout="$event => debounce(() => handlePointerHide(), 50)()"
+    @pointerleave="$event => debounce(() => handlePointerHide(), 50)()"
   >
     <title></title>
     <desc></desc>
@@ -441,6 +517,14 @@ const seriesDataPoints = computed(() => {
           </g>
         </template>
       </g>
+
+      <!-- Tooltip element -->
+      <path
+        v-if="tooltip.visible"
+        :d="`M${tooltip.nearestX},${chartBounds.bottom} L${tooltip.nearestX},${chartBounds.top}`"
+        class="stroke-1 stroke-white"
+        stroke-dasharray="5 2"
+      />
     </g>
 
     <g
@@ -537,6 +621,28 @@ const seriesDataPoints = computed(() => {
           />
         </g>
       </g>
+    </g>
+    <g v-if="tooltip.visible">
+      <rect
+        class="fill-red-500"
+        width="100"
+        height="50"
+        rx="7"
+        :x="tooltip.x"
+        :y="tooltip.y"
+      />
+      <text
+        :x="tooltip.x"
+        :y="tooltip.y"
+        class="text-xs fill-white"
+        dominant-baseline="hanging"
+      >
+        <tspan
+          dy="0px"
+          dominant-baseline="hanging"
+          v-html="tooltip.content"
+        ></tspan>
+      </text>
     </g>
     <clipPath id="some-clip-path">
       <rect
