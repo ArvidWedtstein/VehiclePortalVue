@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatFileSize, formatListDisjunction } from '@/utils/utils';
+import { formatFileSize, formatListDisjunction } from '@/utils/format';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
 import { ref, watch } from 'vue';

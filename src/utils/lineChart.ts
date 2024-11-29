@@ -1,3 +1,5 @@
+import { getRangeBetweenDates } from './date';
+
 export type ScaleTypes =
   | 'band'
   | 'linear'
@@ -18,12 +20,12 @@ export type ChartBounds = {
 };
 
 export const generateTicks = (
-  min: number,
+  min: number | Date,
   max: number,
   numTicks: number,
   scaleType: ScaleTypes,
 ) => {
-  if (scaleType === 'log') {
+  if (scaleType === 'log' && typeof min === 'number') {
     // Log scale requires a logarithmic progression
     const logTicks = [];
     const minLog = Math.ceil(Math.log10(min));
@@ -37,13 +39,21 @@ export const generateTicks = (
   }
 
   if (scaleType === 'time' || scaleType === 'utc') {
-    const step = (max - min) / (numTicks - 1);
+    const step = (max - new Date(min).getTime()) / (numTicks - 1);
 
-    return Array.from({ length: numTicks }, (_, i) => ({
-      value: new Date(new Date(min).getTime() + i * step),
-      index: i,
-    }));
+    return Array.from({ length: numTicks }, (_, i) => {
+      const val = Math.round(new Date(min).getTime() + i * step);
+      const date = new Date(val);
+      date.setUTCHours(0, 0, 0);
+
+      return {
+        value: date,
+        index: i,
+      };
+    });
   }
+
+  if (typeof min !== 'number') return [];
 
   const range = max - min;
 
@@ -174,15 +184,14 @@ export const scale = <S extends ScaleTypes>(
 
   if (scaleType === 'time' || scaleType === 'utc') {
     const domainMin = Math.min(
-      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
-        new Date(d).getTime(),
-      ),
+      ...(ticks.map(({ value }) => value) as Date[]).map(d => d.getTime()),
     );
     const domainMax = Math.max(
       ...(ticks.map(({ value }) => value) as Date[]).map(d =>
         new Date(d).getTime(),
       ),
     );
+
     const normalized =
       (new Date(value).getTime() - domainMin) / (domainMax - domainMin);
 

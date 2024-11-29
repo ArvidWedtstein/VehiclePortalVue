@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import ExpenseModal from './ExpenseModal.vue';
-import { computed, onMounted, ref, toRefs } from 'vue';
-import { formatDate, getLastNTimePeriods } from '@/utils/date';
+import { computed, onMounted, reactive, ref, toRefs } from 'vue';
+import {
+  adjustCalendarDate,
+  formatDate,
+  getRangeBetweenDates,
+} from '@/utils/date';
 import { useExpensesStore } from '@/stores/expenses';
 import LineChart from '@/components/general/charts/LineChart.vue';
 import { getLanguage, groupBy } from '@/utils/utils';
+import { formatNumber } from '@/utils/format';
+import { average, sum } from '@/utils/math';
 
 const expenseStore = useExpensesStore();
 
@@ -40,15 +46,22 @@ const expenseModal = ref();
 //   return [0]; // Object.values(groupBy(dataPoints, 'month')).map(p => p[0].fuelEconomy);
 // });
 
-const months = getLastNTimePeriods(12, 'months')
-  .reverse()
-  .map(({ year, month }) => {
-    const monthYear = new Date(`${year}-${('0' + month).slice(-2)}`);
+const chartSettings = reactive({
+  selectedMode: 'costThisYear',
+});
 
-    return monthYear;
-  });
+const monthsThisYear = computed(() => {
+  return getRangeBetweenDates(
+    adjustCalendarDate('start', 'year'),
+    adjustCalendarDate('end', 'year'),
+    'months',
+    'date',
+  );
+});
 
-const expenseData = computed(() => {
+console.log('Months', monthsThisYear.value);
+
+const chartData = computed(() => {
   const language = getLanguage();
 
   const expensesGroupedByMonth = groupBy(
@@ -66,20 +79,27 @@ const expenseData = computed(() => {
     'monthYear',
   );
 
-  const costGrouped = months.map(date => {
-    const monthYear = date.toLocaleDateString(getLanguage(), {
+  const costGrouped = monthsThisYear.value.map(date => {
+    const monthYear = new Date(date).toLocaleDateString(language, {
       month: 'short',
       year: 'numeric',
     });
 
     const items = expensesGroupedByMonth[monthYear] || [];
 
+    const totalPrice = sum(items, 'cost');
+    const averagePricePerLitre = average(
+      items.map(({ price_per_litre }) => price_per_litre || 0),
+    );
+
+    const value =
+      chartSettings.selectedMode === 'costThisYear'
+        ? totalPrice
+        : averagePricePerLitre;
+
     return {
       monthYear,
-      cost: items.reduce(
-        (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
-        0,
-      ),
+      cost: value > 0 ? value : null,
     };
   }, []);
 
@@ -88,6 +108,8 @@ const expenseData = computed(() => {
 
 onMounted(() => {
   getExpenses();
+
+  console.log(monthsThisYear.value);
 });
 </script>
 
@@ -110,16 +132,40 @@ onMounted(() => {
     <LineChart
       :xAxis="[
         {
-          data: months,
-          scaleType: 'time',
-          valueFormatter: value =>
-            new Date(value).toLocaleDateString(getLanguage(), {
-              month: 'short',
-              year: '2-digit',
-            }),
+          data: monthsThisYear.map(p => {
+            p.setDate(15);
+            return p;
+          }),
+          scaleType: 'utc',
+          valueFormatter: value => {
+            // console.log(
+            //   value,
+            //   new Date(value || '').toLocaleDateString(getLanguage(), {
+            //     month: 'short',
+            //   }),
+            // );
+            return value === null
+              ? ''
+              : new Date(value).toLocaleDateString(getLanguage(), {
+                  month: 'short',
+                });
+          },
         },
       ]"
-      :dataset="expenseData"
+      :yAxis="[
+        {
+          valueFormatter: value =>
+            value === null
+              ? ''
+              : formatNumber(parseInt(value.toString()), {
+                  style: 'currency',
+                  currency: 'NOK',
+                  currencyDisplay: 'narrowSymbol',
+                  maximumFractionDigits: 0,
+                }),
+        },
+      ]"
+      :dataset="chartData"
       :series="[
         {
           dataKey: 'cost',
@@ -135,14 +181,17 @@ onMounted(() => {
         class="join-item btn"
         type="radio"
         name="options"
-        checked
-        aria-label="Cost / 12 mnd"
+        value="costThisYear"
+        aria-label="Cost this year"
+        v-model="chartSettings.selectedMode"
       />
       <input
         class="join-item btn text-nowrap"
         type="radio"
         name="options"
+        value="gasPrice"
         aria-label="Gas Price"
+        v-model="chartSettings.selectedMode"
       />
     </div>
   </div>

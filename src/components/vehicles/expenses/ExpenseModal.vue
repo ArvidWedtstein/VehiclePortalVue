@@ -154,7 +154,6 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
       <FormInput
         wrapperClass="sm:col-span-3"
-        class="w-full"
         label="Cost"
         type="text"
         inputmode="decimal"
@@ -163,7 +162,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       >
         <template #addon>
           <FormInput
-            wrapperClass="max-w-32"
+            wrapperClass="max-w-fit"
             class="join-item"
             type="select"
             v-model="expense.currency"

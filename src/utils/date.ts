@@ -39,36 +39,38 @@ export const timeFormatL = (seconds: number, onlyLast: boolean = false) => {
  * @returns
  */
 export const adjustCalendarDate = (
-  date: Date,
   type: 'start' | 'end',
-  period: 'day' | 'week' | 'month' | 'year',
+  period: 'day' | 'week' | 'month' | 'year' = 'day',
+  date: Date = new Date(),
   startOn = 0,
 ): Date => {
   const result = new Date(date);
 
   if (type === 'start') {
     if (period === 'day') {
-      result.setUTCHours(0, 0, 0, 0);
+      result.setHours(0, 0, 0, 0);
     } else if (period === 'week') {
       const dayOfWeek = result.getUTCDay();
       const diff = (dayOfWeek - startOn + 7) % 7;
-      result.setUTCDate(result.getUTCDate() - diff);
+      result.setDate(result.getUTCDate() - diff);
     } else if (period === 'month') {
       result.setDate(1);
     } else if (period === 'year') {
-      result.setUTCMonth(0, 1);
+      result.setMonth(0, 1);
+      result.setHours(0, 0, 0);
     }
   } else if (type === 'end') {
     if (period === 'day') {
-      result.setUTCHours(23, 59, 59, 999);
+      result.setHours(23, 59, 59, 999);
     } else if (period === 'month') {
       result.setMonth(result.getMonth() + 1, 0);
     } else if (period === 'week') {
       const dayOfWeek = result.getUTCDay();
       const diff = (6 - dayOfWeek + 7) % 7;
-      result.setUTCDate(result.getUTCDate() + diff);
+      result.setDate(result.getUTCDate() + diff);
     } else if (period === 'year') {
-      result.setUTCMonth(11, 31);
+      result.setMonth(11, 31);
+      // result.setUTCHours(2, 0, 0, 0);
     }
   }
 
@@ -165,4 +167,81 @@ export const getLastNTimePeriods = (
   }
 
   return result;
+};
+
+type DateRangeResult<
+  T extends 'months' | 'days' | 'years',
+  R extends 'date' | 'object',
+> = R extends 'date'
+  ? Date[]
+  : T extends 'days'
+    ? { year: number; month: number; date: number }[]
+    : T extends 'months'
+      ? { year: number; month: number }[]
+      : { year: number }[];
+
+/**
+ * Gets years, dates and months between two dates
+ *
+ * @param startDate
+ * @param endDate
+ * @param unit
+ * @returns
+ */
+export const getRangeBetweenDates = <
+  T extends 'months' | 'days' | 'years',
+  R extends 'date' | 'object' = 'object',
+>(
+  startDate: Date,
+  endDate: Date,
+  unit: T,
+  returnAs: R = 'object' as R,
+): DateRangeResult<T, R> => {
+  const result: (Date | { year: number; month?: number; date?: number })[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate.setHours(1, 0, 0));
+
+  switch (unit) {
+    case 'days': {
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        result.push(
+          returnAs === 'date'
+            ? new Date(d)
+            : {
+                date: d.getDate(),
+                month: d.getMonth() + 1,
+                year: d.getFullYear(),
+              },
+        );
+      }
+      break;
+    }
+    case 'months': {
+      for (
+        let m = new Date(start.getFullYear(), start.getMonth(), 1, 1);
+        m <= new Date(end.getFullYear(), end.getMonth(), 1, 1);
+        m.setMonth(m.getMonth() + 1, 1)
+      ) {
+        result.push(
+          returnAs === 'date'
+            ? new Date(m)
+            : {
+                month: m.getMonth(),
+                year: m.getFullYear(),
+              },
+        );
+      }
+      break;
+    }
+    case 'years': {
+      for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+        result.push(returnAs === 'date' ? new Date(year, 0, 1) : { year });
+      }
+      break;
+    }
+    default:
+      throw new Error('Invalid unit specified');
+  }
+
+  return result as DateRangeResult<T, R>;
 };

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatFileSize } from '@/utils/utils';
+import { formatFileSize } from '@/utils/format';
 
 type iFile = {
   file: {

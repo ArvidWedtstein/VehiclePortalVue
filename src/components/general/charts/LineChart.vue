@@ -40,6 +40,9 @@ type Serie<T> = {
     | 'stepAfter';
 
   showMark?: (index: number) => boolean;
+
+  /** TODO: Formats value for tooltip */
+  valueFormatter?: (value: T[keyof T]) => string;
 };
 
 type AxisDataType<S extends ScaleTypes> = S extends 'linear' | 'log' | 'sqrt'
@@ -48,7 +51,7 @@ type AxisDataType<S extends ScaleTypes> = S extends 'linear' | 'log' | 'sqrt'
     ? Date[]
     : S extends 'band' | 'point'
       ? (string | number)[]
-      : unknown[];
+      : number[];
 
 type Axis<T, S extends ScaleTypes> = {
   data?: AxisDataType<S>;
@@ -57,7 +60,14 @@ type Axis<T, S extends ScaleTypes> = {
 
   position?: 'top' | 'bottom' | 'left' | 'right';
 
-  valueFormatter?: (value: AxisDataType<S>[number]) => string;
+  /** TODO: fix type */
+  valueFormatter?: (
+    value:
+      | T[keyof T]
+      | (AxisDataType<S>[number] extends never
+          ? number
+          : AxisDataType<S>[number]),
+  ) => string;
 };
 
 type Props<T> = {
@@ -84,7 +94,7 @@ type Props<T> = {
 };
 
 const props = withDefaults(defineProps<Props<Dataset>>(), {
-  xAxis: () => [],
+  xAxis: () => [{ position: 'bottom', scaleType: 'linear' as ScaleType }],
   yAxis: () => [
     {
       position: 'left',
@@ -156,7 +166,7 @@ const formatTick = (
   axis: Axis<Dataset, ScaleType>,
 ) => {
   if (axis.valueFormatter) {
-    return axis.valueFormatter(value);
+    return axis.valueFormatter(value as Dataset[keyof Dataset]);
   }
 
   if (axis.scaleType === 'time' || axis.scaleType === 'utc') {
@@ -173,8 +183,8 @@ const xAxes = computed(() => {
     let data = (axisData || []) as AxisDataType<ScaleType>;
 
     if (dataKey && props.dataset) {
-      data = props.dataset.map(
-        p => getNestedProperty(p, [dataKey?.toString() || '']) as number,
+      data = props.dataset.map(p =>
+        getNestedProperty(p, [dataKey?.toString() || '']),
       ) as AxisDataType<ScaleType>;
     }
 
@@ -185,6 +195,7 @@ const xAxes = computed(() => {
 
     const ticks = generateTicks(min, max, steps, scaleType);
 
+    console.log('tick', ticks);
     const ticksPosition = ticks.map(({ value, index }) => {
       const { coord: scaleX, labelOffset } = scale(
         value as number & Date,
@@ -207,6 +218,7 @@ const xAxes = computed(() => {
         labelY: 9,
       };
     });
+    // console.log('axis', ticksPosition);
 
     // TODO: fix position
     const position = {
@@ -231,19 +243,23 @@ const yAxes = computed(() => {
 
   const yAxesWithData = props.yAxis.map(axis => {
     const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
-    let data = (axisData as number[]) || [];
+    let data = (axisData || []) as AxisDataType<ScaleType>;
 
     if (dataKey && props.dataset) {
-      data = props.dataset.map(
-        p => getNestedProperty(p, [dataKey?.toString() || '']) as number,
-      );
+      data = props.dataset.map(p =>
+        getNestedProperty(p, [dataKey?.toString() || '']),
+      ) as AxisDataType<ScaleType>;
     }
 
     const seriesFlat = seriesData.value.flatMap(({ data }) => data);
     const steps = data.length > 0 ? data.length : 5;
 
-    const min = Math.min(...(data.length > 0 ? data : seriesFlat));
-    const max = Math.max(...(data.length > 0 ? data : seriesFlat));
+    const min = Math.min(
+      ...(data.length > 0 ? (data as number[]) : seriesFlat),
+    );
+    const max = Math.max(
+      ...(data.length > 0 ? (data as number[]) : seriesFlat),
+    );
 
     const ticks = generateTicks(min, max, steps, scaleType);
 
@@ -291,13 +307,17 @@ const yAxes = computed(() => {
 const seriesDataPoints = computed(() => {
   const { top, bottom } = chartBounds.value;
 
-  const xAxis = xAxes.value[0];
-  const yAxis = yAxes.value[0];
+  const series = seriesData.value.map((serie, serieIndex) => {
+    const xAxis =
+      xAxes.value[serieIndex > xAxes.value.length - 1 ? 0 : serieIndex];
+    const yAxis =
+      yAxes.value[serieIndex > yAxes.value.length - 1 ? 0 : serieIndex];
 
-  const series = seriesData.value.map(serie => {
     const points = serie.data
-      .slice(0, xAxes.value[0].data.length)
+      .slice(0, xAxis.data.length)
       .map((value, index) => {
+        if (value === null || value === undefined) return undefined;
+
         const xPos = xAxis.ticks.find((_, i) => i === index);
 
         const { coord: yScale } = scale(
@@ -312,7 +332,8 @@ const seriesDataPoints = computed(() => {
           x: (xPos?.x || 0) + (xPos?.labelX || 0),
           y: yScale,
         };
-      });
+      })
+      .filter(p => p !== undefined);
 
     const path = generatePath(points, serie.curve);
 
@@ -432,7 +453,7 @@ const seriesDataPoints = computed(() => {
         :x2="chartBounds.right"
         shape-rendering="crispEdges"
         class="stroke-white"
-      ></line>
+      />
 
       <g
         v-for="(
@@ -441,9 +462,8 @@ const seriesDataPoints = computed(() => {
         :key="`x-axis-${axisIndex}-ticks-${index}`"
         :transform="`translate(${x}, ${y})`"
       >
-        <!-- Tick Lines -->
         <line :x1="tickX" :x2="tickX" :y2="tickY" stroke="white" />
-        <!-- Labels -->
+
         <text
           :x="labelX"
           :y="labelY"
@@ -451,7 +471,9 @@ const seriesDataPoints = computed(() => {
           text-anchor="middle"
           dominant-baseline="hanging"
         >
-          {{ formatTick(label as number | string | Date, axis) }}
+          <tspan :x="labelX" dy="0px" dominant-baseline="central">
+            {{ formatTick(label as number | string | Date, axis) }}
+          </tspan>
         </text>
       </g>
     </g>
@@ -480,7 +502,7 @@ const seriesDataPoints = computed(() => {
           :y2="tickY"
           shape-rendering="crispEdges"
           class="stroke-white"
-        ></line>
+        />
         <text
           class="text-xs fill-white"
           :x="labelX"
@@ -488,7 +510,9 @@ const seriesDataPoints = computed(() => {
           text-anchor="end"
           dominant-baseline="central"
         >
-          <tspan x="-8" dy="0px" dominant-baseline="central">{{ label }}</tspan>
+          <tspan :x="labelX" dy="0px" dominant-baseline="central">
+            {{ formatTick(label as number | string | Date, axis) }}
+          </tspan>
         </text>
       </g>
     </g>
