@@ -1,7 +1,7 @@
 <script setup lang="ts">
 type Props = {
   imageUrl?: string;
-  title: string;
+  title?: string;
   subtitle?: string;
   size?: 'sm' | 'md' | 'lg';
   as?: 'a' | 'button';

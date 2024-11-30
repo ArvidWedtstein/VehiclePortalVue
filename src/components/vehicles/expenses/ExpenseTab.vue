@@ -1,4 +1,8 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+  generic="T extends readonly { id: string; name: string }[]"
+>
 import ExpenseModal from './ExpenseModal.vue';
 import { computed, onMounted, reactive, ref, toRefs } from 'vue';
 import {
@@ -12,6 +16,9 @@ import { getLanguage, groupBy } from '@/utils/utils';
 import { formatNumber } from '@/utils/format';
 import { average, sum } from '@/utils/math';
 import type { Tables } from '@/database.types';
+import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
+import ListGroup from '@/components/general/list/ListGroup.vue';
+import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 
 const expenseStore = useExpensesStore();
 
@@ -20,11 +27,18 @@ const { getExpenses, deleteExpense } = expenseStore;
 
 const expenseModal = ref();
 
-const chartSettings = reactive<{
-  selectedMode: 'gasPrice' | 'costThisYear' | 'fuelEconomy';
+type ChartSettings<T extends readonly { id: string; name: string }[]> = {
+  options: T;
+  selectedMode: T[number]['id'];
   currencyFormatOptions: Intl.NumberFormatOptions;
   unitFormatOptions: Intl.NumberFormatOptions;
-}>({
+};
+const chartSettings = reactive<ChartSettings<T>>({
+  options: [
+    { id: 'costThisYear', name: 'Cost this Year' },
+    { id: 'gasPrice', name: 'Gas Price' },
+    { id: 'fuelEconomy', name: 'Fuel Economy' },
+  ] as const,
   selectedMode: 'costThisYear',
   currencyFormatOptions: {
     style: 'currency',
@@ -143,98 +157,138 @@ onMounted(() => {
 <template>
   <ExpenseModal ref="expenseModal" />
 
-  <button class="btn" @click="expenseModal.open()">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 448 512"
-      class="w-4 fill-current"
-    >
-      <path
-        d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
-      />
-    </svg>
-    Add Expense
-  </button>
+  <div class="flex justify-between">
+    <button class="btn" @click="expenseModal.open()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 448 512"
+        class="w-4 fill-current"
+      >
+        <path
+          d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
+        />
+      </svg>
+      Add Expense
+    </button>
 
-  <div class="flex">
-    <LineChart
-      :key="chartSettings.selectedMode"
-      :xAxis="[
-        {
-          data: monthsThisYear.map(p => {
-            p.setDate(15);
-            return p;
-          }),
-          scaleType: 'utc',
-          valueFormatter: value => {
-            return value === null
-              ? ''
-              : new Date(value as number | Date).toLocaleDateString(
-                  getLanguage(),
-                  {
-                    month: 'short',
-                  },
+    <div
+      class="card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
+    >
+      <div class="card-body items-center text-center">
+        <div class="flex justify-end w-full">
+          <select
+            class="select select-bordered select-xs w-full max-w-32"
+            v-model="chartSettings.selectedMode"
+          >
+            <option
+              v-for="{ id, name } in chartSettings.options"
+              :key="id"
+              :value="id"
+            >
+              {{ name }}
+            </option>
+          </select>
+        </div>
+        <LineChart
+          :key="chartSettings.selectedMode"
+          :xAxis="[
+            {
+              data: monthsThisYear.map(p => {
+                p.setDate(15);
+                return p;
+              }),
+              scaleType: 'utc',
+              valueFormatter: value => {
+                return value === null
+                  ? ''
+                  : new Date(value as number | Date).toLocaleDateString(
+                      getLanguage(),
+                      {
+                        month: 'short',
+                      },
+                    );
+              },
+            },
+          ]"
+          :yAxis="[
+            {
+              valueFormatter: value => {
+                const formattedNumber = formatNumber(
+                  parseInt((value || 0).toString()),
+                  chartSettings.selectedMode === 'fuelEconomy'
+                    ? chartSettings.unitFormatOptions
+                    : chartSettings.currencyFormatOptions,
                 );
-          },
-        },
-      ]"
-      :yAxis="[
-        {
-          valueFormatter: value => {
-            const formattedNumber = formatNumber(
-              parseInt((value || 0).toString()),
-              chartSettings.selectedMode === 'fuelEconomy'
-                ? chartSettings.unitFormatOptions
-                : chartSettings.currencyFormatOptions,
-            );
-            return value === null ? '' : formattedNumber;
-          },
-        },
-      ]"
-      :dataset="chartData"
-      :series="[
-        {
-          dataKey:
-            chartSettings.selectedMode === 'costThisYear'
-              ? 'cost'
-              : chartSettings.selectedMode === 'gasPrice'
-                ? 'averagePricePerLitre'
-                : 'fuelEconomy',
-        },
-      ]"
-      :grid="{
-        vertical: true,
-      }"
-      :margin="{ top: 10, right: 10 }"
-    />
-    <div class="join join-vertical">
-      <input
-        class="join-item btn"
-        type="radio"
-        name="options"
-        value="costThisYear"
-        aria-label="Cost this year"
-        v-model="chartSettings.selectedMode"
-      />
-      <input
-        class="join-item btn text-nowrap"
-        type="radio"
-        name="options"
-        value="gasPrice"
-        aria-label="Gas Price"
-        v-model="chartSettings.selectedMode"
-      />
-      <input
-        class="join-item btn text-nowrap"
-        type="radio"
-        name="options"
-        value="fuelEconomy"
-        aria-label="Fuel Economy"
-        v-model="chartSettings.selectedMode"
-      />
+                return value === null ? '' : formattedNumber;
+              },
+            },
+          ]"
+          :dataset="chartData"
+          :series="[
+            {
+              dataKey:
+                chartSettings.selectedMode === 'costThisYear'
+                  ? 'cost'
+                  : chartSettings.selectedMode === 'gasPrice'
+                    ? 'averagePricePerLitre'
+                    : 'fuelEconomy',
+            },
+          ]"
+          :grid="{
+            vertical: true,
+          }"
+          :margin="{ top: 10, right: 10, bottom: 20 }"
+        />
+      </div>
     </div>
   </div>
 
+  <ListGroup class="max-h-96 mt-2">
+    <ListSubGroup
+      v-for="(monthExpenses, date) in groupBy(
+        expenses.map(p => ({
+          ...p,
+          expense_date: new Date(p.expense_date).toLocaleDateString(
+            getLanguage(),
+            { month: 'short', year: 'numeric' },
+          ),
+        })),
+        'expense_date',
+      )"
+      :key="date"
+      :title="date.toString()"
+    >
+      <ListGroupItem
+        v-for="(expense, expenseIndex) in monthExpenses"
+        :key="`expense-${expenseIndex}`"
+        as="button"
+        size="sm"
+        :subtitle="
+          formatNumber(expense.amount || 0, {
+            style: 'unit',
+            unit: 'liter',
+            unitDisplay: 'short',
+          })
+        "
+        @click="expenseModal.open(expense.id)"
+      >
+        <template #icon>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="h-5 w-5 mx-2 fill-current"
+          >
+            <path
+              d="M32 64C32 28.7 60.7 0 96 0L256 0c35.3 0 64 28.7 64 64l0 192 8 0c48.6 0 88 39.4 88 88l0 32c0 13.3 10.7 24 24 24s24-10.7 24-24l0-154c-27.6-7.1-48-32.2-48-62l0-64L384 64c-8.8-8.8-8.8-23.2 0-32s23.2-8.8 32 0l77.3 77.3c12 12 18.7 28.3 18.7 45.3l0 13.5 0 24 0 32 0 152c0 39.8-32.2 72-72 72s-72-32.2-72-72l0-32c0-22.1-17.9-40-40-40l-8 0 0 144c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32L32 64zM96 80l0 96c0 8.8 7.2 16 16 16l128 0c8.8 0 16-7.2 16-16l0-96c0-8.8-7.2-16-16-16L112 64c-8.8 0-16 7.2-16 16z"
+            />
+          </svg>
+        </template>
+        <template #title>
+          <span class="capitalize">{{ expense.expense_type }}</span>
+        </template>
+      </ListGroupItem>
+    </ListSubGroup>
+  </ListGroup>
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
       class="relative flex space-x-6 py-6 xl:static"

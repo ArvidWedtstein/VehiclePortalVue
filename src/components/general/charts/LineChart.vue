@@ -458,7 +458,6 @@ const getNearestX = (mouseX: number) => {
           :x1="x"
           :x2="x"
           class="stroke-white/10 stroke-1"
-          shape-rendering="crispEdges"
         />
       </template>
       <template v-if="grid?.horizontal">
@@ -470,7 +469,6 @@ const getNearestX = (mouseX: number) => {
           :x1="chartBounds.left"
           :x2="chartBounds.right"
           class="stroke-white/10 stroke-1"
-          shape-rendering="crispEdges"
         />
       </template>
     </g>
@@ -546,7 +544,7 @@ const getNearestX = (mouseX: number) => {
         :key="`x-axis-${axisIndex}-ticks-${index}`"
         :transform="`translate(${x}, ${y})`"
       >
-        <line :x1="tickX" :x2="tickX" :y2="tickY" stroke="white" />
+        <line :x1="tickX" :x2="tickX" :y2="tickY" class="stroke-white" />
 
         <text
           :x="labelX"
