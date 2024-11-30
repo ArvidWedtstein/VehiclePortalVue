@@ -154,8 +154,6 @@ const handleUpload = () => {
           file as File,
         );
 
-      console.log('uploadData', data);
-
       let hasError: iFile['error'] = undefined;
 
       if (error) {
@@ -171,6 +169,7 @@ const handleUpload = () => {
         f.file?.name === (file?.name || '')
           ? {
               ...f,
+              path: data?.path,
               state: 'newuploaded',
               error: hasError,
             }

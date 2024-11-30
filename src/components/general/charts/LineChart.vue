@@ -43,7 +43,7 @@ type Serie<T> = {
     | 'stepBefore'
     | 'stepAfter';
 
-  showMark?: (index: number) => boolean;
+  showMark?: (value: T[keyof T], index: number) => boolean;
 
   /** TODO: Formats value for tooltip */
   valueFormatter?: (value: T[keyof T]) => string;
@@ -147,6 +147,9 @@ const seriesData = computed(() => {
   const colors = generateDistinctColors(props.series.length);
 
   return props.series.map((serie, index) => {
+    /**
+     * ! TODO: fix type
+     */
     let data: number[] = serie.data || [];
 
     if (serie.dataKey && props.dataset && props.dataset?.length) {
@@ -331,9 +334,13 @@ const seriesDataPoints = computed(() => {
           chartBounds.value,
         );
 
+        const showMark =
+          serie.showMark?.(value as Dataset[keyof Dataset], index) ?? true;
+
         return {
           x: (xPos?.x || 0) + (xPos?.labelX || 0),
           y: yScale,
+          showMark,
         };
       })
       .filter(p => p !== undefined);
@@ -533,7 +540,7 @@ const getNearestX = (mouseX: number) => {
       <line
         :x1="chartBounds.left"
         :x2="chartBounds.right"
-        shape-rendering="crispEdges"
+        shape-rendering="auto"
         class="stroke-white"
       />
 
@@ -567,7 +574,7 @@ const getNearestX = (mouseX: number) => {
       <line
         :y1="chartBounds.top"
         :y2="chartBounds.bottom"
-        shape-rendering="crispEdges"
+        shape-rendering="auto"
         class="stroke-white"
         stroke-linecap="square"
       />
@@ -606,7 +613,9 @@ const getNearestX = (mouseX: number) => {
           :clip-path="`url(#auto-generated-id-${serieIndex}-line-clip)`"
         >
           <path
-            v-for="({ x, y }, index) in points"
+            v-for="({ x, y }, index) in points.filter(
+              ({ showMark }) => showMark,
+            )"
             :key="`serie-${serieIndex}-point-${index}`"
             :style="{
               transform: `translate(${x}px, ${y}px)`,

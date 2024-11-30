@@ -4,7 +4,7 @@ import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { onMounted, ref, watchEffect } from 'vue';
-import VehicleShareModal from '@/components/vehicles/VehicleShareModal.vue';
+import VehicleShareModal from '@/components/vehicles/ShareVehicleModal.vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
 
 import { storeToRefs } from 'pinia';
@@ -59,10 +59,12 @@ onMounted(async () => {
       loading="lazy"
     />
     <div class="relative md:absolute top-0 left-0 md:w-1/3 w-full p-2">
-      <div class="card bg-neutral bg-opacity-50 rounded-md text-white">
+      <div
+        class="card bg-neutral text-neutral-content bg-opacity-50 rounded-md"
+      >
         <div class="card-body">
           <h2 class="card-title">
-            {{ currentVehicle.name }} {{ currentVehicle.make }}
+            {{ currentVehicle.make }} {{ currentVehicle.model }}
           </h2>
           <p>tralala</p>
 

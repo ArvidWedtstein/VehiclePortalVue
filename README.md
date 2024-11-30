@@ -73,113 +73,10 @@ Plan is to replace the excel spreadsheet that was used for this task until now.
 
 <ul>
   <li>Make DB <a href="https://drawsql.app/teams/arvid/diagrams/vehicledb">Schema</a></li>
-  <li>Make Plan for UI</li>
-  <li>Find good solution for features below</li>
+  <li>Maketh Plan for UI</li>
 </ul>
 
-<details>
-  <summary>Priorities</summary>
-  <table>
-    <tr>
-      <th>🟢</th>
-      <td>First Priority</td>
-    </tr>
-    <tr>
-      <th>🟡</th>
-      <td>Second priority</td>
-    </tr>
-    <tr>
-      <th>🟠</th>
-      <td>Third Priority</td>
-    </tr>
-    <tr>
-      <th>🔴</th>
-      <td>Last Priority</td>
-    </tr>
-  </table>
-</details>
-
-<table>
-  <thead>
-    <tr>
-      <th>Priority</th>
-      <th>Feature</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>🟢</td>
-      <td><b>Multiple Vehicles</b></td>
-      <td>
-        <p>
-          Support for having multiple vehicles.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟢</td>
-      <td><b>Service Records</b></td>
-      <td>
-        <p>
-          Support for adding service records to vehicle
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟡</td>
-      <td><b>Sharing</b></td>
-      <td>
-        <p>
-          Support for sharing service records / vehicle with other users
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟠</td>
-      <td><b>Document Storage</b></td>
-      <td>
-        <p>
-          Users can upload and store important documents related to their vehicles, such as insurance papers, registration documents, and service receipts.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟡</td>
-      <td><b>Expense Tracking</b></td>
-      <td>
-        <p>
-          A feature to track the expenses related to vehicle maintenance, including the cost of parts, labor, and any other associated expenses.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟠</td>
-      <td><b>Service Reminders</b></td>
-      <td>
-        <p>
-          Users can set reminders for upcoming maintenance tasks based on time intervals or mileage thresholds. The app can send notifications when a service is due.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟡</td>
-      <td><b>SVV</b></td>
-      <td>
-        <p>Integration to SVV API for data on Vehicle</p>
-      </td>
-    </tr>
-    <tr>
-      <td>🟠</td>
-      <td><b>Dashboard for users, roles and transfering of data</b></td>
-      <td>
-        <p>
-          Dashboard for managing users data
-        </p>
-      </td>
-    </tr>
-  </tbody>
-</table>
+Rest of plan can be found: <a href="https://github.com/users/ArvidWedtstein/projects/13/views/2">here</a>
 
 ### Built With
 
@@ -221,8 +118,8 @@ Instructions TBA...
 
 ### Deploying
 
-
 Please don't
+
 <!-- USAGE EXAMPLES -->
 
 ## Usage
@@ -243,7 +140,6 @@ Testing is not in place yet, but will hopefully come later
 - [ ] Execute plan
 - [ ] Testing
 - [ ] Find place to deploy (preferably free)
-
 
 See the [open issues](https://github.com/ArvidWedtstein/VehicleHub/issues) for a full list of proposed features (and known issues).
 

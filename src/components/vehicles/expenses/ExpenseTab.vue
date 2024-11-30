@@ -1,7 +1,7 @@
 <script
   setup
   lang="ts"
-  generic="T extends readonly { id: string; name: string }[]"
+  generic="ChartData extends ReadonlyArray<{ id: string; name: string }>"
 >
 import ExpenseModal from './ExpenseModal.vue';
 import { computed, onMounted, reactive, ref, toRefs } from 'vue';
@@ -27,18 +27,19 @@ const { getExpenses, deleteExpense } = expenseStore;
 
 const expenseModal = ref();
 
-type ChartSettings<T extends readonly { id: string; name: string }[]> = {
+type ChartSettings<T extends ReadonlyArray<{ id: string; name: string }>> = {
   options: T;
   selectedMode: T[number]['id'];
   currencyFormatOptions: Intl.NumberFormatOptions;
   unitFormatOptions: Intl.NumberFormatOptions;
 };
-const chartSettings = reactive<ChartSettings<T>>({
+
+const chartSettings = reactive<ChartSettings<ChartData>>({
   options: [
     { id: 'costThisYear', name: 'Cost this Year' },
     { id: 'gasPrice', name: 'Gas Price' },
     { id: 'fuelEconomy', name: 'Fuel Economy' },
-  ] as const,
+  ] as unknown as ChartData,
   selectedMode: 'costThisYear',
   currencyFormatOptions: {
     style: 'currency',
@@ -48,7 +49,7 @@ const chartSettings = reactive<ChartSettings<T>>({
   },
   unitFormatOptions: {
     style: 'unit',
-    unit: 'kilometer-per-liter', //'consumption-liter-per-kilometer',
+    unit: 'kilometer-per-liter',
     unitDisplay: 'narrow',
     compactDisplay: 'long',
     maximumFractionDigits: 2,

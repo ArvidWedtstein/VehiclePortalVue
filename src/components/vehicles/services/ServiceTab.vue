@@ -1,10 +1,19 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+  generic="ChartData extends ReadonlyArray<{ id: string; name: string }>"
+>
 import ServiceModal from './ServiceModal.vue';
 import { useServicesStore } from '@/stores/services';
-import { computed, onMounted, ref, toRef } from 'vue';
-import { formatDate, getLastNTimePeriods } from '@/utils/date';
+import { computed, onMounted, reactive, ref, toRef } from 'vue';
+import {
+  adjustCalendarDate,
+  formatDate,
+  getRangeBetweenDates,
+} from '@/utils/date';
 import LineChart from '@/components/general/charts/LineChart.vue';
 import { getLanguage, groupBy } from '@/utils/utils';
+import { formatNumber } from '@/utils/format';
 
 const servicesStore = useServicesStore();
 
@@ -13,13 +22,34 @@ const { getServices, deleteService } = servicesStore;
 
 const serviceModal = ref();
 
-const months = getLastNTimePeriods(12, 'months')
-  .reverse()
-  .map(({ year, month }) => {
-    const monthYear = new Date(`${year}-${('0' + month).slice(-2)}`);
+type ChartSettings<T extends ReadonlyArray<{ id: string; name: string }>> = {
+  options: T;
+  selectedMode: T[number]['id'];
+  currencyFormatOptions: Intl.NumberFormatOptions;
+};
 
-    return monthYear;
-  });
+const chartSettings = reactive<ChartSettings<ChartData>>({
+  options: [
+    { id: 'costThisYear', name: 'Cost this Year' },
+    { id: 'repairsPerMonth', name: 'Repairs Per Month' },
+  ] as unknown as ChartData,
+  selectedMode: 'costThisYear',
+  currencyFormatOptions: {
+    style: 'currency',
+    currency: 'NOK',
+    currencyDisplay: 'narrowSymbol',
+    maximumFractionDigits: 0,
+  },
+});
+
+const monthsThisYear = computed(() => {
+  return getRangeBetweenDates(
+    adjustCalendarDate('start', 'year'),
+    adjustCalendarDate('end', 'year'),
+    'months',
+    'date',
+  );
+});
 
 const serviceData = computed(() => {
   const language = getLanguage();
@@ -39,7 +69,7 @@ const serviceData = computed(() => {
     'monthYear',
   );
 
-  const costGrouped = months.map(date => {
+  const servicesGrouped = monthsThisYear.value.map(date => {
     const monthYear = date.toLocaleDateString(getLanguage(), {
       month: 'short',
       year: 'numeric',
@@ -47,18 +77,19 @@ const serviceData = computed(() => {
 
     const items = servicesGroupedByMonth[monthYear] || [];
 
+    const totalCost = items.reduce(
+      (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
+      0,
+    );
+
     return {
       monthYear,
-      cost: items.reduce(
-        (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
-        0,
-      ),
+      cost: totalCost,
+      repairs: items.length,
     };
   }, []);
 
-  console.log(costGrouped);
-
-  return costGrouped;
+  return servicesGrouped;
 });
 
 onMounted(async () => {
@@ -82,31 +113,72 @@ onMounted(async () => {
     Add Service
   </button>
 
-  <div class="flex">
-    <LineChart
-      :xAxis="[
-        {
-          data: months,
-          scaleType: 'time',
-          valueFormatter: value =>
-            new Date(value).toLocaleDateString(getLanguage(), {
-              month: 'short',
-              year: '2-digit',
+  <div
+    class="card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
+  >
+    <div class="card-body items-center text-center">
+      <div class="flex justify-end w-full">
+        <select
+          class="select select-bordered select-xs w-full max-w-48"
+          v-model="chartSettings.selectedMode"
+        >
+          <option
+            v-for="{ id, name } in chartSettings.options"
+            :key="id"
+            :value="id"
+          >
+            {{ name }}
+          </option>
+        </select>
+      </div>
+      <LineChart
+        :xAxis="[
+          {
+            data: monthsThisYear.map(p => {
+              p.setDate(15);
+              return p;
             }),
-        },
-      ]"
-      :dataset="serviceData"
-      :series="[
-        {
-          dataKey: 'cost',
-        },
-      ]"
-      :grid="{
-        vertical: true,
-      }"
-      :margin="{ top: 10, right: 10 }"
-    />
+            scaleType: 'utc',
+            valueFormatter: value => {
+              return value === null
+                ? ''
+                : new Date(value).toLocaleDateString(getLanguage(), {
+                    month: 'short',
+                  });
+            },
+          },
+        ]"
+        :yAxis="[
+          {
+            valueFormatter: value => {
+              const formattedNumber = formatNumber(
+                parseInt((value || 0).toString()),
+                chartSettings.selectedMode === 'costThisYear'
+                  ? chartSettings.currencyFormatOptions
+                  : undefined,
+              );
+              return value === null ? '' : formattedNumber;
+            },
+          },
+        ]"
+        :dataset="serviceData"
+        :series="[
+          {
+            dataKey:
+              chartSettings.selectedMode === 'costThisYear'
+                ? 'cost'
+                : 'repairs',
+            showMark: value => !!value,
+          },
+        ]"
+        :grid="{
+          vertical: true,
+        }"
+        :margin="{ top: 10, right: 10, bottom: 20 }"
+      />
+    </div>
   </div>
+  <div class="flex"></div>
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
       class="relative flex space-x-6 py-6 xl:static"
