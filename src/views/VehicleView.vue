@@ -8,6 +8,7 @@ import VehicleShareModal from '@/components/vehicles/ShareVehicleModal.vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
 
 import { storeToRefs } from 'pinia';
+import ChangeLogList from '@/components/general/changelog/ChangelogList.vue';
 
 const route = useRoute();
 const vehicleId = Array.isArray(route.params.id)
@@ -85,6 +86,8 @@ onMounted(async () => {
             </svg>
           </button>
         </div>
+
+        <ChangeLogList />
       </div>
     </div>
     <div class="grid grid-cols-3">

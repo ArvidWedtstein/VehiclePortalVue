@@ -245,3 +245,36 @@ export const getRangeBetweenDates = <
 
   return result as DateRangeResult<T, R>;
 };
+
+/**
+ *
+ * @param date
+ * @param unit
+ * @returns "time" ago
+ */
+export const relativeDate = (
+  date: Date | string,
+  style?: Intl.RelativeTimeFormatStyle,
+): string => {
+  const now = new Date().getTime();
+  const diffInSeconds = Math.floor((now - new Date(date).getTime()) / 1000);
+
+  const rtf = new Intl.RelativeTimeFormat('en', {
+    numeric: 'auto',
+    localeMatcher: 'lookup',
+    style: style,
+  });
+
+  if (diffInSeconds < 60) {
+    return rtf.format(-diffInSeconds, 'second');
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return rtf.format(-minutes, 'minute');
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return rtf.format(-hours, 'hour');
+  } else {
+    const days = Math.floor(diffInSeconds / 86400);
+    return rtf.format(-days, 'day');
+  }
+};
