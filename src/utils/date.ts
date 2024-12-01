@@ -1,3 +1,5 @@
+import { getLanguage } from './utils';
+
 export const timeFormatL = (seconds: number, onlyLast: boolean = false) => {
   let time = '';
   const days = Math.floor(seconds / 86400);
@@ -259,7 +261,7 @@ export const relativeDate = (
   const now = new Date().getTime();
   const diffInSeconds = Math.floor((now - new Date(date).getTime()) / 1000);
 
-  const rtf = new Intl.RelativeTimeFormat('en', {
+  const rtf = new Intl.RelativeTimeFormat(getLanguage(), {
     numeric: 'auto',
     localeMatcher: 'lookup',
     style: style,

@@ -60,9 +60,7 @@ onMounted(async () => {
       loading="lazy"
     />
     <div class="relative md:absolute top-0 left-0 md:w-1/3 w-full p-2">
-      <div
-        class="card bg-neutral text-neutral-content bg-opacity-50 rounded-md"
-      >
+      <div class="card bg-base-200 text-neutral-content rounded-md">
         <div class="card-body">
           <h2 class="card-title">
             {{ currentVehicle.make }} {{ currentVehicle.model }}
