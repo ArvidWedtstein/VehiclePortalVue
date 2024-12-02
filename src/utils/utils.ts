@@ -1,3 +1,19 @@
+/**
+ * Returns a pluralized string based on the count and noun provided.
+ *
+ * @param {number} count - The number of items.
+ * @param {string} noun - The noun to be pluralized.
+ * @param {string} [suffix='s'] - The suffix to be added to the noun.
+ * @param {boolean} [includeCount=true] - The suffix to be added to the noun.
+ * @return {string} - The pluralized string.
+ */
+export const pluralize = (
+  count: number,
+  noun: string,
+  suffix = 's',
+  includeCount: boolean = true,
+): string => `${includeCount ? count : ''} ${noun}${count !== 1 ? suffix : ''}`;
+
 // Helper function to safely access nested properties with strict typing
 export const getNestedProperty = (
   obj: Record<string, unknown>,
@@ -94,4 +110,59 @@ export const generateDistinctColors = (numColors: number): string[] => {
   }
 
   return colors;
+};
+
+type Change<T> = {
+  field: keyof T;
+  oldValue: T[keyof T] | undefined;
+  newValue: T[keyof T] | undefined;
+};
+
+export const calculateJsonChanges = <T>(
+  oldValues: Partial<T> | undefined,
+  newValues: Partial<T> | undefined,
+): Change<T>[] => {
+  const changes: Change<T>[] = [];
+
+  // Get the union of all keys from old and new
+  const allKeys = new Set<keyof T>([
+    ...(oldValues ? Object.keys(oldValues) : []),
+    ...(newValues ? Object.keys(newValues) : []),
+  ] as (keyof T)[]);
+
+  // Compare values for each key
+  for (const key of allKeys) {
+    const oldValue = oldValues?.[key];
+    const newValue = newValues?.[key];
+
+    if (oldValue !== newValue) {
+      changes.push({
+        field: key,
+        oldValue,
+        newValue,
+      });
+    }
+  }
+
+  return changes;
+};
+
+/**
+ * Extracts initials from a given name.
+ * @param name The full name from which to extract initials.
+ * @param maxInitials The maximum number of initials to include (default is 2).
+ * @returns The initials as a string.
+ */
+export const getInitials = (name: string, maxInitials: number = 2): string => {
+  if (!name.trim()) {
+    return '';
+  }
+
+  const words = name.trim().split(/\s+/);
+
+  const initials = words
+    .slice(0, maxInitials)
+    .map(word => word[0].toUpperCase());
+
+  return initials.join('');
 };

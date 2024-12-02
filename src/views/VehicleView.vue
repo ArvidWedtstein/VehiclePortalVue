@@ -8,7 +8,7 @@ import VehicleShareModal from '@/components/vehicles/ShareVehicleModal.vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
 
 import { storeToRefs } from 'pinia';
-import ChangeLogList from '@/components/general/changelog/ChangelogList.vue';
+import ChangelogTab from '@/components/vehicles/changelog/ChangelogTab.vue';
 
 const route = useRoute();
 const vehicleId = Array.isArray(route.params.id)
@@ -29,7 +29,7 @@ watchEffect(() => {
 });
 
 onMounted(async () => {
-  setCurrentVehicle(parseInt(vehicleId));
+  await setCurrentVehicle(parseInt(vehicleId));
 });
 </script>
 
@@ -60,7 +60,7 @@ onMounted(async () => {
       loading="lazy"
     />
     <div class="relative md:absolute top-0 left-0 md:w-1/3 w-full p-2">
-      <div class="card bg-base-200 text-neutral-content rounded-md">
+      <div class="card bg-base-200 text-neutral-content rounded-md h-full">
         <div class="card-body">
           <h2 class="card-title">
             {{ currentVehicle.make }} {{ currentVehicle.model }}
@@ -84,8 +84,6 @@ onMounted(async () => {
             </svg>
           </button>
         </div>
-
-        <ChangeLogList />
       </div>
     </div>
     <div class="grid grid-cols-3">
@@ -123,6 +121,17 @@ onMounted(async () => {
           />
           <div role="tabpanel" class="tab-content p-10">
             <FilesTab />
+          </div>
+
+          <input
+            type="radio"
+            name="vehicle_tabs"
+            role="tab"
+            class="tab"
+            aria-label="Changelog"
+          />
+          <div role="tabpanel" class="tab-content p-10">
+            <ChangelogTab />
           </div>
         </div>
       </div>

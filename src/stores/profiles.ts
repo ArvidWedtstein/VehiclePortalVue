@@ -37,5 +37,5 @@ export const useProfilesStore = defineStore('profiles', () => {
     }
   };
 
-  return { getProfiles };
+  return { profilesCache, getProfiles };
 });
