@@ -7,20 +7,16 @@
   "
 >
 import {
-  generatePath,
   generateTicks,
+  getMinMax,
   scale,
   type ScaleTypes,
 } from '@/utils/chart';
-import {
-  debounce,
-  generateDistinctColors,
-  getNestedProperty,
-} from '@/utils/utils';
-import { computed, ref } from 'vue';
+import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
+import { computed } from 'vue';
 
 type Serie<T> = {
-  data?: number[];
+  data?: number[][];
   /** Gets value from dataset */
   dataKey?: keyof T;
 
@@ -31,19 +27,6 @@ type Serie<T> = {
   area?: boolean;
   /** Baseline for area. Default is min */
   baseline?: 'min' | 'max';
-
-  /** Curve Style */
-  curve?:
-    | 'catmullRom'
-    | 'linear'
-    | 'monotoneX'
-    | 'monotoneY'
-    | 'natural'
-    | 'step'
-    | 'stepBefore'
-    | 'stepAfter';
-
-  showMark?: (value: T[keyof T], index: number) => boolean;
 
   /** TODO: Formats value for tooltip */
   valueFormatter?: (value: T[keyof T]) => string;
@@ -98,11 +81,11 @@ type Props<T> = {
 };
 
 const props = withDefaults(defineProps<Props<Dataset>>(), {
-  xAxis: () => [{ position: 'bottom', scaleType: 'linear' as ScaleType }],
+  xAxis: () => [{ position: 'bottom', scaleType: 'band' as ScaleType }],
   yAxis: () => [
     {
       position: 'left',
-      scaleType: 'linear' as ScaleType,
+      scaleType: 'band' as ScaleType,
     },
   ],
   grid: () => ({
@@ -144,26 +127,22 @@ const chartBounds = computed(() => {
 });
 
 const seriesData = computed(() => {
-  const colors = generateDistinctColors(props.series.length);
-
-  return props.series.map((serie, index) => {
+  return props.series.map(serie => {
     /**
      * ! TODO: fix type
      */
-    let data: number[] = serie.data || [];
+    let data: number[][] = serie.data || [];
 
     if (serie.dataKey && props.dataset && props.dataset?.length) {
       data = props.dataset.map(
-        p => getNestedProperty(p, [serie.dataKey?.toString() || '']) as number,
+        p =>
+          getNestedProperty(p, [serie.dataKey?.toString() || '']) as number[],
       );
     }
 
     return {
       ...serie,
       data,
-      baseline: serie.baseline ?? 'min',
-      color: serie.color || colors[index],
-      curve: serie.curve || 'natural',
     };
   });
 });
@@ -179,14 +158,15 @@ const formatTick = (
   if (axis.scaleType === 'time' || axis.scaleType === 'utc') {
     return new Date(value).toISOString().split('T')[0];
   }
-  return parseInt(value.toString());
+
+  return value;
 };
 
 const xAxes = computed(() => {
   const { bottom } = chartBounds.value;
 
   const xAxesWithData = props.xAxis.map(axis => {
-    const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
+    const { scaleType = 'band' as ScaleType, dataKey, data: axisData } = axis;
     let data = (axisData || []) as AxisDataType<ScaleType>;
 
     if (dataKey && props.dataset) {
@@ -200,17 +180,21 @@ const xAxes = computed(() => {
     const min = Math.min(...((data || [0]) as number[]));
     const max = Math.max(...((data || [10]) as number[]));
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    const ticks = generateTicks(min, max, steps, 'band', data);
 
     const ticksPosition = ticks.map(({ value, index }) => {
-      const { coord: scaleX, labelOffset } = scale(
+      const {
+        coord: scaleX,
+        labelOffset,
+        bandWidth,
+      } = scale(
         value as number & Date,
         'x',
         scaleType,
         ticks,
         chartBounds.value,
         'extremities',
-        scaleType === 'band' ? 'middle' : 'tick',
+        'middle',
       );
 
       return {
@@ -222,6 +206,7 @@ const xAxes = computed(() => {
         tickY: 6,
         labelX: labelOffset,
         labelY: 9,
+        bandWidth,
       };
     });
 
@@ -247,7 +232,7 @@ const yAxes = computed(() => {
   const { left } = chartBounds.value;
 
   const yAxesWithData = props.yAxis.map(axis => {
-    const { scaleType = 'linear' as ScaleType, dataKey, data: axisData } = axis;
+    const { scaleType = 'band' as ScaleType, dataKey, data: axisData } = axis;
     let data = (axisData || []) as AxisDataType<ScaleType>;
 
     if (dataKey && props.dataset) {
@@ -256,27 +241,30 @@ const yAxes = computed(() => {
       ) as AxisDataType<ScaleType>;
     }
 
-    const seriesFlat = seriesData.value.flatMap(({ data }) => data);
+    const seriesFlat = seriesData.value.flatMap(({ data }) =>
+      data.flatMap(([, y]) => y),
+    );
     const steps = data.length > 0 ? data.length : 5;
 
-    const min = Math.min(
-      ...(data.length > 0 ? (data as number[]) : seriesFlat),
-    );
-    const max = Math.max(
-      ...(data.length > 0 ? (data as number[]) : seriesFlat),
+    const { min, max } = getMinMax(
+      (data.length > 0 ? data : seriesFlat) as (string | number | Date)[],
     );
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    const ticks = generateTicks(min, max, steps, scaleType, data);
 
-    const ticksPosition = ticks.map(({ value, index }) => {
-      const { coord: scaleY, labelOffset } = scale(
-        value as number & Date,
+    const ticksPosition = ticks.reverse().map(({ value, index }) => {
+      const {
+        coord: scaleY,
+        labelOffset,
+        bandWidth,
+      } = scale(
+        value,
         'y',
         scaleType,
         ticks,
         chartBounds.value,
         'extremities',
-        scaleType === 'band' ? 'middle' : 'tick',
+        'middle',
       );
 
       return {
@@ -288,6 +276,7 @@ const yAxes = computed(() => {
         tickY: 0,
         labelX: -8,
         labelY: labelOffset,
+        bandWidth,
       };
     });
 
@@ -310,135 +299,43 @@ const yAxes = computed(() => {
 });
 
 const seriesDataPoints = computed(() => {
-  const { top, bottom } = chartBounds.value;
-
   const series = seriesData.value.map((serie, serieIndex) => {
     const xAxis =
       xAxes.value[serieIndex > xAxes.value.length - 1 ? 0 : serieIndex];
     const yAxis =
       yAxes.value[serieIndex > yAxes.value.length - 1 ? 0 : serieIndex];
 
+    const colors = generateDistinctColors(serie.data.length);
     const points = serie.data
-      .slice(0, xAxis.data.length)
       .map((value, index) => {
-        // TODO: replace this with gap between lines instead
-        if (value === null || value === undefined) return undefined;
+        const [x, y, pointValue] = value;
 
-        const xPos = xAxis.ticks.find((_, i) => i === index);
+        console.log('ticks', yAxis.ticks);
+        const xPos = xAxis.ticks.find(({ index }) => index === x);
+        const yPos = yAxis.ticks.find(({ index }) => index === y);
 
-        const { coord: yScale } = scale(
-          value,
-          'y',
-          yAxis.scaleType,
-          yAxis.ticks.map(({ label, index }) => ({ value: label, index })),
-          chartBounds.value,
-        );
-
-        const showMark =
-          serie.showMark?.(value as Dataset[keyof Dataset], index) ?? true;
-
+        // console.log('Val', pointValue, '|', x, y, '|', xPos, yPos);
         return {
-          x: (xPos?.x || 0) + (xPos?.labelX || 0),
-          y: yScale,
-          showMark,
+          x: xPos?.x || 0,
+          y: yPos?.y || 0,
+          labelX: xPos?.labelX || 0,
+          labelY: yPos?.labelY || 0,
+          width: xPos?.bandWidth || 100,
+          height: yPos?.bandWidth || 50,
+          value: pointValue,
+          color: colors[index],
         };
       })
       .filter(p => p !== undefined);
 
-    const path = generatePath(points, serie.curve);
-
-    const pathRegex = /M\s*(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)/;
-
-    const firstX = path.match(pathRegex)?.[0].split(',')[0].replace('M', '');
-    const lastX = path.substring(path.lastIndexOf(' '), path.lastIndexOf(','));
-
-    const yPos =
-      serie.baseline === 'min' ? bottom : serie.baseline === 'max' ? top : 0;
-
-    const areaPath = serie.area
-      ? path + `L${lastX},${yPos} ${firstX},${yPos}Z`
-      : '';
-
     return {
       ...serie,
-      path,
-      areaPath,
       points,
     };
   });
 
   return series;
 });
-
-type Tooltip = {
-  nearestX?: number;
-  visible: boolean;
-  x: number;
-  y: number;
-  content: string;
-};
-
-const tooltip = ref<Tooltip>({
-  visible: false,
-  x: 0,
-  y: 0,
-  content: '',
-});
-
-const handlePointerMove = (event: PointerEvent) => {
-  // TODO: fix
-  // const target = event.currentTarget as SVGElement;
-  // const isValid = target && target.hasPointerCapture(event.pointerId);
-
-  // if (!isValid) return;
-
-  // console.log(
-  //   'pointer',
-  //   event,
-  //   isValid,
-  //   target.hasPointerCapture(event.pointerId),
-  //   target.releasePointerCapture(event.pointerId),
-  // );
-
-  const bounds = chartBounds.value; // Use chart bounds for accurate positioning
-  const mouseX = event.offsetX - bounds.left;
-  const mouseY = event.offsetY - bounds.top;
-
-  const nearestX = getNearestX(mouseX);
-  if (!nearestX) return;
-
-  const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
-
-  const content = `
-    ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
-    `;
-
-  tooltip.value = {
-    nearestX: nearestX.x,
-    // nearestX: mouseX,
-    visible: false,
-    x: mouseX,
-    y: mouseY,
-    content,
-  };
-};
-
-const handlePointerHide = () => {
-  // tooltip.value.visible = false;
-};
-
-const getNearestX = (mouseX: number) => {
-  const xAxis = xAxes.value[0];
-
-  const { ticks } = xAxis;
-
-  // Find the nearest x-axis tick to the mouse position
-  const nearest = ticks.reduce((prev, curr) =>
-    Math.abs(curr.x - mouseX) < Math.abs(prev.x - mouseX) ? curr : prev,
-  );
-
-  return nearest;
-};
 </script>
 
 <template>
@@ -448,9 +345,6 @@ const getNearestX = (mouseX: number) => {
     :viewBox="`0 0 ${width} ${height}`"
     class="relative w-full h-full"
     xmlns="http://www.w3.org/2000/svg"
-    @pointermove="$event => debounce(() => handlePointerMove($event), 100)()"
-    @pointerout="$event => debounce(() => handlePointerHide(), 50)()"
-    @pointerleave="$event => debounce(() => handlePointerHide(), 50)()"
   >
     <title></title>
     <desc></desc>
@@ -480,56 +374,32 @@ const getNearestX = (mouseX: number) => {
       </template>
     </g>
     <g>
-      <!-- For area -->
-      <g>
+      <g
+        v-for="({ points }, index) in seriesDataPoints"
+        :key="`serie-${index}`"
+      >
         <template
-          v-for="({ color, areaPath }, index) in seriesDataPoints.filter(
-            ({ area }) => area,
-          )"
-          :key="`serie-area-${index}`"
+          v-for="({ width, height, x, y, color, value }, pointIndex) in points"
+          :key="`serie-${index}-point-${pointIndex}`"
         >
-          <clipPath :id="`:auto-gen-id-${index}-area-clip`">
-            <rect x="0" y="0" :width="width" :height="height" />
-          </clipPath>
-
-          <g :clip-path="`url(#auto-gen-id-${index}-area-clip)`">
-            <path
-              cursor="unset"
-              stroke-linejoin="round"
-              :style="{ fill: color }"
-              class="stroke-none"
-              :d="areaPath"
-            />
-          </g>
+          <rect
+            :width="width"
+            :height="height"
+            :x="x"
+            :y="y"
+            :fill="color"
+          ></rect>
+          <text
+            :x="x"
+            :y="y"
+            dominant-baseline="hanging"
+            text-anchor="start"
+            fill="white"
+          >
+            {{ value }}
+          </text>
         </template>
       </g>
-      <g>
-        <template
-          v-for="({ color, path }, index) in seriesDataPoints"
-          :key="`serie-line-${index}`"
-        >
-          <clipPath :id="`:auto-gen-id-${index}-line-clip`">
-            <rect x="0" y="0" :width="width" :height="height" />
-          </clipPath>
-          <g :clip-path="`url(#auto-gen-id-${index}-line-clip)`">
-            <path
-              cursor="unset"
-              stroke-linejoin="round"
-              :style="{ stroke: color }"
-              class="fill-transparent stroke-2"
-              :d="path"
-            />
-          </g>
-        </template>
-      </g>
-
-      <!-- Tooltip element -->
-      <path
-        v-if="tooltip.visible"
-        :d="`M${tooltip.nearestX},${chartBounds.bottom} L${tooltip.nearestX},${chartBounds.top}`"
-        class="stroke-1 stroke-white"
-        stroke-dasharray="5 2"
-      />
     </g>
 
     <g
@@ -540,6 +410,7 @@ const getNearestX = (mouseX: number) => {
       <line
         :x1="chartBounds.left"
         :x2="chartBounds.right"
+        shape-rendering="auto"
         class="stroke-white"
       />
 
@@ -582,10 +453,15 @@ const getNearestX = (mouseX: number) => {
         v-for="(
           { label, x, y, tickX, tickY, labelX, labelY }, index
         ) in axis.ticks"
-        :key="'y-tick-' + index"
+        :key="`y-tick-${index}`"
         :transform="`translate(${x}, ${y})`"
       >
-        <line :x2="tickX" :y2="tickY" class="stroke-white" />
+        <line
+          :x2="tickX"
+          :y2="tickY"
+          shape-rendering="crispEdges"
+          class="stroke-white"
+        />
         <text
           class="text-xs fill-white"
           :x="labelX"
@@ -598,52 +474,6 @@ const getNearestX = (mouseX: number) => {
           </tspan>
         </text>
       </g>
-    </g>
-    <g data-drawing-container="true">
-      <g v-if="!hidePoints">
-        <g
-          v-for="({ color, points }, serieIndex) in seriesDataPoints"
-          :key="`serie-${serieIndex}-points`"
-          :clip-path="`url(#auto-generated-id-${serieIndex}-line-clip)`"
-        >
-          <path
-            v-for="({ x, y }, index) in points.filter(
-              ({ showMark }) => showMark,
-            )"
-            :key="`serie-${serieIndex}-point-${index}`"
-            :style="{
-              transform: `translate(${x}px, ${y}px)`,
-              'transform-origin': `${x}px ${y}px 0px`,
-              stroke: color,
-            }"
-            class="stroke-2 fill-base-100"
-            d="M4.514,0A4.514,4.514,0,1,1,-4.514,0A4.514,4.514,0,1,1,4.514,0"
-            cursor="unset"
-          />
-        </g>
-      </g>
-    </g>
-    <g v-if="tooltip.visible">
-      <rect
-        class="fill-red-500"
-        width="100"
-        height="50"
-        rx="7"
-        :x="tooltip.x"
-        :y="tooltip.y"
-      />
-      <text
-        :x="tooltip.x"
-        :y="tooltip.y"
-        class="text-xs fill-white"
-        dominant-baseline="hanging"
-      >
-        <tspan
-          dy="0px"
-          dominant-baseline="hanging"
-          v-html="tooltip.content"
-        ></tspan>
-      </text>
     </g>
     <clipPath id="some-clip-path">
       <rect

@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { useSessionStore } from '@/stores/userSession';
 import { storeToRefs } from 'pinia';
 import LoginModal from './auth/LoginModal.vue';
+import { getInitials } from '@/utils/utils';
 
 const router = useRouter();
 
@@ -48,9 +49,19 @@ const navbarRoutes = computed(() => {
     </div>
     <div class="navbar-end">
       <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn btn-ghost btn-circle avatar online"
+        >
           <div class="w-10 rounded-full">
-            <img alt="My Profile Image 1" :src="profile?.profile_image_url" />
+            <img
+              v-if="profile?.profile_image_url"
+              :src="profile?.profile_image_url"
+            />
+            <span v-else class="text-xl">{{
+              getInitials(profile?.name || '')
+            }}</span>
           </div>
         </div>
         <ul

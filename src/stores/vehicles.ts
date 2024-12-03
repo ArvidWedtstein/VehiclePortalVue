@@ -8,6 +8,11 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = ref<Tables<'Vehicles'>[]>([]);
   const currentVehicle = ref<Tables<'Vehicles'> | null>(null);
 
+  const vehicleSharesCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Tables<'VehicleShares'>[]
+  >();
+
   const setCurrentVehicle = async (pVehicle_ID?: Tables<'Vehicles'>['id']) => {
     try {
       console.info('Set Current Vehicle');
@@ -46,7 +51,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       console.info('Get Vehicles');
 
       const { data, error, status } = await supabase
-        .from('myvehicles') // Vehicles
+        .from('Vehicles')
         .select(columns.join(','))
         .match(filters || {})
         .limit(100)
@@ -67,6 +72,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       const { data, error } = await supabase
         .from('Vehicles')
         .upsert(pData)
+        .returns<Tables<'Vehicles'>[]>()
         .select();
 
       if (error) throw error;
@@ -83,6 +89,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
 
         return;
       }
+
+      if (!data) return;
 
       vehicles.value.push(...data);
     } catch (pErr) {
@@ -135,13 +143,29 @@ export const useVehiclesStore = defineStore('vehicles', () => {
         return [];
       }
 
+      if (vehicleSharesCache.has(currentVehicle_ID)) {
+        return vehicleSharesCache.get(currentVehicle_ID) || [];
+      }
+
       const { data, error, status } = await supabase
         .from('VehicleShares')
-        .select('*')
+        .select(
+          `
+          *,
+          Profiles (
+            name,
+            profile_image_url
+          )  
+        `,
+        )
         .eq('vehicle_id', currentVehicle_ID)
         .returns<Tables<'VehicleShares'>[]>();
 
       if (error && status !== 406) throw error;
+
+      console.log(data);
+
+      vehicleSharesCache.set(currentVehicle_ID, data || []);
 
       return data || [];
     } catch (error) {
@@ -158,6 +182,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     currentVehicle,
     getVehicles,
     upsertVehicle,
+    vehicleSharesCache,
     shareVehicle,
     unShareVehicle,
     getVehicleShares,

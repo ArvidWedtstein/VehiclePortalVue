@@ -15,14 +15,16 @@ export const pluralize = (
 ): string => `${includeCount ? count : ''} ${noun}${count !== 1 ? suffix : ''}`;
 
 // Helper function to safely access nested properties with strict typing
-export const getNestedProperty = (
-  obj: Record<string, unknown>,
-  keys: string[],
-): unknown => {
-  return keys.reduce((acc: unknown, currentKey: string) => {
-    // Ensure acc is a Record<string, unknown> for safe nested access
+export const getNestedProperty = <
+  T extends Record<string, unknown>, // Base object type
+  K extends Array<keyof T>, // Array of keys (generic)
+>(
+  obj: T,
+  keys: K,
+) => {
+  return keys.reduce<unknown>((acc, currentKey) => {
     if (acc && typeof acc === 'object' && currentKey in acc) {
-      return (acc as Record<string, unknown>)[currentKey];
+      return (acc as Record<string, unknown>)[currentKey as string];
     }
     return undefined;
   }, obj);

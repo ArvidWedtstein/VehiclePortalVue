@@ -44,10 +44,14 @@ const editVehicle = (vehicle_id: number) => {
         </p>
       </div>
       <ul role="list" class="grid gap-8 sm:grid-cols-2 sm:gap-16 xl:col-span-2">
+        <li v-for="(vehicle, index) in vehicles" :key="index">
+          <VehicleGridItem :vehicle="vehicle" @editVehicle="editVehicle" />
+        </li>
+
         <li>
           <button
             type="button"
-            class="relative block w-full rounded-lg border-2 border-dashed p-12 text-center focus:ring-offset-2 focus:ring-offset-base-100 focus:ring-primary focus:ring-2 focus:outline-none hover:border-secondary transition-colors"
+            class="relative block w-full h-full rounded-lg border-2 border-dashed p-12 text-center focus:ring-offset-2 focus:ring-offset-base-100 focus:ring-primary focus:ring-2 focus:outline-none hover:border-secondary transition-colors"
             onclick="vehicleModal.showModal()"
           >
             <svg
@@ -68,10 +72,6 @@ const editVehicle = (vehicle_id: number) => {
               >Add Vehicle</span
             >
           </button>
-        </li>
-
-        <li v-for="(vehicle, index) in vehicles" :key="index">
-          <VehicleGridItem :vehicle="vehicle" @editVehicle="editVehicle" />
         </li>
       </ul>
     </div>

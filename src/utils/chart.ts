@@ -18,12 +18,17 @@ export type ChartBounds = {
 };
 
 export const generateTicks = (
-  min: number | Date,
-  max: number,
+  min: number | Date | string,
+  max: number | Date | string,
   numTicks: number,
   scaleType: ScaleTypes,
+  data?: (string | number)[] | number[] | Date[],
 ) => {
-  if (scaleType === 'log' && typeof min === 'number') {
+  if (
+    scaleType === 'log' &&
+    typeof min === 'number' &&
+    typeof max === 'number'
+  ) {
     // Log scale requires a logarithmic progression
     const logTicks = [];
     const minLog = Math.ceil(Math.log10(min));
@@ -36,7 +41,10 @@ export const generateTicks = (
     return logTicks;
   }
 
-  if (scaleType === 'time' || scaleType === 'utc') {
+  if (
+    (scaleType === 'time' || scaleType === 'utc') &&
+    typeof max === 'number'
+  ) {
     const step = (max - new Date(min).getTime()) / (numTicks - 1);
 
     return Array.from({ length: numTicks }, (_, i) => {
@@ -51,7 +59,26 @@ export const generateTicks = (
     });
   }
 
-  if (typeof min !== 'number') return [];
+  if (data) {
+    return (
+      data
+        // .sort((a, b) =>
+        //   typeof a === 'string' && typeof b === 'string'
+        //     ? b.localeCompare(a)
+        //     : typeof a === 'number' && typeof b === 'number'
+        //       ? b - a
+        //       : 0,
+        // )
+        .map((val, index) => {
+          return {
+            value: val,
+            index: index,
+          };
+        })
+    );
+  }
+
+  if (typeof min !== 'number' || typeof max !== 'number') return [];
 
   const range = max - min;
 
@@ -81,11 +108,11 @@ const offsetRatio = {
 } as const;
 
 export const scale = <S extends ScaleTypes>(
-  value: number,
+  value: number | string | Date,
   axis: 'x' | 'y' = 'x',
   scaleType: S,
   ticks: {
-    value: number | Date;
+    value: number | Date | string;
     index: number;
   }[],
   chartBounds: ChartBounds,
@@ -112,17 +139,13 @@ export const scale = <S extends ScaleTypes>(
     scaleType === 'sqrt' ||
     scaleType === 'pow'
   ) {
-    const domainMin = Math.min(
-      ...(ticks.map(({ value }) => value) as number[]),
-    );
-    const domainMax = Math.max(
-      ...(ticks.map(({ value }) => value) as number[]),
-    );
+    const { min, max } = getMinMax(ticks.map(({ value }) => value));
+    const minMaxIsNum = typeof min === 'number' && typeof max === 'number';
 
-    if (scaleType === 'linear') {
+    if (scaleType === 'linear' && minMaxIsNum) {
       if (typeof value !== 'number') return { coord: rangeMin, labelOffset: 0 };
 
-      const normalized = (value - domainMin) / (domainMax - domainMin);
+      const normalized = (value - min) / (max - min);
       const scaledValue = rangeMin + normalized * scaleSize;
 
       return {
@@ -131,27 +154,25 @@ export const scale = <S extends ScaleTypes>(
       };
     }
 
-    if (scaleType === 'log' && typeof value === 'number') {
+    if (scaleType === 'log' && typeof value === 'number' && minMaxIsNum) {
       const normalized =
-        (Math.log(value) - Math.log(domainMin)) /
-        (Math.log(domainMax) - Math.log(domainMin));
+        (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min));
 
       return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
     }
 
-    if (scaleType === 'sqrt' && typeof value === 'number') {
+    if (scaleType === 'sqrt' && typeof value === 'number' && minMaxIsNum) {
       const normalized =
-        (Math.sqrt(value) - Math.sqrt(domainMin)) /
-        (Math.sqrt(domainMax) - Math.sqrt(domainMin));
+        (Math.sqrt(value) - Math.sqrt(min)) / (Math.sqrt(max) - Math.sqrt(min));
 
       return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
     }
 
-    if (scaleType === 'pow' && typeof value === 'number') {
+    if (scaleType === 'pow' && typeof value === 'number' && minMaxIsNum) {
       const power = 2; // Adjust power as needed
       const normalized =
-        (Math.pow(value, power) - Math.pow(domainMin, power)) /
-        (Math.pow(domainMax, power) - Math.pow(domainMin, power));
+        (Math.pow(value, power) - Math.pow(min, power)) /
+        (Math.pow(max, power) - Math.pow(min, power));
 
       return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
     }
@@ -159,24 +180,41 @@ export const scale = <S extends ScaleTypes>(
 
   if (scaleType === 'band' || scaleType === 'point') {
     const step = scaleSize / ticks.length;
+
     const tickIndex = ticks.findIndex(
       ({ value: tickValue }) => tickValue === value,
     );
-
-    if (tickIndex === -1) {
-      return { coord: rangeMin, labelOffset: 0 };
-    }
 
     const labelOffset =
       tickLabelPlacement === 'tick'
         ? 0
         : step * (offsetRatio[tickLabelPlacement] - offsetRatio[tickPlacement]);
 
+    if (tickIndex === -1) {
+      const normalized =
+        ((value as number) - Math.min(...ticks.map(p => p.value as number))) /
+        (Math.max(...ticks.map(p => p.value as number)) -
+          Math.min(...ticks.map(p => p.value as number)));
+
+      const scaledValue = rangeMin + normalized * scaleSize;
+
+      return {
+        coord:
+          axis === 'x'
+            ? scaledValue
+            : rangeMax - (scaledValue - rangeMin) - step,
+        labelOffset,
+        bandWidth: step,
+      };
+    }
+
     const scaledValue = rangeMin + tickIndex * step;
 
     return {
-      coord: axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin),
+      coord:
+        axis === 'x' ? scaledValue : rangeMax - (scaledValue - rangeMin) - step,
       labelOffset,
+      bandWidth: step,
     };
   }
 
@@ -363,4 +401,26 @@ const calculateCatmullRomPath = (
   }
 
   return path.join(' ');
+};
+
+export const getMinMax = <T extends string | number | Date>(
+  data: T[],
+): { min: T; max: T } => {
+  if (!data || data.length === 0) {
+    return { min: 0 as T, max: 0 as T };
+  }
+
+  let min = data[0];
+  let max = data[0];
+
+  for (const item of data) {
+    if (item < min) {
+      min = item;
+    }
+    if (item > max) {
+      max = item;
+    }
+  }
+
+  return { min, max };
 };

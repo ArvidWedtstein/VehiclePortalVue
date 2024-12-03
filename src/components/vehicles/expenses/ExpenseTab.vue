@@ -190,6 +190,7 @@ onMounted(() => {
             </option>
           </select>
         </div>
+
         <LineChart
           :key="chartSettings.selectedMode"
           :xAxis="[
