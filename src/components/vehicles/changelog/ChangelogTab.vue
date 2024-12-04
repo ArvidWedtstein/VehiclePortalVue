@@ -36,12 +36,7 @@ const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
   const tableSentenceMappings: {
     [key in Exclude<
       TableNames,
-      | 'Changelog'
-      | 'VehicleEngines'
-      | 'VehicleTransmissions'
-      | 'Roles'
-      | 'Profiles'
-      | 'RolesPermissions'
+      'Changelog' | 'Roles' | 'Profiles' | 'RolesPermissions'
     >]: {
       INSERT?: string;
       UPDATE?: string;

@@ -191,7 +191,7 @@ onMounted(() => {
           </select>
         </div>
 
-        <LineChart
+        <!-- <LineChart
           :key="chartSettings.selectedMode"
           :xAxis="[
             {
@@ -240,7 +240,7 @@ onMounted(() => {
             vertical: true,
           }"
           :margin="{ top: 10, right: 10, bottom: 20 }"
-        />
+        /> -->
       </div>
     </div>
   </div>

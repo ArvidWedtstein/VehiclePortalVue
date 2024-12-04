@@ -7,8 +7,10 @@
   "
 >
 import {
+  generateAxisTicks,
   generatePath,
   generateTicks,
+  getMinMax,
   scale,
   type ScaleTypes,
 } from '@/utils/chart';
@@ -179,6 +181,9 @@ const formatTick = (
   if (axis.scaleType === 'time' || axis.scaleType === 'utc') {
     return new Date(value).toISOString().split('T')[0];
   }
+
+  if (value === undefined) return '';
+
   return parseInt(value.toString());
 };
 
@@ -197,26 +202,40 @@ const xAxes = computed(() => {
 
     const steps = data.length > 0 ? data.length : 5;
 
-    const min = Math.min(...((data || [0]) as number[]));
-    const max = Math.max(...((data || [10]) as number[]));
+    const { min, max } = getMinMax(
+      (data.length > 0 ? data : [0, 10]) as (string | number | Date)[],
+    );
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    const ticks = generateTicks(min, max, steps, scaleType, data);
+    const axisTicks = generateAxisTicks(
+      'x',
+      min,
+      max,
+      scaleType,
+      steps,
+      chartBounds.value,
+      data,
+    );
 
-    const ticksPosition = ticks.map(({ value, index }) => {
+    console.log('xTIGGS', scaleType, steps, ticks, axisTicks);
+    const ticksPosition = axisTicks.map(({ coord, value, index }) => {
       const { coord: scaleX, labelOffset } = scale(
-        value as number & Date,
+        value,
         'x',
         scaleType,
-        ticks,
+        axisTicks,
         chartBounds.value,
         'extremities',
         scaleType === 'band' ? 'middle' : 'tick',
       );
 
+      console.log('DIFF', value, scaleX, coord);
+
       return {
         index,
         label: value,
-        x: scaleX,
+        x: coord,
+        // x: scaleX,
         y: 0,
         tickX: 0,
         tickY: 6,
@@ -259,21 +278,27 @@ const yAxes = computed(() => {
     const seriesFlat = seriesData.value.flatMap(({ data }) => data);
     const steps = data.length > 0 ? data.length : 5;
 
-    const min = Math.min(
-      ...(data.length > 0 ? (data as number[]) : seriesFlat),
-    );
-    const max = Math.max(
-      ...(data.length > 0 ? (data as number[]) : seriesFlat),
+    const { min, max } = getMinMax(
+      (data.length > 0 ? data : seriesFlat) as (string | number | Date)[],
     );
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    // const ticks = generateTicks(min || 0, max, steps, scaleType);
+    const axisTicks = generateAxisTicks(
+      'y',
+      min,
+      max,
+      scaleType,
+      steps,
+      chartBounds.value,
+      data,
+    );
 
-    const ticksPosition = ticks.map(({ value, index }) => {
-      const { coord: scaleY, labelOffset } = scale(
-        value as number & Date,
+    const ticksPosition = axisTicks.map(({ coord, value, index }) => {
+      const { labelOffset } = scale(
+        value,
         'y',
         scaleType,
-        ticks,
+        axisTicks,
         chartBounds.value,
         'extremities',
         scaleType === 'band' ? 'middle' : 'tick',
@@ -283,7 +308,7 @@ const yAxes = computed(() => {
         index,
         label: value,
         x: 0,
-        y: scaleY,
+        y: coord,
         tickX: -6,
         tickY: 0,
         labelX: -8,
@@ -321,10 +346,20 @@ const seriesDataPoints = computed(() => {
     const points = serie.data
       .slice(0, xAxis.data.length)
       .map((value, index) => {
-        // TODO: replace this with gap between lines instead
         if (value === null || value === undefined) return undefined;
 
-        const xPos = xAxis.ticks.find((_, i) => i === index);
+        const xPos = xAxis.ticks.find(({ index: tickIndex, label }) =>
+          xAxis.data.length > 0
+            ? xAxis.data[index] === label
+            : tickIndex === index,
+        );
+        // const { coord: xScale } = scale(
+        //   index,
+        //   'x',
+        //   xAxis.scaleType,
+        //   xAxis.ticks.map(({ label, index }) => ({ value: label, index })),
+        //   chartBounds.value,
+        // );
 
         const { coord: yScale } = scale(
           value,
@@ -389,9 +424,7 @@ const handlePointerMove = (event: PointerEvent) => {
   // TODO: fix
   // const target = event.currentTarget as SVGElement;
   // const isValid = target && target.hasPointerCapture(event.pointerId);
-
   // if (!isValid) return;
-
   // console.log(
   //   'pointer',
   //   event,
@@ -399,46 +432,41 @@ const handlePointerMove = (event: PointerEvent) => {
   //   target.hasPointerCapture(event.pointerId),
   //   target.releasePointerCapture(event.pointerId),
   // );
-
-  const bounds = chartBounds.value; // Use chart bounds for accurate positioning
-  const mouseX = event.offsetX - bounds.left;
-  const mouseY = event.offsetY - bounds.top;
-
-  const nearestX = getNearestX(mouseX);
-  if (!nearestX) return;
-
-  const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
-
-  const content = `
-    ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
-    `;
-
-  tooltip.value = {
-    nearestX: nearestX.x,
-    // nearestX: mouseX,
-    visible: false,
-    x: mouseX,
-    y: mouseY,
-    content,
-  };
+  // const bounds = chartBounds.value; // Use chart bounds for accurate positioning
+  // const mouseX = event.offsetX - bounds.left;
+  // const mouseY = event.offsetY - bounds.top;
+  // const nearestX = getNearestX(mouseX);
+  // if (!nearestX) return;
+  // const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
+  // const content = `
+  //   ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
+  //   `;
+  // tooltip.value = {
+  //   nearestX: nearestX.x,
+  //   // nearestX: mouseX,
+  //   visible: false,
+  //   x: mouseX,
+  //   y: mouseY,
+  //   content,
+  // };
 };
 
 const handlePointerHide = () => {
   // tooltip.value.visible = false;
 };
 
-const getNearestX = (mouseX: number) => {
-  const xAxis = xAxes.value[0];
+// const getNearestX = (mouseX: number) => {
+//   const xAxis = xAxes.value[0];
 
-  const { ticks } = xAxis;
+//   const { ticks } = xAxis;
 
-  // Find the nearest x-axis tick to the mouse position
-  const nearest = ticks.reduce((prev, curr) =>
-    Math.abs(curr.x - mouseX) < Math.abs(prev.x - mouseX) ? curr : prev,
-  );
+//   // Find the nearest x-axis tick to the mouse position
+//   const nearest = ticks.reduce((prev, curr) =>
+//     Math.abs(curr.x - mouseX) < Math.abs(prev.x - mouseX) ? curr : prev,
+//   );
 
-  return nearest;
-};
+//   return nearest;
+// };
 </script>
 
 <template>

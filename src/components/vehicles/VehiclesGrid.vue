@@ -40,7 +40,7 @@ const editVehicle = (vehicle_id: number) => {
           Your Vehicles
         </h2>
         <p class="mt-6 text-lg leading-8 dark:text-gray-300 text-gray-600">
-          Tralala
+          Vehicles owned or shared by you
         </p>
       </div>
       <ul role="list" class="grid gap-8 sm:grid-cols-2 sm:gap-16 xl:col-span-2">

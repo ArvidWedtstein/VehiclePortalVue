@@ -131,7 +131,7 @@ onMounted(async () => {
           </option>
         </select>
       </div>
-      <LineChart
+      <!-- <LineChart
         :xAxis="[
           {
             data: monthsThisYear.map(p => {
@@ -175,6 +175,23 @@ onMounted(async () => {
           vertical: true,
         }"
         :margin="{ top: 10, right: 10, bottom: 20 }"
+      /> -->
+      <LineChart
+        :xAxis="[{ data: [1, 2, 3, 5, 8, 10, 12], scaleType: 'linear' }]"
+        :series="[
+          {
+            data: [2, 5.5, 2, 8.5, 1.5, 5, 45],
+          },
+        ]"
+      />
+
+      <LineChart
+        :xAxis="[{ data: [1, 2, 3, 5, 8, 10, 12], scaleType: 'log' }]"
+        :series="[
+          {
+            data: [2, 5.5, 2, 8.5, 1.5, 5, 45],
+          },
+        ]"
       />
     </div>
   </div>

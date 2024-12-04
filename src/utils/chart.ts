@@ -17,6 +17,176 @@ export type ChartBounds = {
   height: number;
 };
 
+export const numberToChart = (
+  min: number | string | Date,
+  max: number | string | Date,
+  value: number | string | Date,
+  axis: 'x' | 'y',
+  scaleType: ScaleTypes,
+  chartBounds: ChartBounds,
+) => {
+  const size = axis === 'x' ? chartBounds.width : chartBounds.height;
+
+  const formattedMin =
+    min instanceof Date ? min.getTime() : typeof min === 'string' ? 0 : min;
+  const formattedMax =
+    max instanceof Date ? max.getTime() : typeof max === 'string' ? 0 : max;
+
+  const formattedValue =
+    value instanceof Date
+      ? value.getTime()
+      : typeof value === 'string'
+        ? 0
+        : value;
+
+  const range =
+    scaleType === 'log'
+      ? Math.log10(formattedMax + 1) - Math.log10(formattedMin)
+      : Math.ceil(formattedMax - formattedMin);
+
+  const relativeValue = (formattedValue - formattedMin) / range;
+
+  if (scaleType === 'log') {
+    const logMin = Math.log10(formattedMin);
+    const logMax = Math.log10(formattedMax + 1); // Add 1 to handle log(0)
+
+    return axis === 'x'
+      ? size -
+          ((Math.log10(formattedMin) + relativeValue * (logMax - logMin)) /
+            (logMax - logMin)) *
+            size
+      : size -
+          ((Math.log10(formattedMin) + relativeValue * (logMax - logMin)) /
+            (logMax - logMin)) *
+            size;
+  }
+
+  return axis === 'x'
+    ? ((formattedValue - formattedMin) / (formattedMax - formattedMin)) * size
+    : chartBounds.bottom - relativeValue * size;
+};
+
+export const generateAxisTicks = (
+  axis: 'x' | 'y',
+  min: number | string | Date,
+  max: number | string | Date,
+  scaleType: ScaleTypes = 'linear',
+  numTicks: number,
+  chartBounds: ChartBounds,
+  data?: (string | number)[] | number[] | Date[],
+) => {
+  const { width, height } = chartBounds;
+
+  const formattedMin =
+    min instanceof Date ? min.getTime() : typeof min === 'string' ? 0 : min;
+  const formattedMax =
+    max instanceof Date ? max.getTime() : typeof max === 'string' ? 0 : max;
+
+  const size = axis === 'x' ? width : height;
+
+  // TODO: remove
+  const labelStep = (labelsNum: number) => size / labelsNum;
+
+  // const maxTicks = Math.floor(
+  //   Math.abs(formattedMin - formattedMax) / formattedMin,
+  // );
+  // const minTicks = Math.ceil(
+  //   Math.abs(formattedMax - formattedMin) / formattedMax,
+  // );
+
+  const idealStepCount = size / Math.sqrt(size);
+
+  // Calculate the raw step size
+  const rawStepSize = (formattedMax - formattedMin) / idealStepCount;
+
+  // Calculate a rounded step size for even steps
+  const stepExponent = Math.floor(Math.log(rawStepSize));
+
+  const stepMultiplier = Math.pow(
+    formattedMax - formattedMin <= 100
+      ? formattedMax - formattedMin <= 20 // 10 // TODO: fix
+        ? 1
+        : 10
+      : 5,
+    stepExponent,
+  );
+
+  const stepSize = Math.ceil(rawStepSize / stepMultiplier) * stepMultiplier;
+
+  // Calculate the number of steps based on the rounded step size
+  const stepCount = Math.ceil((formattedMax - formattedMin) / stepSize);
+
+  // console.log(
+  //   axis,
+  //   'ddd',
+  //   idealStepCount,
+  //   rawStepSize,
+  //   stepCount,
+  //   stepSize,
+  //   stepMultiplier,
+  //   '|',
+  //   formattedMax - formattedMin,
+  // );
+
+  const axisTicks = Array.from(
+    {
+      length:
+        (scaleType === 'band' || scaleType === 'point' ? numTicks : stepCount) +
+        1,
+    },
+    (_, i) => {
+      const value =
+        (isFinite(formattedMin) && formattedMin !== 0
+          ? formattedMin - (formattedMin % stepMultiplier)
+          : 0) +
+        i *
+          (scaleType === 'band' || scaleType === 'point'
+            ? labelStep(numTicks)
+            : stepSize);
+      const coord =
+        axis === 'x'
+          ? scaleType === 'band' || scaleType === 'point'
+            ? chartBounds.left + value
+            : chartBounds.left +
+              numberToChart(
+                formattedMin - (formattedMin % stepMultiplier),
+                formattedMax,
+                value,
+                axis,
+                scaleType,
+                chartBounds,
+              )
+          : scaleType === 'band' || scaleType === 'point'
+            ? chartBounds.top + value
+            : numberToChart(
+                formattedMin - (formattedMin % stepMultiplier),
+                formattedMax,
+                value,
+                axis,
+                scaleType,
+                chartBounds,
+              );
+
+      const v =
+        scaleType === 'log'
+          ? isFinite(Math.log10(value))
+            ? Math.log10(value)
+            : 0
+          : scaleType === 'band' || scaleType === 'point'
+            ? (data || [])[i]
+            : value;
+
+      return {
+        coord,
+        value: v,
+        index: i,
+      };
+    },
+  );
+
+  return axisTicks;
+};
+
 export const generateTicks = (
   min: number | Date | string,
   max: number | Date | string,
@@ -133,12 +303,7 @@ export const scale = <S extends ScaleTypes>(
     };
   }
 
-  if (
-    scaleType === 'linear' ||
-    scaleType === 'log' ||
-    scaleType === 'sqrt' ||
-    scaleType === 'pow'
-  ) {
+  if (scaleType === 'linear' || scaleType === 'log' || scaleType === 'sqrt') {
     const { min, max } = getMinMax(ticks.map(({ value }) => value));
     const minMaxIsNum = typeof min === 'number' && typeof max === 'number';
 
@@ -155,6 +320,27 @@ export const scale = <S extends ScaleTypes>(
     }
 
     if (scaleType === 'log' && typeof value === 'number' && minMaxIsNum) {
+      // const range = Math.log10(max + 1) - Math.log10(min);
+
+      // const relativeValue = (value - min) / range;
+
+      // const logMin = Math.log10(min);
+      // const logMax = Math.log10(max + 1); // Add 1 to handle log(0)
+
+      // return {
+      //   coord:
+      //     axis === 'x'
+      //       ? right -
+      //         ((Math.log10(min) + relativeValue * (logMax - logMin)) /
+      //           (logMax - logMin)) *
+      //           scaleSize
+      //       : bottom -
+      //         ((Math.log10(min) + relativeValue * (logMax - logMin)) /
+      //           (logMax - logMin)) *
+      //           scaleSize,
+      //   labelOffset: 0,
+      // };
+
       const normalized =
         (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min));
 
@@ -219,17 +405,11 @@ export const scale = <S extends ScaleTypes>(
   }
 
   if (scaleType === 'time' || scaleType === 'utc') {
-    const domainMin = Math.min(
-      ...(ticks.map(({ value }) => value) as Date[]).map(d => d.getTime()),
-    );
-    const domainMax = Math.max(
-      ...(ticks.map(({ value }) => value) as Date[]).map(d =>
-        new Date(d).getTime(),
-      ),
-    );
+    const { min, max } = getMinMax(ticks.map(({ value }) => value as Date));
 
     const normalized =
-      (new Date(value).getTime() - domainMin) / (domainMax - domainMin);
+      (new Date(value).getTime() - min.getTime()) /
+      (max.getTime() - min.getTime());
 
     return { coord: rangeMin + normalized * scaleSize, labelOffset: 0 };
   }
