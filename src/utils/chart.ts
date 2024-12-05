@@ -17,6 +17,15 @@ export type ChartBounds = {
   height: number;
 };
 
+export type TickLabelPlacement = 'middle' | 'tick';
+
+const offsetRatio = {
+  start: 0,
+  extremities: 0,
+  end: 1,
+  middle: 0.5,
+} as const;
+
 export const numberToChart = (
   min: number | string | Date,
   max: number | string | Date,
@@ -25,7 +34,11 @@ export const numberToChart = (
   scaleType: ScaleTypes,
   chartBounds: ChartBounds,
 ) => {
-  const size = axis === 'x' ? chartBounds.width : chartBounds.height;
+  const { width, height, left, right, top, bottom } = chartBounds;
+
+  const scaleSize = axis === 'x' ? width : height;
+  const scaleMin = axis === 'x' ? left : top;
+  const scaleMax = axis === 'x' ? right : bottom;
 
   const formattedMin =
     min instanceof Date ? min.getTime() : typeof min === 'string' ? 0 : min;
@@ -41,31 +54,36 @@ export const numberToChart = (
 
   const range =
     scaleType === 'log'
-      ? Math.log10(formattedMax + 1) - Math.log10(formattedMin)
-      : Math.ceil(formattedMax - formattedMin);
+      ? Math.log(formattedMax) - Math.log(formattedMin)
+      : formattedMax - formattedMin;
 
   const relativeValue = (formattedValue - formattedMin) / range;
 
-  if (scaleType === 'log') {
-    const logMin = Math.log10(formattedMin);
-    const logMax = Math.log10(formattedMax + 1); // Add 1 to handle log(0)
+  const scaledValue = scaleMin + relativeValue * scaleSize;
 
-    return axis === 'x'
-      ? size -
-          ((Math.log10(formattedMin) + relativeValue * (logMax - logMin)) /
-            (logMax - logMin)) *
-            size
-      : size -
-          ((Math.log10(formattedMin) + relativeValue * (logMax - logMin)) /
-            (logMax - logMin)) *
-            size;
+  if (scaleType === 'log') {
+    const normalized =
+      (Math.log(formattedValue) - Math.log(formattedMin)) / range;
+
+    return scaleMin + normalized * scaleSize;
   }
 
-  return axis === 'x'
-    ? ((formattedValue - formattedMin) / (formattedMax - formattedMin)) * size
-    : chartBounds.bottom - relativeValue * size;
+  return axis === 'x' ? scaledValue : scaleMax - (scaledValue - scaleMin);
 };
 
+/**
+ *
+ * @param axis
+ * @param min
+ * @param max
+ * @param {ScaleTypes} [scaleType='linear'] - Type of scaling
+ * @param numTicks
+ * @param chartBounds
+ * @param data
+ * @param tickPlacement
+ * @param {TickLabelPlacement} [tickLabelPlacement='tick'] - Position of label
+ * @returns
+ */
 export const generateAxisTicks = (
   axis: 'x' | 'y',
   min: number | string | Date,
@@ -74,25 +92,17 @@ export const generateAxisTicks = (
   numTicks: number,
   chartBounds: ChartBounds,
   data?: (string | number)[] | number[] | Date[],
+  tickPlacement: 'start' | 'end' | 'middle' | 'extremities' = 'extremities',
+  tickLabelPlacement: TickLabelPlacement = 'tick',
 ) => {
   const { width, height } = chartBounds;
+
+  const size = axis === 'x' ? width : height;
 
   const formattedMin =
     min instanceof Date ? min.getTime() : typeof min === 'string' ? 0 : min;
   const formattedMax =
     max instanceof Date ? max.getTime() : typeof max === 'string' ? 0 : max;
-
-  const size = axis === 'x' ? width : height;
-
-  // TODO: remove
-  const labelStep = (labelsNum: number) => size / labelsNum;
-
-  // const maxTicks = Math.floor(
-  //   Math.abs(formattedMin - formattedMax) / formattedMin,
-  // );
-  // const minTicks = Math.ceil(
-  //   Math.abs(formattedMax - formattedMin) / formattedMax,
-  // );
 
   const idealStepCount = size / Math.sqrt(size);
 
@@ -113,72 +123,91 @@ export const generateAxisTicks = (
 
   const stepSize = Math.ceil(rawStepSize / stepMultiplier) * stepMultiplier;
 
+  const adjustedMin = formattedMin - (formattedMin % stepMultiplier);
+  const adjustedMax =
+    (data || []).length > 0
+      ? formattedMax
+      : Math.ceil((formattedMax - formattedMin) / stepSize) * stepMultiplier;
+
   // Calculate the number of steps based on the rounded step size
-  const stepCount = Math.ceil((formattedMax - formattedMin) / stepSize);
+  const stepCount =
+    scaleType === 'band' || scaleType === 'point'
+      ? numTicks
+      : Math.ceil((formattedMax - formattedMin) / stepSize);
 
   // console.log(
   //   axis,
   //   'ddd',
-  //   idealStepCount,
-  //   rawStepSize,
   //   stepCount,
   //   stepSize,
-  //   stepMultiplier,
   //   '|',
-  //   formattedMax - formattedMin,
+  //   adjustedMin,
+  //   adjustedMax,
+  //   Math.ceil((formattedMax - formattedMin) / stepSize) * stepMultiplier,
   // );
 
   const axisTicks = Array.from(
     {
-      length:
-        (scaleType === 'band' || scaleType === 'point' ? numTicks : stepCount) +
-        1,
+      length: stepCount + 1,
     },
     (_, i) => {
-      const value =
-        (isFinite(formattedMin) && formattedMin !== 0
-          ? formattedMin - (formattedMin % stepMultiplier)
-          : 0) +
-        i *
-          (scaleType === 'band' || scaleType === 'point'
-            ? labelStep(numTicks)
-            : stepSize);
-      const coord =
-        axis === 'x'
-          ? scaleType === 'band' || scaleType === 'point'
-            ? chartBounds.left + value
-            : chartBounds.left +
-              numberToChart(
-                formattedMin - (formattedMin % stepMultiplier),
-                formattedMax,
-                value,
-                axis,
-                scaleType,
-                chartBounds,
-              )
-          : scaleType === 'band' || scaleType === 'point'
-            ? chartBounds.top + value
-            : numberToChart(
-                formattedMin - (formattedMin % stepMultiplier),
-                formattedMax,
-                value,
-                axis,
-                scaleType,
-                chartBounds,
-              );
+      const step = size / stepCount;
 
-      const v =
+      const value =
+        (isFinite(adjustedMin) && adjustedMin !== 0 ? adjustedMin : 0) +
+        i * (scaleType === 'band' || scaleType === 'point' ? step : stepSize);
+
+      const adjustedValue =
         scaleType === 'log'
-          ? isFinite(Math.log10(value))
-            ? Math.log10(value)
+          ? isFinite(value)
+            ? value
             : 0
           : scaleType === 'band' || scaleType === 'point'
             ? (data || [])[i]
             : value;
 
+      let coord =
+        scaleType === 'band' || scaleType === 'point'
+          ? value
+          : numberToChart(
+              adjustedMin,
+              adjustedMax,
+              value,
+              axis,
+              scaleType,
+              chartBounds,
+            );
+
+      if (scaleType === 'band' || scaleType === 'point') {
+        coord =
+          axis === 'x' ? chartBounds.left + coord : chartBounds.bottom - coord;
+      }
+
+      const labelOffset =
+        tickLabelPlacement === 'tick'
+          ? 0
+          : step *
+            (offsetRatio[tickLabelPlacement] - offsetRatio[tickPlacement]);
+
+      const tickX = axis === 'x' ? 0 : -6;
+      const tickY = axis === 'x' ? 6 : 0;
+
+      const labelX = axis === 'x' ? labelOffset : -9;
+      const labelY =
+        axis === 'x'
+          ? 9
+          : scaleType === 'band' || scaleType === 'point'
+            ? -labelOffset
+            : labelOffset;
+
       return {
         coord,
-        value: v,
+        label: adjustedValue,
+        value,
+        tickX,
+        tickY,
+        labelX,
+        labelY,
         index: i,
       };
     },
@@ -270,13 +299,6 @@ export const generateTicks = (
   return ticks;
 };
 
-const offsetRatio = {
-  start: 0,
-  extremities: 0,
-  end: 1,
-  middle: 0.5,
-} as const;
-
 export const scale = <S extends ScaleTypes>(
   value: number | string | Date,
   axis: 'x' | 'y' = 'x',
@@ -292,8 +314,8 @@ export const scale = <S extends ScaleTypes>(
   const { left, right, top, bottom, width, height } = chartBounds;
 
   const scaleSize = axis === 'x' ? width : height;
-  const rangeMin = axis === 'x' ? left : top;
 
+  const rangeMin = axis === 'x' ? left : top;
   const rangeMax = axis === 'x' ? right : bottom;
 
   if (ticks.length === 0) {
@@ -310,7 +332,7 @@ export const scale = <S extends ScaleTypes>(
     if (scaleType === 'linear' && minMaxIsNum) {
       if (typeof value !== 'number') return { coord: rangeMin, labelOffset: 0 };
 
-      const normalized = (value - min) / (max - min);
+      const normalized = (value - min) / Math.ceil(max - min);
       const scaledValue = rangeMin + normalized * scaleSize;
 
       return {
@@ -320,27 +342,6 @@ export const scale = <S extends ScaleTypes>(
     }
 
     if (scaleType === 'log' && typeof value === 'number' && minMaxIsNum) {
-      // const range = Math.log10(max + 1) - Math.log10(min);
-
-      // const relativeValue = (value - min) / range;
-
-      // const logMin = Math.log10(min);
-      // const logMax = Math.log10(max + 1); // Add 1 to handle log(0)
-
-      // return {
-      //   coord:
-      //     axis === 'x'
-      //       ? right -
-      //         ((Math.log10(min) + relativeValue * (logMax - logMin)) /
-      //           (logMax - logMin)) *
-      //           scaleSize
-      //       : bottom -
-      //         ((Math.log10(min) + relativeValue * (logMax - logMin)) /
-      //           (logMax - logMin)) *
-      //           scaleSize,
-      //   labelOffset: 0,
-      // };
-
       const normalized =
         (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min));
 
@@ -379,8 +380,10 @@ export const scale = <S extends ScaleTypes>(
     if (tickIndex === -1) {
       const normalized =
         ((value as number) - Math.min(...ticks.map(p => p.value as number))) /
-        (Math.max(...ticks.map(p => p.value as number)) -
-          Math.min(...ticks.map(p => p.value as number)));
+        Math.ceil(
+          Math.max(...ticks.map(p => p.value as number)) -
+            Math.min(...ticks.map(p => p.value as number)),
+        );
 
       const scaledValue = rangeMin + normalized * scaleSize;
 

@@ -11,14 +11,11 @@ import {
   generatePath,
   generateTicks,
   getMinMax,
+  numberToChart,
   scale,
   type ScaleTypes,
 } from '@/utils/chart';
-import {
-  debounce,
-  generateDistinctColors,
-  getNestedProperty,
-} from '@/utils/utils';
+import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
 import { computed, ref } from 'vue';
 
 type Serie<T> = {
@@ -202,11 +199,18 @@ const xAxes = computed(() => {
 
     const steps = data.length > 0 ? data.length : 5;
 
-    const { min, max } = getMinMax(
-      (data.length > 0 ? data : [0, 10]) as (string | number | Date)[],
+    const maxSeriesLength = Math.max(
+      ...seriesData.value.map(serie => serie.data.length - 1),
     );
 
-    const ticks = generateTicks(min, max, steps, scaleType, data);
+    const { min, max } = getMinMax(
+      (data.length > 0 ? data : [0, maxSeriesLength]) as (
+        | string
+        | number
+        | Date
+      )[],
+    );
+
     const axisTicks = generateAxisTicks(
       'x',
       min,
@@ -215,34 +219,26 @@ const xAxes = computed(() => {
       steps,
       chartBounds.value,
       data,
+      'extremities',
+      scaleType === 'band' ? 'middle' : 'tick',
     );
 
-    console.log('xTIGGS', scaleType, steps, ticks, axisTicks);
-    const ticksPosition = axisTicks.map(({ coord, value, index }) => {
-      const { coord: scaleX, labelOffset } = scale(
-        value,
-        'x',
-        scaleType,
-        axisTicks,
-        chartBounds.value,
-        'extremities',
-        scaleType === 'band' ? 'middle' : 'tick',
-      );
-
-      console.log('DIFF', value, scaleX, coord);
-
-      return {
-        index,
-        label: value,
-        x: coord,
-        // x: scaleX,
-        y: 0,
-        tickX: 0,
-        tickY: 6,
-        labelX: labelOffset,
-        labelY: 9,
-      };
-    });
+    // console.log('xTIGGS', scaleType, steps, ticks, axisTicks);
+    const ticksPosition = axisTicks.map(
+      ({ coord, label, value, index, tickX, tickY, labelX, labelY }) => {
+        return {
+          index,
+          label,
+          value,
+          x: coord,
+          y: 0,
+          tickX,
+          tickY,
+          labelX,
+          labelY,
+        };
+      },
+    );
 
     // TODO: fix position
     const position = {
@@ -282,39 +278,43 @@ const yAxes = computed(() => {
       (data.length > 0 ? data : seriesFlat) as (string | number | Date)[],
     );
 
-    // const ticks = generateTicks(min || 0, max, steps, scaleType);
     const axisTicks = generateAxisTicks(
       'y',
-      min,
+      min || 0,
       max,
       scaleType,
       steps,
       chartBounds.value,
       data,
+      'extremities',
+      scaleType === 'band' ? 'middle' : 'tick',
     );
 
-    const ticksPosition = axisTicks.map(({ coord, value, index }) => {
-      const { labelOffset } = scale(
-        value,
-        'y',
-        scaleType,
-        axisTicks,
-        chartBounds.value,
-        'extremities',
-        scaleType === 'band' ? 'middle' : 'tick',
-      );
+    const ticksPosition = axisTicks.map(
+      ({ coord, label, value, index, tickX, tickY, labelX, labelY }) => {
+        // const { labelOffset } = scale(
+        //   value,
+        //   'y',
+        //   scaleType,
+        //   ticks,
+        //   chartBounds.value,
+        //   'extremities',
+        //   scaleType === 'band' ? 'middle' : 'tick',
+        // );
 
-      return {
-        index,
-        label: value,
-        x: 0,
-        y: coord,
-        tickX: -6,
-        tickY: 0,
-        labelX: -8,
-        labelY: labelOffset,
-      };
-    });
+        return {
+          index,
+          label,
+          value,
+          x: 0,
+          y: coord,
+          tickX,
+          tickY,
+          labelX,
+          labelY,
+        };
+      },
+    );
 
     // TODO: fix position
     const position = {
@@ -344,28 +344,40 @@ const seriesDataPoints = computed(() => {
       yAxes.value[serieIndex > yAxes.value.length - 1 ? 0 : serieIndex];
 
     const points = serie.data
-      .slice(0, xAxis.data.length)
       .map((value, index) => {
         if (value === null || value === undefined) return undefined;
 
-        const xPos = xAxis.ticks.find(({ index: tickIndex, label }) =>
+        // TODO: replace, xPos can't be determined based on ticks position...
+        const xPos = xAxis.ticks.find(({ index: tickIndex, value, label }) =>
           xAxis.data.length > 0
-            ? xAxis.data[index] === label
+            ? xAxis.data[index] === label || xAxis.data[index] === value
             : tickIndex === index,
         );
-        // const { coord: xScale } = scale(
-        //   index,
+
+        // const { min: xMin, max: xMax } = getMinMax(
+        //   xAxis.ticks.map(p => p.label),
+        // );
+
+        // const x = numberToChart(
+        //   xMin,
+        //   xMax,
+        //   xAxis.ticks[index].value,
         //   'x',
         //   xAxis.scaleType,
-        //   xAxis.ticks.map(({ label, index }) => ({ value: label, index })),
         //   chartBounds.value,
         // );
 
-        const { coord: yScale } = scale(
+        const { min: yMin, max: yMax } = getMinMax(
+          yAxis.ticks.map(p => p.label),
+        );
+
+        // console.log('x', xMin, xMax, x, xPos?.x, !xAxis.data[index]);
+        const y = numberToChart(
+          yMin,
+          yMax,
           value,
           'y',
           yAxis.scaleType,
-          yAxis.ticks.map(({ label, index }) => ({ value: label, index })),
           chartBounds.value,
         );
 
@@ -373,8 +385,9 @@ const seriesDataPoints = computed(() => {
           serie.showMark?.(value as Dataset[keyof Dataset], index) ?? true;
 
         return {
+          // x: x,
           x: (xPos?.x || 0) + (xPos?.labelX || 0),
-          y: yScale,
+          y: y,
           showMark,
         };
       })
@@ -420,40 +433,40 @@ const tooltip = ref<Tooltip>({
   content: '',
 });
 
-const handlePointerMove = (event: PointerEvent) => {
-  // TODO: fix
-  // const target = event.currentTarget as SVGElement;
-  // const isValid = target && target.hasPointerCapture(event.pointerId);
-  // if (!isValid) return;
-  // console.log(
-  //   'pointer',
-  //   event,
-  //   isValid,
-  //   target.hasPointerCapture(event.pointerId),
-  //   target.releasePointerCapture(event.pointerId),
-  // );
-  // const bounds = chartBounds.value; // Use chart bounds for accurate positioning
-  // const mouseX = event.offsetX - bounds.left;
-  // const mouseY = event.offsetY - bounds.top;
-  // const nearestX = getNearestX(mouseX);
-  // if (!nearestX) return;
-  // const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
-  // const content = `
-  //   ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
-  //   `;
-  // tooltip.value = {
-  //   nearestX: nearestX.x,
-  //   // nearestX: mouseX,
-  //   visible: false,
-  //   x: mouseX,
-  //   y: mouseY,
-  //   content,
-  // };
-};
+// const handlePointerMove = (event: PointerEvent) => {
+//   // TODO: fix
+//   const target = event.currentTarget as SVGElement;
+//   const isValid = target && target.hasPointerCapture(event.pointerId);
+//   if (!isValid) return;
+//   console.log(
+//     'pointer',
+//     event,
+//     isValid,
+//     target.hasPointerCapture(event.pointerId),
+//     target.releasePointerCapture(event.pointerId),
+//   );
+//   const bounds = chartBounds.value; // Use chart bounds for accurate positioning
+//   const mouseX = event.offsetX - bounds.left;
+//   const mouseY = event.offsetY - bounds.top;
+//   const nearestX = getNearestX(mouseX);
+//   if (!nearestX) return;
+//   const data = seriesData.value[0].data[nearestX.index]; // Find data for the nearest x point
+//   const content = `
+//     ${xAxes.value[0].dataKey?.toString() || 'X'}: ${data}
+//     `;
+//   tooltip.value = {
+//     nearestX: nearestX.x,
+//     // nearestX: mouseX,
+//     visible: false,
+//     x: mouseX,
+//     y: mouseY,
+//     content,
+//   };
+// };
 
-const handlePointerHide = () => {
-  // tooltip.value.visible = false;
-};
+// const handlePointerHide = () => {
+//   tooltip.value.visible = false;
+// };
 
 // const getNearestX = (mouseX: number) => {
 //   const xAxis = xAxes.value[0];
@@ -476,10 +489,10 @@ const handlePointerHide = () => {
     :viewBox="`0 0 ${width} ${height}`"
     class="relative w-full h-full"
     xmlns="http://www.w3.org/2000/svg"
-    @pointermove="$event => debounce(() => handlePointerMove($event), 100)()"
-    @pointerout="$event => debounce(() => handlePointerHide(), 50)()"
-    @pointerleave="$event => debounce(() => handlePointerHide(), 50)()"
   >
+    <!-- @pointermove="$event => debounce(() => handlePointerMove($event), 100)()"
+    @pointerout="$event => debounce(() => handlePointerHide(), 50)()"
+    @pointerleave="$event => debounce(() => handlePointerHide(), 50)()" -->
     <title></title>
     <desc></desc>
     <defs></defs>
