@@ -49,10 +49,7 @@ onMounted(async () => {
     Back to vehicles
   </RouterLink>
 
-  <div
-    v-if="currentVehicle"
-    class="relative rounded-lg border overflow-hidden bg-base-300 p-4 gap-2"
-  >
+  <div v-if="currentVehicle" class="relative">
     <img
       v-if="currentVehicle.thumbnail"
       :src="currentVehicle.thumbnail"
@@ -88,7 +85,7 @@ onMounted(async () => {
     </div>
     <div class="grid grid-cols-3">
       <div class="col-start-1 md:col-start-2 col-span-3 md:col-span-2 p-2">
-        <div role="tablist" class="tabs tabs-bordered">
+        <div role="tablist" class="tabs tabs-boxed">
           <input
             type="radio"
             name="vehicle_tabs"
@@ -97,7 +94,10 @@ onMounted(async () => {
             aria-label="Expenses"
             :checked="true"
           />
-          <div role="tabpanel" class="tab-content p-10">
+          <div
+            role="tabpanel"
+            class="tab-content p-4 bg-base-100 border-base-300 rounded-box"
+          >
             <ExpenseTab />
           </div>
 
@@ -106,9 +106,12 @@ onMounted(async () => {
             name="vehicle_tabs"
             role="tab"
             class="tab"
-            aria-label="Service"
+            aria-label="Services"
           />
-          <div role="tabpanel" class="tab-content p-10">
+          <div
+            role="tabpanel"
+            class="tab-content p-4 bg-base-100 border-base-300 rounded-box"
+          >
             <ServiceTab />
           </div>
 
@@ -119,7 +122,10 @@ onMounted(async () => {
             class="tab"
             aria-label="Files"
           />
-          <div role="tabpanel" class="tab-content p-10">
+          <div
+            role="tabpanel"
+            class="tab-content p-4 bg-base-100 border-base-300 rounded-box"
+          >
             <FilesTab />
           </div>
 
@@ -130,7 +136,10 @@ onMounted(async () => {
             class="tab"
             aria-label="Changelog"
           />
-          <div role="tabpanel" class="tab-content p-10">
+          <div
+            role="tabpanel"
+            class="tab-content p-4 bg-base-100 border-base-300 rounded-box"
+          >
             <ChangelogTab />
           </div>
         </div>

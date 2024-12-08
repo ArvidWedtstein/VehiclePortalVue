@@ -31,18 +31,44 @@ onMounted(async () => {
     class="card card-bordered md:card-normal card-compact bg-base-100 shadow-xl h-full"
   >
     <div class="card-body">
-      <h2 class="card-title">{{ vehicle.make }} {{ vehicle.model }}</h2>
-
-      <div class="flex justify-between items-center gap-3 w-full grow">
-        <ul class="space-y-1">
-          <li v-if="vehicle.type">
-            <CarIcon v-if="vehicle.type === 'M1'" class="h-6" />
+      <div class="flex flex-row items-center gap-3">
+        <div class="avatar">
+          <div
+            v-if="vehicle.type"
+            class="flex justify-center items-center w-12 rounded-lg border bg-accent text-accent-content p-2"
+          >
+            <CarIcon v-if="vehicle.type === 'M1'" class="h-8" />
 
             <MotorcycleIcon
               v-if="vehicle.type === 'L3e' || vehicle.type === 'MCT'"
-              class="w-6"
+              class="w-7"
             />
-          </li>
+          </div>
+        </div>
+        <h2 class="card-title !mb-0 grow">
+          {{ vehicle.make }} {{ vehicle.model }}
+        </h2>
+
+        <RouterLink
+          :to="{ name: 'vehicle', params: { id: vehicle.id } }"
+          class="btn btn-sm btn-square btn-primary btn-ghost md:hidden"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 320 512"
+            class="w-5 h-5 fill-current"
+          >
+            <path
+              d="M113.333 47.409L297.314 239.407C301.783 244.032 304.001 250.032 304.001 256.001S301.783 267.969 297.314 272.594L113.333 464.592C104.181 474.186 88.994 474.499 79.431 465.311C69.806 456.186 69.494 440.936 78.712 431.405L246.759 256.001L78.712 80.596C69.494 71.096 69.806 55.815 79.431 46.69C88.994 37.503 104.181 37.815 113.333 47.409Z"
+            />
+          </svg>
+        </RouterLink>
+      </div>
+
+      <div
+        class="hidden md:flex justify-between items-center gap-3 w-full grow"
+      >
+        <ul class="space-y-1">
           <li v-if="vehicle.engine_size" class="flex gap-2 items-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -65,7 +91,8 @@ onMounted(async () => {
         </ul>
       </div>
 
-      <div class="card-actions justify-end items-center mt-2">
+      <div class="hidden md:card-actions justify-end items-center mt-2">
+        <!-- TODO: remove share option here, and move to vehicle view-->
         <div class="avatar-group -space-x-4 rtl:space-x-reverse me-auto">
           <div
             v-for="(share, shareIndex) in shares"
@@ -100,6 +127,15 @@ onMounted(async () => {
           class="btn btn-sm btn-primary"
         >
           View
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 320 512"
+            class="w-3 h-3 fill-current"
+          >
+            <path
+              d="M113.333 47.409L297.314 239.407C301.783 244.032 304.001 250.032 304.001 256.001S301.783 267.969 297.314 272.594L113.333 464.592C104.181 474.186 88.994 474.499 79.431 465.311C69.806 456.186 69.494 440.936 78.712 431.405L246.759 256.001L78.712 80.596C69.494 71.096 69.806 55.815 79.431 46.69C88.994 37.503 104.181 37.815 113.333 47.409Z"
+            />
+          </svg>
         </RouterLink>
       </div>
     </div>

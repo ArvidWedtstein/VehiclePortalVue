@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
-import PageNavbar from './components/PageNavbar.vue';
+import PageNavbar from './components/layout/PageNavbar.vue';
 import { useSessionStore } from './stores/userSession';
 import ToastAlert from './components/general/utils/ToastAlert.vue';
+import MobileNavigation from './components/layout/MobileNavigation.vue';
 
 const { initialize } = useSessionStore();
 
@@ -22,5 +23,7 @@ onMounted(() => {
         <RouterView />
       </div>
     </main>
+
+    <MobileNavigation />
   </div>
 </template>

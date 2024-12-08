@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FileDrop from '@/components/general/form/FileDrop.vue';
+import FileDrop from '@/components/general/file/FileDrop.vue';
 import { useDocumentsStore } from '@/stores/documents';
 import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, toRef, toRefs } from 'vue';

@@ -89,9 +89,9 @@ export const generateAxisTicks = (
   min: number | string | Date,
   max: number | string | Date,
   scaleType: ScaleTypes = 'linear',
-  numTicks: number,
   chartBounds: ChartBounds,
-  data?: (string | number)[] | number[] | Date[],
+  numTicks: number = 0,
+  data: (string | number)[] | number[] | Date[] = [],
   tickPlacement: 'start' | 'end' | 'middle' | 'extremities' = 'extremities',
   tickLabelPlacement: TickLabelPlacement = 'tick',
 ) => {
@@ -104,13 +104,13 @@ export const generateAxisTicks = (
   const formattedMax =
     max instanceof Date ? max.getTime() : typeof max === 'string' ? 0 : max;
 
-  const idealStepCount = size / Math.sqrt(size);
+  const idealStepCount = Math.max(2, Math.ceil(size / Math.sqrt(size)));
 
   // Calculate the raw step size
   const rawStepSize = (formattedMax - formattedMin) / idealStepCount;
 
   // Calculate a rounded step size for even steps
-  const stepExponent = Math.floor(Math.log(rawStepSize));
+  const stepExponent = Math.floor(Math.log10(rawStepSize)); // log10 / log?
 
   const stepMultiplier = Math.pow(
     formattedMax - formattedMin <= 100
@@ -125,25 +125,25 @@ export const generateAxisTicks = (
 
   const adjustedMin = formattedMin - (formattedMin % stepMultiplier);
   const adjustedMax =
-    (data || []).length > 0
+    data.length > 0
       ? formattedMax
-      : Math.ceil((formattedMax - formattedMin) / stepSize) * stepMultiplier;
+      : Math.ceil((formattedMax - formattedMin) / stepSize) * stepSize;
 
   // Calculate the number of steps based on the rounded step size
   const stepCount =
     scaleType === 'band' || scaleType === 'point'
       ? numTicks
-      : Math.ceil((formattedMax - formattedMin) / stepSize);
+      : Math.round((formattedMax - formattedMin) / stepSize);
 
   // console.log(
   //   axis,
-  //   'ddd',
-  //   stepCount,
-  //   stepSize,
-  //   '|',
-  //   adjustedMin,
-  //   adjustedMax,
-  //   Math.ceil((formattedMax - formattedMin) / stepSize) * stepMultiplier,
+  //   [
+  //     `StepC: ${idealStepCount} | ${stepCount}`,
+  //     `Size: ${stepSize} | ${rawStepSize}`,
+  //     `Min/Max: ${adjustedMin} | ${adjustedMax}`,
+  //     `Mult: ${stepMultiplier}`,
+  //     `Expo: ${stepExponent}`,
+  //   ].join('\n'),
   // );
 
   const axisTicks = Array.from(
@@ -164,8 +164,11 @@ export const generateAxisTicks = (
             : 0
           : scaleType === 'band' || scaleType === 'point'
             ? (data || [])[i]
-            : value;
+            : scaleType === 'time' || scaleType === 'utc'
+              ? new Date(value)
+              : value;
 
+      // TODO: fix
       let coord =
         scaleType === 'band' || scaleType === 'point'
           ? value
@@ -221,7 +224,7 @@ export const generateTicks = (
   max: number | Date | string,
   numTicks: number,
   scaleType: ScaleTypes,
-  data?: (string | number)[] | number[] | Date[],
+  data: (string | number)[] | number[] | Date[] = [],
 ) => {
   if (
     scaleType === 'log' &&
@@ -240,11 +243,9 @@ export const generateTicks = (
     return logTicks;
   }
 
-  if (
-    (scaleType === 'time' || scaleType === 'utc') &&
-    typeof max === 'number'
-  ) {
-    const step = (max - new Date(min).getTime()) / (numTicks - 1);
+  if (scaleType === 'time' || scaleType === 'utc') {
+    const step =
+      (new Date(max).getTime() - new Date(min).getTime()) / (numTicks - 1);
 
     return Array.from({ length: numTicks }, (_, i) => {
       const val = Math.round(new Date(min).getTime() + i * step);
@@ -258,7 +259,7 @@ export const generateTicks = (
     });
   }
 
-  if (data) {
+  if (data.length > 0) {
     return (
       data
         // .sort((a, b) =>

@@ -237,7 +237,7 @@ watch(
 
 <template>
   <div
-    class="group relative flex w-[calc(100%-3rem)] max-w-2xl flex-col gap-2 text-gray-900 transition-colors dark:text-stone-200"
+    class="group relative flex flex-col gap-2 text-gray-900 transition-colors dark:text-stone-200"
     @dragover="($event: DragEvent) => $event.preventDefault()"
     @drop="handleDrop"
   >

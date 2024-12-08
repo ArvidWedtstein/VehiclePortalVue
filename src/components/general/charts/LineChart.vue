@@ -9,10 +9,8 @@
 import {
   generateAxisTicks,
   generatePath,
-  generateTicks,
   getMinMax,
   numberToChart,
-  scale,
   type ScaleTypes,
 } from '@/utils/chart';
 import { generateDistinctColors, getNestedProperty } from '@/utils/utils';
@@ -181,7 +179,7 @@ const formatTick = (
 
   if (value === undefined) return '';
 
-  return parseInt(value.toString());
+  return value.toString();
 };
 
 const xAxes = computed(() => {
@@ -197,7 +195,7 @@ const xAxes = computed(() => {
       ) as AxisDataType<ScaleType>;
     }
 
-    const steps = data.length > 0 ? data.length : 5;
+    const steps = data.length;
 
     const maxSeriesLength = Math.max(
       ...seriesData.value.map(serie => serie.data.length - 1),
@@ -216,14 +214,13 @@ const xAxes = computed(() => {
       min,
       max,
       scaleType,
-      steps,
       chartBounds.value,
+      steps,
       data,
       'extremities',
       scaleType === 'band' ? 'middle' : 'tick',
     );
 
-    // console.log('xTIGGS', scaleType, steps, ticks, axisTicks);
     const ticksPosition = axisTicks.map(
       ({ coord, label, value, index, tickX, tickY, labelX, labelY }) => {
         return {
@@ -272,7 +269,7 @@ const yAxes = computed(() => {
     }
 
     const seriesFlat = seriesData.value.flatMap(({ data }) => data);
-    const steps = data.length > 0 ? data.length : 5;
+    const steps = data.length;
 
     const { min, max } = getMinMax(
       (data.length > 0 ? data : seriesFlat) as (string | number | Date)[],
@@ -283,13 +280,14 @@ const yAxes = computed(() => {
       min || 0,
       max,
       scaleType,
-      steps,
       chartBounds.value,
+      steps,
       data,
       'extremities',
       scaleType === 'band' ? 'middle' : 'tick',
     );
 
+    // console.log('y', axisTicks, min, max, data);
     const ticksPosition = axisTicks.map(
       ({ coord, label, value, index, tickX, tickY, labelX, labelY }) => {
         // const { labelOffset } = scale(
@@ -335,7 +333,7 @@ const yAxes = computed(() => {
 });
 
 const seriesDataPoints = computed(() => {
-  const { top, bottom } = chartBounds.value;
+  const { top, bottom, left } = chartBounds.value;
 
   const series = seriesData.value.map((serie, serieIndex) => {
     const xAxis =
@@ -348,30 +346,36 @@ const seriesDataPoints = computed(() => {
         if (value === null || value === undefined) return undefined;
 
         // TODO: replace, xPos can't be determined based on ticks position...
-        const xPos = xAxis.ticks.find(({ index: tickIndex, value, label }) =>
-          xAxis.data.length > 0
-            ? xAxis.data[index] === label || xAxis.data[index] === value
-            : tickIndex === index,
+        const xPos = xAxis.ticks.find(
+          ({ index: tickIndex, value: tickValue, label }) => {
+            const xDataVal =
+              xAxis.data[index] instanceof Date
+                ? xAxis.data[index].getTime()
+                : xAxis.data[index];
+
+            return xAxis.data.length > 0
+              ? xDataVal === label || xDataVal === tickValue
+              : tickIndex === index;
+          },
         );
 
-        // const { min: xMin, max: xMax } = getMinMax(
-        //   xAxis.ticks.map(p => p.label),
-        // );
+        const { min: xMin, max: xMax } = getMinMax(
+          xAxis.ticks.map(p => p.label),
+        );
 
-        // const x = numberToChart(
-        //   xMin,
-        //   xMax,
-        //   xAxis.ticks[index].value,
-        //   'x',
-        //   xAxis.scaleType,
-        //   chartBounds.value,
-        // );
+        const x = numberToChart(
+          xMin,
+          xMax,
+          xAxis.ticks[index].value,
+          'x',
+          xAxis.scaleType,
+          chartBounds.value,
+        );
 
         const { min: yMin, max: yMax } = getMinMax(
           yAxis.ticks.map(p => p.label),
         );
 
-        // console.log('x', xMin, xMax, x, xPos?.x, !xAxis.data[index]);
         const y = numberToChart(
           yMin,
           yMax,
@@ -385,9 +389,13 @@ const seriesDataPoints = computed(() => {
           serie.showMark?.(value as Dataset[keyof Dataset], index) ?? true;
 
         return {
-          // x: x,
-          x: (xPos?.x || 0) + (xPos?.labelX || 0),
-          y: y,
+          x:
+            xAxis.scaleType === 'point' || xAxis.scaleType === 'band'
+              ? xPos
+                ? (xPos?.x || left) + (xPos?.labelX || 0)
+                : x
+              : x,
+          y,
           showMark,
         };
       })

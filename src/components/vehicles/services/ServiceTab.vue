@@ -38,7 +38,9 @@ const chartSettings = reactive<ChartSettings<ChartData>>({
     style: 'currency',
     currency: 'NOK',
     currencyDisplay: 'narrowSymbol',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+    notation: 'compact',
   },
 });
 
@@ -114,7 +116,7 @@ onMounted(async () => {
   </button>
 
   <div
-    class="card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
+    class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
   >
     <div class="card-body items-center text-center">
       <div class="flex justify-end w-full">
@@ -131,21 +133,16 @@ onMounted(async () => {
           </option>
         </select>
       </div>
-      <!-- <LineChart
+      <LineChart
         :xAxis="[
           {
             data: monthsThisYear.map(p => {
               p.setDate(15);
-              return p;
+              return p.toLocaleDateString(getLanguage(), {
+                month: 'short',
+              });
             }),
-            scaleType: 'utc',
-            valueFormatter: value => {
-              return value === null
-                ? ''
-                : new Date(value).toLocaleDateString(getLanguage(), {
-                    month: 'short',
-                  });
-            },
+            scaleType: 'band',
           },
         ]"
         :yAxis="[
@@ -175,37 +172,10 @@ onMounted(async () => {
           vertical: true,
         }"
         :margin="{ top: 10, right: 10, bottom: 20 }"
-      /> -->
-      <LineChart
-        :series="[
-          {
-            data: [2, 5.5, 2, 8.5, 1.5, 5, 45],
-          },
-        ]"
-        :grid="{ horizontal: true }"
-      />
-      <LineChart
-        :xAxis="[{ data: [1, 2, 3, 5, 8, 10, 12], scaleType: 'band' }]"
-        :series="[
-          {
-            data: [2, 5.5, 2, 8.5, 1.5, 5, 45],
-          },
-        ]"
-        :grid="{ horizontal: true }"
-      />
-
-      <LineChart
-        :xAxis="[{ data: [1, 2, 3, 5, 8, 10, 12], scaleType: 'log' }]"
-        :series="[
-          {
-            data: [2, 5.5, 2, 8.5, 1.5, 5, 45],
-          },
-        ]"
-        :grid="{ horizontal: true }"
       />
     </div>
   </div>
-  <div class="flex"></div>
+
   <ul class="mt-4 text-sm divide-y divide-base-100">
     <li
       class="relative flex space-x-6 py-6 xl:static"

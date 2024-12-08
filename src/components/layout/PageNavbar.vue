@@ -3,8 +3,8 @@ import { useRouter, RouterLink } from 'vue-router';
 import { computed } from 'vue';
 import { useSessionStore } from '@/stores/userSession';
 import { storeToRefs } from 'pinia';
-import LoginModal from './auth/LoginModal.vue';
 import { getInitials } from '@/utils/utils';
+import LoginModal from '../auth/LoginModal.vue';
 
 const router = useRouter();
 
@@ -30,7 +30,7 @@ const navbarRoutes = computed(() => {
       </a>
     </div>
 
-    <div class="navbar-center hidden lg:flex">
+    <div class="navbar-center hidden md:flex">
       <ul class="menu menu-horizontal px-1 gap-2">
         <li v-for="route in navbarRoutes" :key="route.name">
           <RouterLink

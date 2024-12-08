@@ -26,7 +26,7 @@ const actionText = computed(() => {
       props.type === 'default'
         ? props.action
         : `<p class="mt-0.5 text-base-content capitalize">
-            ${props.action} <span class="ms-auto float-end">${props.time ? relativeDate(props.time, 'narrow') : ''}</span>
+            ${props.action} <span class="ms-auto float-end opacity-50">${props.time ? relativeDate(props.time, 'narrow') : ''}</span>
     </p>`
     }
 `;
@@ -80,9 +80,11 @@ const actionText = computed(() => {
             <div v-html="actionText"></div>
 
             <slot></slot>
-            <span v-if="time" class="whitespace-nowrap float-end ms-auto">{{
-              relativeDate(time, 'narrow')
-            }}</span>
+            <span
+              v-if="time"
+              class="whitespace-nowrap float-end ms-auto opacity-50"
+              >{{ relativeDate(time, 'narrow') }}</span
+            >
           </div>
           <template v-else>
             <div class="text-sm" v-html="actionText"></div>

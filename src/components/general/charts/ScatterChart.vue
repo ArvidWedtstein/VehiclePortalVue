@@ -7,8 +7,10 @@
   "
 >
 import {
+  generateAxisTicks,
   generateTicks,
   getMinMax,
+  numberToChart,
   scale,
   type ScaleTypes,
 } from '@/utils/chart';
@@ -187,7 +189,7 @@ const xAxes = computed(() => {
     }
 
     const seriesFlat = seriesData.value.flatMap(({ data }) => data);
-    const steps = data.length > 0 ? data.length : 5;
+    const steps = data.length > 0 ? data.length : seriesFlat.length;
 
     const { min, max } = getMinMax(
       (data.length > 0 ? data : seriesFlat.map(p => p.x)) as (
@@ -197,8 +199,18 @@ const xAxes = computed(() => {
       )[],
     );
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    const ticks = generateTicks(min, max, steps, scaleType, data);
+    // const axisTicks = generateAxisTicks(
+    //   'x',
+    //   min,
+    //   max,
+    //   scaleType,
+    //   chartBounds.value,
+    //   steps,
+    //   data.length > 0 ? data : seriesFlat.map(p => p.x),
+    // );
 
+    // console.log('x', ticks, axisTicks, min, max);
     const ticksPosition = ticks.map(({ value, index }) => {
       const { coord: scaleX, labelOffset } = scale(
         value as number & Date,
@@ -264,7 +276,7 @@ const yAxes = computed(() => {
       )[],
     );
 
-    const ticks = generateTicks(min, max, steps, scaleType);
+    const ticks = generateTicks(min || 0, max, steps, scaleType, data);
 
     const ticksPosition = ticks.map(({ value, index }) => {
       const { coord: scaleY, labelOffset } = scale(
@@ -316,24 +328,42 @@ const seriesDataPoints = computed(() => {
 
     const points = serie.data
       .map(value => {
-        const { coord: xScale } = scale(
+        if (
+          value.x === undefined ||
+          value.x === null ||
+          value.y === undefined ||
+          value.y === null
+        )
+          return undefined;
+
+        const { min: xMin, max: xMax } = getMinMax(
+          xAxis.ticks.map(p => p.label),
+        );
+
+        const { min: yMin, max: yMax } = getMinMax(
+          yAxis.ticks.map(p => p.label),
+        );
+
+        const x = numberToChart(
+          xMin,
+          xMax,
           value.x,
           'x',
           xAxis.scaleType,
-          xAxis.ticks.map(({ label, index }) => ({ value: label, index })),
           chartBounds.value,
         );
-        const { coord: yScale } = scale(
+        const y = numberToChart(
+          yMin,
+          yMax,
           value.y,
           'y',
           yAxis.scaleType,
-          yAxis.ticks.map(({ label, index }) => ({ value: label, index })),
           chartBounds.value,
         );
 
         return {
-          x: xScale,
-          y: yScale,
+          x,
+          y,
         };
       })
       .filter(p => p !== undefined);
