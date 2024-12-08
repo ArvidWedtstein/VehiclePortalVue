@@ -107,9 +107,15 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     :title="vehicle.id ? 'Edit Vehicle' : 'Add Vehicle'"
     @submit="onFormSubmit"
   >
-    <FormStepper v-model="stepControl.step" :steps="stepControl.steps">
+    <FormStepper
+      class="mt-2"
+      v-model="stepControl.step"
+      :steps="stepControl.steps"
+    >
       <template #step-general>
-        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+        <div
+          class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
+        >
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Liscense Plate Number"
@@ -159,7 +165,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         </div>
       </template>
       <template #step-engine>
-        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+        <div
+          class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
+        >
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Fuel Capacity"
@@ -191,7 +199,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         </div>
       </template>
       <template #step-transmission>
-        <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
+        <div
+          class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
+        >
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Type"
