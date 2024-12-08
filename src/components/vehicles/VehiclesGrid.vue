@@ -17,19 +17,11 @@ onMounted(() => {
   getVehicles();
 });
 
-const editVehicle_ID = ref<number | undefined>(undefined);
-
 const vehicleModal = ref();
-
-const editVehicle = (vehicle_id: number) => {
-  editVehicle_ID.value = vehicle_id;
-
-  vehicleModal.value.open(vehicle_id);
-};
 </script>
 
 <template>
-  <VehicleModal ref="vehicleModal" :vehicle_id="editVehicle_ID" />
+  <VehicleModal ref="vehicleModal" />
 
   <div class="py-6 md:py-32">
     <div class="mx-auto grid max-w-7xl px-6 gap-6 md:gap-16 xl:grid-cols-3">
@@ -48,7 +40,7 @@ const editVehicle = (vehicle_id: number) => {
           <button
             type="button"
             class="relative block w-full h-full rounded-lg border-2 border-dashed p-4 md:p-12 text-center focus:ring-offset-2 focus:ring-offset-base-100 focus:ring-primary focus:ring-2 focus:outline-none hover:border-secondary transition-colors"
-            onclick="vehicleModal.showModal()"
+            @click="vehicleModal.open()"
           >
             <svg
               fill="none"
@@ -71,7 +63,7 @@ const editVehicle = (vehicle_id: number) => {
         </li>
 
         <li v-for="(vehicle, index) in vehicles" :key="index">
-          <VehicleGridItem :vehicle="vehicle" @editVehicle="editVehicle" />
+          <VehicleGridItem :vehicle="vehicle" />
         </li>
       </ul>
     </div>

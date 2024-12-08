@@ -1,7 +1,7 @@
 <template>
   <TransitionGroup
     name="fade"
-    class="toast toast-bottom toast-end z-50"
+    class="toast toast-bottom toast-end !z-[1000]"
     tag="div"
   >
     <div

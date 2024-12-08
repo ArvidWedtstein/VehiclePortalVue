@@ -95,14 +95,14 @@ const onInput = (event: Event) => {
   if (!props.mask) return;
 
   const masked = maskInput(rawValue, props.mask);
-  // console.log(rawValue, masked, model.value)
+
   model.value = masked;
 };
 </script>
 
 <template>
   <label class="form-control" :class="wrapperClass">
-    <slot name="label">
+    <slot name="label" :label="`${label}${required ? ' *' : ''}`">
       <div class="label" v-show="label">
         <span class="label-text">
           {{ label }}
@@ -119,7 +119,7 @@ const onInput = (event: Event) => {
         v-if="$slots.icon"
         class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
       >
-        <slot name="icon"> </slot>
+        <slot name="icon"></slot>
       </div>
 
       <slot name="input">
@@ -166,6 +166,7 @@ const onInput = (event: Event) => {
           @input="onInput"
         />
       </slot>
+
       <slot name="addon"></slot>
     </label>
     <slot name="helpText">

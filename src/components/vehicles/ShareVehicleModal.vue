@@ -29,6 +29,7 @@ const removedShares = ref<Tables<'VehicleShares'>['user_id'][]>([]);
 const groupedPersons = computed(() =>
   groupBy(
     users.value
+      .filter(user => user.user_id !== currentVehicle.value?.createdby_id)
       .map(p => ({ ...p, firstLetter: (p.name || '').charAt(0) }))
       .sort((a, b) => a.firstLetter.localeCompare(b.firstLetter)),
     'firstLetter',
@@ -65,12 +66,12 @@ const handleOpen = async () => {
 
   modalRef.value.modalRef.showModal();
 
-  const vehicleShares = await getVehicleShares();
+  const vehicleShares = await getVehicleShares(currentVehicle.value?.id);
 
   vehiclesShare.value = vehicleShares;
 
-  personsModel.value = users.value.filter(pProfile =>
-    vehicleShares?.some(pShare => pShare.user_id === pProfile.user_id),
+  personsModel.value = users.value.filter(profile =>
+    vehicleShares?.some(pShare => pShare.user_id === profile.user_id),
   );
 };
 
@@ -136,7 +137,10 @@ defineExpose({ modalRef: modalRef });
           v-for="person in people"
           :key="person.id"
           :title="person.name || ''"
-          :imageUrl="person.profile_image_url || ''"
+          :imageUrl="
+            person.profile_image_url ||
+            `https://ui-avatars.com/api/?name=${person.name}`
+          "
           :class="{ active: personsModel.some(p => p.id === person.id) }"
           @click="checkPerson(person)"
         >

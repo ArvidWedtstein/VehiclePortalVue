@@ -1,59 +1,66 @@
-<template>
-  <label class="position-relative">
-    <input
-      :type="type"
-      class="checkbox-input hidden"
-      v-model="vModelValue"
-      :value="value || label"
-      v-bind="$attrs"
-    />
-    <span
-      class="flex flex-col justify-center items-center relative rounded-md checkbox-tile gap-1"
-      :class="vComputedTileClass"
-    >
-      <i
-        v-if="icon"
-        class="text-lg mb-0 bi"
-        :class="icon"
-        style="transition: 0.375s ease"
-      ></i>
-      <span class="text-center" style="transition: 0.375s ease">
-        <slot>{{ label }}</slot>
-      </span>
-    </span>
-  </label>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue';
 
 type Props = {
   label?: string;
-  icon?: string;
   value?: string | number;
   type?: 'checkbox' | 'radio';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
-const vProps = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   label: '',
   type: 'checkbox',
+  size: 'md',
 });
 
-const vModelValue = defineModel<string | number | null | undefined>({
+const modelValue = defineModel<string | number | null | undefined>({
   required: true,
 });
 
-const vComputedTileClass = computed(() => {
-  const vIsChecked = Array.isArray(vModelValue.value)
-    ? vModelValue.value.includes(vProps.value || '')
-    : vModelValue.value === vProps.value;
+const computedTileClass = computed(() => {
+  const isChecked = Array.isArray(modelValue.value)
+    ? modelValue.value.includes(props.value || '')
+    : modelValue.value === props.value;
 
-  return {
-    'text-primary border border-primary': vIsChecked,
-    'text-neutral-content border border-neutral-content': !vIsChecked,
+  const sizes = {
+    xs: 'min-w-12 min-h-12 text-xs',
+    sm: 'min-w-14 min-h-14 text-sm',
+    md: 'min-w-20 min-h-20 text-sm',
+    lg: 'min-w-24 min-h-24 text-base',
   };
+  return [
+    sizes[props.size],
+    {
+      'text-primary border border-primary': isChecked,
+      'text-neutral-content border border-base-content border-opacity-20':
+        !isChecked,
+    },
+  ];
 });
 </script>
+
+<template>
+  <label class="position-relative">
+    <input
+      :type="type"
+      class="checkbox-input hidden"
+      v-model="modelValue"
+      :value="value || label"
+      v-bind="$attrs"
+    />
+    <span
+      class="flex flex-col justify-center items-center relative rounded-md transition-all cursor-pointer checkbox-tile gap-1"
+      :class="computedTileClass"
+    >
+      <slot name="icon"></slot>
+
+      <span class="text-center transition-all">
+        <slot>{{ label || value }}</slot>
+      </span>
+    </span>
+  </label>
+</template>
 
 <style scoped>
 .checkbox-input:checked + .checkbox-tile:before {
@@ -69,12 +76,7 @@ const vComputedTileClass = computed(() => {
   transform: scale(1);
   opacity: 1;
 }
-.checkbox-tile {
-  width: 5rem;
-  min-height: 5rem;
-  transition: 0.15s ease;
-  cursor: pointer;
-}
+
 .checkbox-tile:before {
   content: '';
   position: absolute;
@@ -89,7 +91,7 @@ const vComputedTileClass = computed(() => {
   opacity: 0;
   transform: scale(0);
   transition: 0.25s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' style='width: 0.5rem;' fill='%23FFFFFF' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='none'%3E%3C/rect%3E%3Cpolyline points='216 72.005 104 184 48 128.005' fill='none' stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='32'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' class='w-2' fill='%23FFFFFF' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' fill='none'%3E%3C/rect%3E%3Cpolyline points='216 72.005 104 184 48 128.005' fill='none' stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='32'%3E%3C/polyline%3E%3C/svg%3E");
   background-size: 12px;
   background-repeat: no-repeat;
   background-position: 50% 50%;

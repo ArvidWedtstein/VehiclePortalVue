@@ -28,7 +28,6 @@ const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   notes: '',
   cost: 0,
   currency: 'NOK',
-  unit: 'liter',
 };
 
 const expense = ref<
@@ -39,7 +38,7 @@ const onFormSubmit = () => {
   console.log('submit', expense.value);
 
   upsertExpense(expense.value);
-  // todo: finish submit
+  // TODO: add confirmation
 };
 
 const handleOpen = async (
@@ -137,20 +136,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         inputmode="numeric"
         join
         v-model.number="expense.amount"
-      >
-        <template #addon>
-          <FormInput
-            wrapperClass="max-w-32"
-            class="join-item"
-            type="select"
-            v-model="expense.unit"
-            :options="[
-              { value: 'liter', label: 'Liter' },
-              { value: 'gallon', label: 'Gallon' },
-            ]"
-          />
-        </template>
-      </FormInput>
+      />
 
       <FormInput
         wrapperClass="sm:col-span-3"

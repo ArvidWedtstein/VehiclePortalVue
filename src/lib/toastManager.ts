@@ -11,6 +11,7 @@ export const toast = reactive({
   // Trigger a toast with cooldown and stacking support
   triggerToast(message = '', type = 'info', duration = 2000) {
     this.toasts.push({ id: Date.now(), message, type, duration });
+    console.log('trigger toast');
   },
 
   // Method to remove a toast from the stack by its ID

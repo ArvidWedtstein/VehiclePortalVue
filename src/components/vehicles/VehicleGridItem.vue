@@ -16,10 +16,6 @@ type Props = {
 
 const props = defineProps<Props>();
 
-defineEmits<{
-  (e: 'editVehicle', vehicle_id: number): void;
-}>();
-
 const shares = ref<Tables<'VehicleShares'>[]>([]);
 onMounted(async () => {
   shares.value = await getVehicleShares(props.vehicle.id);
@@ -35,7 +31,7 @@ onMounted(async () => {
         <div class="avatar">
           <div
             v-if="vehicle.type"
-            class="flex justify-center items-center w-12 rounded-lg border bg-accent text-accent-content p-2"
+            class="flex justify-center items-center w-12 text-base-content p-2"
           >
             <CarIcon v-if="vehicle.type === 'M1'" class="h-8" />
 
@@ -92,7 +88,7 @@ onMounted(async () => {
       </div>
 
       <div class="hidden md:card-actions justify-end items-center mt-2">
-        <!-- TODO: remove share option here, and move to vehicle view-->
+        <!-- TODO: remove edit option here, and move to vehicle view-->
         <div class="avatar-group -space-x-4 rtl:space-x-reverse me-auto">
           <div
             v-for="(share, shareIndex) in shares"
@@ -115,13 +111,6 @@ onMounted(async () => {
             </div>
           </div> -->
         </div>
-        <button
-          type="button"
-          class="btn btn-sm btn-ghost btn-secondary"
-          @click="$emit('editVehicle', vehicle.id)"
-        >
-          Edit
-        </button>
         <RouterLink
           :to="{ name: 'vehicle', params: { id: vehicle.id } }"
           class="btn btn-sm btn-primary"

@@ -42,18 +42,17 @@ const onFormSubmit = () => {
 const handleOpen = async (
   service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
-  const { data: lastServiceMileage, error } = await supabase.rpc(
-    'get_last_mileage',
-    {
-      vehicle_id: currentVehicle.value?.id || -1,
-      type: 'services',
-    },
-  );
+  const { data: lastService, error } = await supabase.rpc('get_last_mileage', {
+    vehicle_id: currentVehicle.value?.id || -1,
+    type: 'services',
+  });
+
+  console.log(lastService);
 
   if (error) throw error;
 
   if (service_id == null || service_id === undefined) {
-    service.value = { ...defaultValues, mileage: lastServiceMileage };
+    service.value = { ...defaultValues, mileage: lastService.mileage };
     modalRef.value?.modalRef?.showModal();
     return;
   }

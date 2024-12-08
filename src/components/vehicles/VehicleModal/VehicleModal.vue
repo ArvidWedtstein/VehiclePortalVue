@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { ref, toRef } from 'vue';
+import { reactive, ref, toRef } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import CheckboxTile from '@/components/general/form/CheckboxTile.vue';
 
 import { type TablesInsert, type TablesUpdate } from '@/database.types';
+import InputHelperTip from '@/components/general/form/InputHelperTip.vue';
+import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
+import FormStepper from '@/components/general/form/FormStepper.vue';
+import { toast } from '@/lib/toastManager';
 
-const step = ref(0);
+const stepControl = reactive({
+  step: 0,
+  steps: ['General', 'Engine', 'Transmission'],
+});
 
 const modalRef = ref();
 
@@ -18,7 +25,7 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
   type: '',
   body_type: '',
   color: '',
-  drivetrain: '',
+  drivetrain: 'FWD',
   eu_control_date: '',
   registered_date: '',
   licenseplate_number: '',
@@ -28,41 +35,46 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
   length: '',
   width: '',
   fuel_capacity: 0,
-  engine_id: undefined,
-  transmission_id: undefined,
+  fuel_capacity_unit: 'liter',
   mileage_unit: 'kilometer',
+  transmission_type: 'automatic',
 };
 
 const vehiclesStore = useVehiclesStore();
 
 const vehicles = toRef(vehiclesStore, 'vehicles');
+const { upsertVehicle } = vehiclesStore;
 
 const vehicle = ref<TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>>({
   ...defaultValues,
 });
 
 const changeStep = (stepIndex: number) => {
-  step.value = Math.max(0, Math.min(3, stepIndex));
+  stepControl.step = Math.max(
+    0,
+    Math.min(stepControl.steps.length - 1, stepIndex),
+  );
 };
 
-const onFormSubmit = () => {
-  console.log('submit', vehicle.value);
+const onFormSubmit = async () => {
+  try {
+    await upsertVehicle(vehicle.value);
 
-  // upsertVehicle({
-  //   id: 7,
-  //   name: 'TEST',
-  //   make: 'TEST',
-  //   model: 'TEST',
-  //   type: 'AAAAAAAA',
-  //   body_type: 'AAAAAAAA',
-  //   color: 'BLAAACK',
-  //   drivetrain: 'NWD',
-  //   licenseplate_number: 'AA 12345',
-  //   mileage_unit: 'kilometer',
-  // });
+    modalRef.value.modalRef.close();
+
+    toast.triggerToast(
+      `Successfully ${vehicle.value.id ? 'updated' : 'created'} vehicle`,
+      'success',
+      2000,
+    );
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 };
 
 const handleOpen = (vehicle_id: TablesUpdate<'Vehicles'>['id']) => {
+  stepControl.step = 0;
   console.log('open', vehicle_id);
 
   if (vehicle_id == null || vehicle_id === undefined) {
@@ -76,11 +88,6 @@ const handleOpen = (vehicle_id: TablesUpdate<'Vehicles'>['id']) => {
     alert('No vehicle found');
     return;
   }
-
-  console.log({
-    ...defaultValues,
-    ...editVehicle,
-  });
 
   vehicle.value = {
     ...defaultValues,
@@ -100,38 +107,14 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     :title="vehicle.id ? 'Edit Vehicle' : 'Add Vehicle'"
     @submit="onFormSubmit"
   >
-    <ul class="steps steps-vertical lg:steps-horizontal w-full">
-      <li
-        data-content="?"
-        class="step"
-        :class="[step >= 0 ? 'step-primary' : '']"
-      >
-        <a href="#item1">General Info</a>
-      </li>
-      <li
-        data-content="?"
-        class="step"
-        :class="[step >= 1 ? 'step-primary' : '']"
-      >
-        <a href="#item2">Engine</a>
-      </li>
-      <li
-        data-content="✓"
-        class="step"
-        :class="[step >= 2 ? 'step-primary' : '']"
-      >
-        <a href="#item3">Transmission</a>
-      </li>
-    </ul>
-    <div class="carousel w-full">
-      <div v-if="step === 0" id="item1" class="carousel-item w-full">
+    <FormStepper v-model="stepControl.step" :steps="stepControl.steps">
+      <template #step-general>
         <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
           <FormInput
             wrapperClass="sm:col-span-2"
-            label="Liscense Number"
+            label="Liscense Plate Number"
             type="text"
             v-model="vehicle.licenseplate_number"
-            mask="AA-######"
             placeholder="AB 123456"
             required
           />
@@ -141,7 +124,17 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             label="VIN (Vehicle Identification Number)"
             type="text"
             v-model="vehicle.vehicle_identification_number"
-          />
+          >
+            <template #label="{ label }">
+              <div class="label">
+                <span class="label-text">{{ label }}</span>
+                <InputHelperTip
+                  position="left"
+                  tip="Can usually be found on dashboard, driver's side door and registration certificate"
+                />
+              </div>
+            </template>
+          </FormInput>
 
           <FormInput
             wrapperClass="sm:col-span-2"
@@ -163,31 +156,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             type="date"
             v-model="vehicle.registered_date"
           />
-
-          <CheckboxTile
-            v-model="vehicle.drivetrain"
-            value="AWD"
-            type="radio"
-            name="drivetrain"
-            >AWD</CheckboxTile
-          >
-          <CheckboxTile
-            v-model="vehicle.drivetrain"
-            value="RWD"
-            type="radio"
-            name="drivetrain"
-            >RWD</CheckboxTile
-          >
-          <CheckboxTile
-            v-model="vehicle.drivetrain"
-            value="FWD"
-            type="radio"
-            name="drivetrain"
-            >FWD</CheckboxTile
-          >
         </div>
-      </div>
-      <div v-if="step === 1" id="item2" class="carousel-item w-full">
+      </template>
+      <template #step-engine>
         <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
           <FormInput
             wrapperClass="sm:col-span-2"
@@ -195,7 +166,21 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             type="number"
             inputmode="decimal"
             v-model="vehicle.fuel_capacity"
-          />
+            join
+          >
+            <template #addon>
+              <FormInput
+                wrapperClass="max-w-28"
+                class="join-item"
+                type="select"
+                v-model="vehicle.fuel_capacity_unit"
+                :options="[
+                  { value: 'liter', label: 'Liter' },
+                  { value: 'us_gallon', label: 'US Gallon' },
+                ]"
+              />
+            </template>
+          </FormInput>
 
           <FormInput
             wrapperClass="sm:col-span-2"
@@ -204,18 +189,16 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             v-model="vehicle.engine_size"
           />
         </div>
-      </div>
-      <div v-if="step === 2" id="item3" class="carousel-item w-full">
+      </template>
+      <template #step-transmission>
         <div class="m-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1">
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Type"
             type="select"
             v-model="vehicle.transmission_type"
-          >
-            <option value="Manual">Manual</option>
-            <option value="Automatic">Automatic</option>
-          </FormInput>
+            :options="[{ value: 'Manual' }, { value: 'Automatic' }]"
+          />
 
           <FormInput
             wrapperClass="sm:col-span-2"
@@ -224,39 +207,79 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             inputmode="decimal"
             v-model="vehicle.transmission_gears"
           />
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Drivetrain</span>
+            </label>
+
+            <div class="flex gap-2">
+              <CheckboxTile
+                v-model="vehicle.drivetrain"
+                value="FWD"
+                type="radio"
+                name="drivetrain"
+              >
+                <template #icon>
+                  <DrivetrainIcon class="w-6 fill-current" drivetrain="FWD" />
+                </template>
+              </CheckboxTile>
+              <CheckboxTile
+                v-model="vehicle.drivetrain"
+                value="RWD"
+                type="radio"
+                name="drivetrain"
+              >
+                <template #icon>
+                  <DrivetrainIcon class="w-6 fill-current" drivetrain="RWD" />
+                </template>
+              </CheckboxTile>
+              <CheckboxTile
+                v-model="vehicle.drivetrain"
+                label="AWD"
+                value="AWD"
+                type="radio"
+                name="drivetrain"
+              >
+                <template #icon>
+                  <DrivetrainIcon class="w-6 fill-current" drivetrain="AWD" />
+                </template>
+              </CheckboxTile>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+    </FormStepper>
 
     <template #actions>
       <button
         type="button"
-        class="btn btn-sm btn-outline"
-        @click="changeStep(step - 1)"
-        :disabled="step === 0"
+        class="btn btn-outline"
+        @click="changeStep(stepControl.step - 1)"
+        :disabled="stepControl.step === 0"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 320 512"
-          fill="currentColor"
-          class="w-2"
+          class="w-2 fill-current"
         >
           <path
             d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"
           />
         </svg>
+        Back
       </button>
       <button
+        v-if="stepControl.step < stepControl.steps.length - 1"
         type="button"
-        class="btn btn-sm btn-outline"
-        @click="changeStep(step + 1)"
-        :disabled="step === 2"
+        class="btn btn-outline"
+        @click="changeStep(stepControl.step + 1)"
       >
+        Next
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 320 512"
-          fill="currentColor"
-          class="w-2"
+          class="w-2 fill-current"
         >
           <path
             d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"
@@ -265,21 +288,13 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       </button>
 
       <button
-        class="btn btn-sm btn-outline"
-        value="cancel"
-        formmethod="dialog"
-        formnovalidate
+        v-if="stepControl.step === stepControl.steps.length - 1"
+        type="button"
+        @click="onFormSubmit"
+        class="btn btn-primary ms-1"
+        :disabled="stepControl.step !== stepControl.steps.length - 1"
       >
-        Close
-      </button>
-
-      <button
-        type="submit"
-        class="btn btn-sm btn-primary ms-1"
-        value="submit"
-        :disabled="step !== 2"
-      >
-        Create
+        {{ vehicle.id ? 'Save' : 'Create' }}
       </button>
     </template>
   </FormDialog>

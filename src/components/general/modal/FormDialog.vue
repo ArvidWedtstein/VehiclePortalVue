@@ -63,15 +63,15 @@ defineExpose({ modalRef: modalRef });
   <dialog
     :id="id"
     ref="modalRef"
-    class="modal modal-top sm:modal-middle"
+    class="modal modal-top md:modal-middle"
     @close="handleClose"
   >
     <form
-      class="modal-box"
+      class="modal-box flex flex-col"
       :class="{
         '!w-4/12': size === 'sm',
         'md:!w-8/12 !max-w-2xl': size === 'md',
-        'md:!w-11/12 !max-w-5xl max-h-full': size === 'lg',
+        'md:!w-11/12 !max-w-5xl max-h-full h-full md:h-fit': size === 'lg',
       }"
       @submit.prevent="handleSubmit"
       ref="formRef"
@@ -91,7 +91,7 @@ defineExpose({ modalRef: modalRef });
 
       <slot></slot>
 
-      <div class="modal-action">
+      <div class="modal-action mt-auto">
         <slot name="actions">
           <button
             class="btn btn-sm btn-outline"
