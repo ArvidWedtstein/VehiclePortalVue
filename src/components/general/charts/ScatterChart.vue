@@ -7,7 +7,6 @@
   "
 >
 import {
-  generateAxisTicks,
   generateTicks,
   getMinMax,
   numberToChart,
@@ -352,6 +351,7 @@ const seriesDataPoints = computed(() => {
           xAxis.scaleType,
           chartBounds.value,
         );
+
         const y = numberToChart(
           yMin,
           yMax,
@@ -360,6 +360,10 @@ const seriesDataPoints = computed(() => {
           yAxis.scaleType,
           chartBounds.value,
         );
+
+        if (x < chartBounds.value.left) {
+          return undefined;
+        }
 
         return {
           x,
