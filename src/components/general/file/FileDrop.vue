@@ -3,6 +3,7 @@ import { formatFileSize, formatListDisjunction } from '@/utils/format';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
 import { ref, watch } from 'vue';
+import { toast } from '@/lib/toastManager';
 
 type FileUploadProps = {
   hideDropArea?: boolean;
@@ -221,7 +222,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
 
     files.value = files.value.filter(({ path }) => path !== file.path);
 
-    // TODO: alert success here
+    toast.triggerToast(`Successfully deleted file`, 'success', 2000);
   } catch (error) {
     console.error(error);
   }

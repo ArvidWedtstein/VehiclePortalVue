@@ -8,11 +8,13 @@ type Props = {
   id?: string;
   title?: string;
   size?: 'sm' | 'md' | 'lg';
+  backdrop?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
   id: crypto.randomUUID(),
   size: 'lg',
+  backdrop: true,
 });
 
 const emit = defineEmits<{
@@ -77,7 +79,7 @@ defineExpose({ modalRef: modalRef });
       ref="formRef"
     >
       <button
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        class="btn btn-circle btn-ghost absolute right-2 top-2"
         formmethod="dialog"
         formnovalidate
         value="cancel"
@@ -94,23 +96,22 @@ defineExpose({ modalRef: modalRef });
       <div class="modal-action mt-auto">
         <slot name="actions">
           <button
-            class="btn btn-sm btn-outline"
+            class="btn btn-outline"
             value="cancel"
             formmethod="dialog"
             formnovalidate
           >
-            Close
+            Cancel
           </button>
 
-          <button
-            type="submit"
-            class="btn btn-sm btn-primary ms-1"
-            value="submit"
-          >
+          <button type="submit" class="btn btn-primary ms-1" value="submit">
             OK
           </button>
         </slot>
       </div>
+    </form>
+    <form v-if="backdrop" method="dialog" class="modal-backdrop">
+      <button>close</button>
     </form>
   </dialog>
 </template>

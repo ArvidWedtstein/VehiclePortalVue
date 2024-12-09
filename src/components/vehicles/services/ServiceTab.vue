@@ -102,91 +102,93 @@ onMounted(async () => {
 <template>
   <ServiceModal ref="serviceModal" />
 
-  <button class="btn" @click="serviceModal.open()">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 448 512"
-      class="w-4 fill-current"
-    >
-      <path
-        d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
-      />
-    </svg>
-    Add Service
-  </button>
+  <div class="flex justify-between">
+    <button type="button" class="btn" @click="serviceModal.open()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 448 512"
+        class="w-4 fill-current"
+      >
+        <path
+          d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
+        />
+      </svg>
+      Add Service
+    </button>
 
-  <div
-    class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
-  >
-    <div class="card-body items-center text-center">
-      <div class="flex justify-end w-full">
-        <select
-          class="select select-bordered select-xs w-full max-w-48"
-          v-model="chartSettings.selectedMode"
-        >
-          <option
-            v-for="{ id, name } in chartSettings.options"
-            :key="id"
-            :value="id"
+    <div
+      class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
+    >
+      <div class="card-body items-center text-center">
+        <div class="flex justify-end w-full">
+          <select
+            class="select select-bordered select-xs w-full max-w-48"
+            v-model="chartSettings.selectedMode"
           >
-            {{ name }}
-          </option>
-        </select>
-      </div>
-      <LineChart
-        :xAxis="[
-          {
-            data: monthsThisYear.map(p => {
-              p.setDate(15);
-              return p.toLocaleDateString(getLanguage(), {
-                month: 'short',
-              });
-            }),
-            scaleType: 'band',
-          },
-        ]"
-        :yAxis="[
-          {
-            valueFormatter: value => {
-              const formattedNumber = formatNumber(
-                parseInt((value || 0).toString()),
-                chartSettings.selectedMode === 'costThisYear'
-                  ? chartSettings.currencyFormatOptions
-                  : undefined,
-              );
-              return value === null ? '' : formattedNumber;
+            <option
+              v-for="{ id, name } in chartSettings.options"
+              :key="id"
+              :value="id"
+            >
+              {{ name }}
+            </option>
+          </select>
+        </div>
+        <LineChart
+          :xAxis="[
+            {
+              data: monthsThisYear.map(p => {
+                p.setDate(15);
+                return p.toLocaleDateString(getLanguage(), {
+                  month: 'short',
+                });
+              }),
+              scaleType: 'band',
             },
-          },
-        ]"
-        :dataset="serviceData"
-        :series="[
-          {
-            dataKey:
-              chartSettings.selectedMode === 'costThisYear'
-                ? 'cost'
-                : 'repairs',
-            showMark: value => !!value,
-          },
-        ]"
-        :grid="{
-          vertical: true,
-        }"
-        :margin="{ top: 10, right: 10, bottom: 20 }"
-      />
+          ]"
+          :yAxis="[
+            {
+              valueFormatter: value => {
+                const formattedNumber = formatNumber(
+                  parseInt((value || 0).toString()),
+                  chartSettings.selectedMode === 'costThisYear'
+                    ? chartSettings.currencyFormatOptions
+                    : undefined,
+                );
+                return value === null ? '' : formattedNumber;
+              },
+            },
+          ]"
+          :dataset="serviceData"
+          :series="[
+            {
+              dataKey:
+                chartSettings.selectedMode === 'costThisYear'
+                  ? 'cost'
+                  : 'repairs',
+              showMark: value => !!value,
+            },
+          ]"
+          :grid="{
+            vertical: true,
+          }"
+          :margin="{ top: 10, right: 10, bottom: 20 }"
+        />
+      </div>
     </div>
   </div>
 
-  <ul class="mt-4 text-sm divide-y divide-base-100">
+  <ul class="mt-4 text-sm divide-y divide-neutral">
     <li
-      class="relative flex space-x-6 py-6 xl:static"
+      class="relative flex items-center space-x-6 py-6 xl:static"
       v-for="(service, index) in services"
       :key="index"
     >
-      <div class="w-14 h-14 flex-none rounded-full border">
+      <div class="w-10 h-10 flex-none rounded-full border">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 640 512"
-          class="h-14 w-14 p-3 fill-current"
+          class="h-10 w-10 p-2 fill-current"
         >
           <path
             d="M320 128c17.7 0 32-14.3 32-32s-14.3-32-32-32L192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32l32 0 0 32-80 0-48 0-48 0c-26.5 0-48 21.5-48 48l0 64.8c0 19 11.2 36.2 28.5 43.9l67.5 30L96 368c0 26.5 21.5 48 48 48l259.1 0c18.4 0 35.8-7.9 48-21.7L633.5 187.7c12.3-13.9-.3-35.4-18.4-31.5L448 192l-50.5-25.2c-8.9-4.4-18.7-6.8-28.6-6.8L288 160l0-32 32 0zM96 208l0 86.1L48 272.8 48 208l48 0z"
@@ -213,7 +215,7 @@ onMounted(async () => {
                   fill-rule="evenodd"
                   d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
                   clip-rule="evenodd"
-                ></path>
+                />
               </svg>
             </dt>
             <dd>
@@ -232,7 +234,23 @@ onMounted(async () => {
         </dl>
       </div>
       <div class="xl:relative">
-        <div class="dropdown dropdown-end">
+        <button
+          type="button"
+          class="md:hidden btn btn-sm mr-3"
+          @click="serviceModal.open(service.id)"
+        >
+          Edit
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="h-3 w-3 fill-current"
+          >
+            <path
+              d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
+            />
+          </svg>
+        </button>
+        <div class="hidden md:dropdown dropdown-end">
           <div
             tabindex="0"
             role="button"
@@ -248,7 +266,7 @@ onMounted(async () => {
             >
               <path
                 d="M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
-              ></path>
+              />
             </svg>
           </div>
           <ul
@@ -259,12 +277,12 @@ onMounted(async () => {
               <button type="button" @click="serviceModal.open(service.id)">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 640 512"
-                  class="h-4 w-4 fill-current"
+                  viewBox="0 0 512 512"
+                  class="h-3 w-3 fill-current"
                 >
                   <path
-                    d="M192 320C192 337.674 206.326 352 224 352S256 337.674 256 320S241.674 288 224 288S192 302.326 192 320ZM528 327.4C528 327.42 527.99 327.436 527.99 327.455V448C527.99 456.836 520.826 464 511.99 464H64C55.164 464 48 456.836 48 448V192C48 183.162 55.164 176 64 176H286.188L334.18 128H64C28.654 128 0 156.654 0 192V448C0 483.346 28.654 512 64 512H511.988C547.334 512 575.986 483.348 575.988 448.002L575.996 241.826L528 289.818V327.4ZM96 320C96 337.674 110.326 352 128 352S160 337.674 160 320S145.674 288 128 288S96 302.326 96 320ZM640 84.268C640 67.71 633.551 52.141 621.842 40.432L599.568 18.158C587.859 6.449 572.289 0 555.729 0S523.6 6.449 511.889 18.16L315.49 214.566C309.469 220.59 305.404 228.186 303.732 236.535L288.656 311.924C288.216 314.127 288 316.343 288 318.542C288 336.263 302.316 352 321.469 352C323.633 352 325.838 351.791 328.072 351.344L403.463 336.266C411.814 334.596 419.414 330.527 425.436 324.502L621.838 128.117C635.765 114.19 640 97.405 640 84.268ZM587.898 94.174L392.561 289.496L339.99 300.01L350.504 247.436L545.83 52.102C548.551 49.379 551.881 48 555.729 48S562.908 49.379 565.627 52.1L587.9 74.373C590.621 77.092 592 80.424 592 84.27C592 88.121 590.619 91.453 587.898 94.174Z "
-                  ></path>
+                    d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
+                  />
                 </svg>
                 Edit
               </button>

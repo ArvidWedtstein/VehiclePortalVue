@@ -18,16 +18,14 @@ const navbarRoutes = computed(() => {
       :to="route.path"
       class="capitalize"
       :class="{
-        'text-neutral-content': router.currentRoute.value.name !== route.name,
+        'text-base-content': router.currentRoute.value.name !== route.name,
       }"
       activeClass="text-primary active"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="h-5 w-5 fill-current"
-        fill="none"
         viewBox="0 0 512 512"
-        stroke="currentColor"
         v-if="route.meta.iconPath"
       >
         <path

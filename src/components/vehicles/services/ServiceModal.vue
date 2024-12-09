@@ -6,6 +6,7 @@ import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useServicesStore } from '@/stores/services';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from '@/lib/toastManager';
 
 const modalRef = ref();
 
@@ -37,22 +38,28 @@ const onFormSubmit = () => {
   console.log('submit', service.value);
 
   upsertService(service.value);
+
+  toast.triggerToast(
+    `Successfully ${service.value.id ? 'saved' : 'created'} service`,
+    'success',
+    2000,
+  );
 };
 
 const handleOpen = async (
   service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
-  const { data: lastService, error } = await supabase.rpc('get_last_mileage', {
+  const { data, error } = await supabase.rpc('get_last_mileage', {
     vehicle_id: currentVehicle.value?.id || -1,
     type: 'services',
   });
 
-  console.log(lastService);
-
   if (error) throw error;
 
+  const [{ mileage }] = data;
+
   if (service_id == null || service_id === undefined) {
-    service.value = { ...defaultValues, mileage: lastService.mileage };
+    service.value = { ...defaultValues, mileage };
     modalRef.value?.modalRef?.showModal();
     return;
   }
@@ -91,9 +98,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     :title="service.id ? 'Edit Service' : 'Create Service'"
     @submit="onFormSubmit"
   >
-    <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+    <div class="my-2 grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-6">
       <FormInput
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         label="Date"
         type="datetime-local"
         v-model="service.service_date"
@@ -101,7 +108,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       />
 
       <FormInput
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         label="Type"
         type="text"
         v-model="service.type"
@@ -109,7 +116,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       />
 
       <FormInput
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         label="Provider"
         type="text"
         v-model.trim="service.service_provider"
@@ -117,7 +124,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       />
 
       <FormInput
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         label="Cost"
         type="number"
         join
@@ -141,7 +148,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
       <FormInput
         label="Odometer Reading"
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         type="number"
         join
         v-model="service.mileage"
@@ -149,7 +156,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
       <FormInput
         label="Notes"
-        wrapperClass="sm:col-span-2"
+        wrapperClass="md:col-span-2"
         type="textarea"
         v-model="service.notes"
       />

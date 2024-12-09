@@ -7,8 +7,7 @@ import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
-
-// TODO: auto-suggest last odometer reading
+import { toast } from '@/lib/toastManager';
 
 const modalRef = ref();
 
@@ -17,10 +16,9 @@ const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
 const expensesStore = useExpensesStore();
 const expenses = toRef(expensesStore, 'expenses');
-const { upsertExpense } = expensesStore;
+const { upsertExpense, deleteExpense } = expensesStore;
 
 const defaultValues: TablesUpdate<'VehicleExpenses'> = {
-  created_at: new Date().toISOString(),
   vehicle_id: currentVehicle.value?.id || -1,
   expense_date: new Date().toISOString().split('.')[0].slice(0, -3),
   expense_type: '',
@@ -38,7 +36,12 @@ const onFormSubmit = () => {
   console.log('submit', expense.value);
 
   upsertExpense(expense.value);
-  // TODO: add confirmation
+
+  toast.triggerToast(
+    `Successfully ${expense.value.id ? 'saved' : 'created'} expense`,
+    'success',
+    2000,
+  );
 };
 
 const handleOpen = async (
@@ -88,7 +91,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     :title="expense.id ? 'Edit Expense' : 'Create Expense'"
     @submit="onFormSubmit"
   >
-    <div class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+    <div class="my-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
       <FormInput
         wrapperClass="sm:col-span-2"
         label="Date"
@@ -181,6 +184,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             />
           </svg>
         </template>
+        <template #addon>
+          <span class="absolute right-0 pr-3">km</span>
+        </template>
       </FormInput>
 
       <FormInput
@@ -190,5 +196,28 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         v-model="expense.notes"
       />
     </div>
+
+    <template #actions>
+      <button
+        v-if="expense.id"
+        type="button"
+        class="btn btn-error btn-outline me-auto"
+        @click="deleteExpense(expense.id)"
+      >
+        Delete
+      </button>
+      <button
+        class="btn btn-outline"
+        value="cancel"
+        formmethod="dialog"
+        formnovalidate
+      >
+        Cancel
+      </button>
+
+      <button type="button" @click="onFormSubmit" class="btn btn-primary ms-1">
+        {{ expense.id ? 'Save' : 'Create' }}
+      </button>
+    </template>
   </FormDialog>
 </template>

@@ -14,16 +14,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-full">
-    <ToastAlert />
+  <main class="min-h-full bg-base-100">
     <PageNavbar />
 
-    <main>
-      <div class="px-4 py-6 sm:px-6 lg:px-8">
-        <RouterView />
-      </div>
-    </main>
+    <div class="px-4 py-6 sm:px-6 lg:px-8">
+      <RouterView />
+    </div>
 
+    <ToastAlert />
     <MobileNavigation />
-  </div>
+  </main>
 </template>

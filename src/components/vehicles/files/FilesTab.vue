@@ -17,10 +17,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div v-if="currentVehicle">
     <FileDrop
       bucket="VehicleDocuments"
-      :storagePath="`${currentVehicle?.licenseplate_number}/`"
+      :storagePath="`${currentVehicle.licenseplate_number}/`"
       :initialFiles="
         documents.map(({ name, file_path }) => ({
           file: { name: name || '' },

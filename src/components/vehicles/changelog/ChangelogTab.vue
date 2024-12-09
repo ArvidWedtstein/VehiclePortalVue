@@ -135,7 +135,7 @@ const formattedChangelog = computed(() => {
 
 <template>
   <div class="flex justify-between">
-    <ChangelogList class="max-h-svh h-fit mt-4">
+    <ChangelogList class="max-h-svh h-fit mt-4 w-full">
       <ChangelogListItem
         v-for="(change, changelogIndex) in formattedChangelog"
         :key="changelogIndex"
