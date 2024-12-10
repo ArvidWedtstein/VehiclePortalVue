@@ -58,7 +58,7 @@ const serviceData = computed(() => {
 
   const servicesGroupedByMonth = groupBy(
     services.value.map(s => {
-      const monthYear = new Date(s.service_date).toLocaleDateString(language, {
+      const monthYear = new Date(s.date).toLocaleDateString(language, {
         month: 'short',
         year: 'numeric',
       });
@@ -219,11 +219,9 @@ onMounted(async () => {
               </svg>
             </dt>
             <dd>
-              <time
-                v-if="service.service_date"
-                :datetime="service.service_date"
-                >{{ formatDate(service.service_date) }}</time
-              >
+              <time v-if="service.date" :datetime="service.date">{{
+                formatDate(service.date)
+              }}</time>
             </dd>
           </div>
           <div

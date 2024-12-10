@@ -7,9 +7,10 @@ import {
   getRangeBetweenDates,
 } from '@/utils/date';
 import { useExpensesStore } from '@/stores/expenses';
-import { getLanguage } from '@/utils/utils';
+import { getLanguage, groupBy } from '@/utils/utils';
 import { formatNumber } from '@/utils/format';
 import ScatterChart from '@/components/general/charts/ScatterChart.vue';
+import { sum } from '@/utils/math';
 
 const expenseStore = useExpensesStore();
 
@@ -25,6 +26,36 @@ const monthsThisYear = computed(() => {
     'months',
     'date',
   );
+});
+
+const statFuelCostPerMonth = computed(() => {
+  const currentMonth = `${new Date().getFullYear()}-${new Date().getMonth()}`;
+  const prevMonth =
+    new Date().getMonth() - 1 < 0
+      ? `${new Date().getFullYear() - 1}-11`
+      : `${new Date().getFullYear()}-${new Date().getMonth() - 1}`;
+
+  const monthExpenses = expenses.value.map(expense => {
+    const expenseDate = new Date(expense.date);
+
+    return {
+      ...expense,
+      monthYear: `${expenseDate.getFullYear()}-${expenseDate.getMonth()}`,
+    };
+  });
+
+  const groupedExpensesPerMonth = groupBy(monthExpenses, 'monthYear');
+
+  const costPrevMonth =
+    sum(groupedExpensesPerMonth[prevMonth] || [], 'cost') || 0;
+  const costThisMonth = sum(groupedExpensesPerMonth[currentMonth], 'cost') || 0;
+
+  return {
+    costPrevMonth,
+    costThisMonth,
+    percentageDiffToPrevMonth:
+      ((costThisMonth - costPrevMonth) / costPrevMonth) * 100,
+  };
 });
 
 onMounted(() => {
@@ -49,70 +80,90 @@ onMounted(() => {
       Add Expense
     </button>
 
-    <div
-      class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
-    >
-      <div class="card-body items-center text-center">
-        <ScatterChart
-          :xAxis="[
-            {
-              data: monthsThisYear.map(p => {
-                p.setDate(15);
-                return p;
-              }),
-              scaleType: 'utc',
-              valueFormatter: value => {
-                return value === null
-                  ? ''
-                  : new Date(value as number | Date).toLocaleDateString(
-                      getLanguage(),
-                      {
-                        month: 'short',
-                      },
-                    );
-              },
-            },
-          ]"
-          :yAxis="[
-            {
-              valueFormatter: value => {
-                const formattedNumber = formatNumber(
-                  parseInt((value || 0).toString()),
-                  {
-                    style: 'currency',
-                    currency: 'NOK',
-                    currencyDisplay: 'narrowSymbol',
-                    maximumFractionDigits: 0,
-                  },
-                );
-                return value === null ? '' : formattedNumber;
-              },
-            },
-          ]"
-          :dataset="
-            expenses.map(p => ({
-              ...p,
-              expense_date: new Date(p.expense_date),
-            }))
-          "
-          :series="[
-            {
-              datasetKeys: {
-                id: 'id',
-                x: 'expense_date',
-                y: 'cost',
-                // y:
-                //   chartSettings.selectedMode === 'costThisYear'
-                //     ? 'cost'
-                //     : chartSettings.selectedMode === 'gasPrice'
-                //       ? 'averagePricePerLitre'
-                //       : 'fuelEconomy',
-              },
-            },
-          ]"
-          :margin="{ top: 10, right: 10, bottom: 20 }"
-        />
+    <div class="stats shadow-md">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="inline-block h-8 w-8 fill-current"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M32 64C32 28.7 60.7 0 96 0L256 0c35.3 0 64 28.7 64 64l0 192 8 0c48.6 0 88 39.4 88 88l0 32c0 13.3 10.7 24 24 24s24-10.7 24-24l0-154c-27.6-7.1-48-32.2-48-62l0-64L384 64c-8.8-8.8-8.8-23.2 0-32s23.2-8.8 32 0l77.3 77.3c12 12 18.7 28.3 18.7 45.3l0 13.5 0 24 0 32 0 152c0 39.8-32.2 72-72 72s-72-32.2-72-72l0-32c0-22.1-17.9-40-40-40l-8 0 0 144c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32L32 64zM96 80l0 96c0 8.8 7.2 16 16 16l128 0c8.8 0 16-7.2 16-16l0-96c0-8.8-7.2-16-16-16L112 64c-8.8 0-16 7.2-16 16z"
+            />
+          </svg>
+        </div>
+        <div class="stat-title">Spent on Fuel this Month</div>
+        <div class="stat-value text-primary">
+          {{ statFuelCostPerMonth.costThisMonth }}
+        </div>
+        <div class="stat-desc">
+          {{ Math.abs(statFuelCostPerMonth.percentageDiffToPrevMonth) }}%
+          {{
+            statFuelCostPerMonth.percentageDiffToPrevMonth < 0 ? 'less' : 'more'
+          }}
+          than last month
+        </div>
       </div>
+
+      <!-- <div class="stat p-0">
+        <div class="stat-figure text-secondary max-h-52">
+          <ScatterChart
+            :xAxis="[
+              {
+                data: monthsThisYear.map(p => {
+                  p.setDate(15);
+                  return p;
+                }),
+                scaleType: 'utc',
+                valueFormatter: value => {
+                  return value === null
+                    ? ''
+                    : new Date(value as number | Date).toLocaleDateString(
+                        getLanguage(),
+                        {
+                          month: 'short',
+                        },
+                      );
+                },
+              },
+            ]"
+            :yAxis="[
+              {
+                valueFormatter: value => {
+                  const formattedNumber = formatNumber(
+                    parseInt((value || 0).toString()),
+                    {
+                      style: 'currency',
+                      currency: 'NOK',
+                      currencyDisplay: 'narrowSymbol',
+                      maximumFractionDigits: 0,
+                    },
+                  );
+                  return value === null ? '' : formattedNumber;
+                },
+              },
+            ]"
+            :dataset="
+              expenses.map(p => ({
+                ...p,
+                date: new Date(p.date),
+              }))
+            "
+            :series="[
+              {
+                datasetKeys: {
+                  id: 'id',
+                  x: 'date',
+                  y: 'cost',
+                },
+              },
+            ]"
+            :margin="{ top: 0, right: 10, bottom: 10 }"
+          />
+        </div>
+      </div> -->
     </div>
   </div>
 
@@ -137,7 +188,7 @@ onMounted(() => {
 
       <div class="flex-1">
         <h3 class="capitalize font-semibold xl:pr-0">
-          {{ expense.expense_type }}
+          {{ expense.type }}
         </h3>
         <dl class="mt-2 flex flex-col xl:flex-row">
           <div class="flex items-center flex-nowrap space-x-2">
@@ -156,8 +207,8 @@ onMounted(() => {
               </svg>
             </dt>
             <dd>
-              <time :datetime="expense.expense_date">{{
-                formatDate(expense.expense_date, { dateStyle: 'medium' })
+              <time :datetime="expense.date">{{
+                formatDate(expense.date, { dateStyle: 'medium' })
               }}</time>
             </dd>
           </div>
@@ -257,3 +308,32 @@ onMounted(() => {
     </li>
   </ul>
 </template>
+
+<style scoped>
+.drawer-bottom {
+  grid-auto-columns: auto max-content;
+}
+.drawer-bottom > .drawer-toggle ~ .drawer-content {
+  grid-column-start: 1;
+}
+.drawer-bottom > .drawer-toggle ~ .drawer-side {
+  grid-column-start: 2;
+  justify-items: end;
+}
+.drawer-bottom > .drawer-toggle ~ .drawer-side > *:not(.drawer-overlay) {
+  transform: translateY(100%);
+}
+[dir='rtl']
+  .drawer-bottom
+  > .drawer-toggle
+  ~ .drawer-side
+  > *:not(.drawer-overlay) {
+  transform: translateY(-100%);
+}
+.drawer-bottom
+  > .drawer-toggle:checked
+  ~ .drawer-side
+  > *:not(.drawer-overlay) {
+  transform: translateY(0%);
+}
+</style>

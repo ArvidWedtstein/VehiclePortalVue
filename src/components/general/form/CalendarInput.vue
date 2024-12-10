@@ -1,339 +1,264 @@
 <script setup lang="ts">
-import { toast } from '@/lib/toastManager';
-const date = new Date();
+import {
+  addToDate,
+  adjustCalendarDate,
+  getRangeBetweenDates,
+  toLocaleISODate,
+  toLocalPeriod,
+} from '@/utils/date';
+import { getLanguage } from '@/utils/utils';
+import { computed, reactive } from 'vue';
+
+const selectedDate = defineModel<Date>({
+  required: false,
+  default: new Date(),
+});
+const settings = reactive<{
+  view: 'none' | 'year' | 'month' | 'week';
+  selectedPeriod: string;
+}>({
+  view: 'none',
+  selectedPeriod: toLocalPeriod(new Date()),
+});
+
+const daysOfMonth = computed(() =>
+  getRangeBetweenDates(
+    adjustCalendarDate(
+      'start',
+      'week',
+      adjustCalendarDate(
+        'start',
+        'month',
+        new Date(settings.selectedPeriod),
+        1,
+      ),
+      1,
+    ),
+    adjustCalendarDate(
+      'end',
+      'week',
+      adjustCalendarDate('end', 'month', new Date(settings.selectedPeriod), 1),
+      1,
+    ),
+    'days',
+    'date',
+  ),
+);
+
+const years = Array.from(
+  { length: 2100 - 1900 + 1 },
+  (_, index) => 1900 + index,
+);
+
+const months = Array.from({ length: 12 }, (_, index) => index + 1).map(
+  month => {
+    return new Date(
+      `${Number(settings.selectedPeriod.substring(0, 4))}-${month}-01`,
+    );
+  },
+);
+
+const handleDateSelect = (date: Date) => {
+  const { selectedPeriod } = settings;
+
+  const currentYear = Number(selectedPeriod.substring(0, 4));
+  const currentMonth = Number(selectedPeriod.substring(5)) - 1;
+
+  const selectedYear = date.getFullYear();
+  const selectedMonth = date.getMonth();
+
+  selectedDate.value = date;
+
+  const monthDiff =
+    (selectedYear - currentYear) * 12 + (selectedMonth - currentMonth);
+
+  console.log(
+    'selectm',
+    selectedPeriod,
+    date.getMonth(),
+    parseInt(selectedPeriod.substring(5)) - 1,
+    'diff',
+    monthDiff,
+  );
+  if (monthDiff !== 0) {
+    navigateMonth(monthDiff > 0 ? 1 : -1);
+  }
+};
+
+const navigateMonth = (change: -1 | 1) => {
+  const newDate = addToDate(new Date(settings.selectedPeriod), change, 'month');
+
+  settings.selectedPeriod = toLocalPeriod(newDate);
+};
+
+const selectYear = (year: number) => {
+  const newDate = new Date(settings.selectedPeriod);
+  newDate.setFullYear(year);
+
+  settings.selectedPeriod = toLocalPeriod(newDate);
+
+  settings.view = 'month';
+};
+
+const selectMonth = (month: number) => {
+  const newDate = new Date(settings.selectedPeriod);
+  newDate.setMonth(month);
+
+  settings.selectedPeriod = toLocalPeriod(newDate);
+
+  settings.view = 'none';
+};
 </script>
 
 <template>
-  <div
-    class="mt-10 text-center lg:col-start-9 lg:col-end-13 lg:row-start-1 lg:mt-9 xl:col-start-9"
-  >
-    <div class="flex items-center text-black">
-      <button
-        type="button"
-        class="-m-1.5 flex flex-none items-center justify-center p-1.5 text-stone-500 bms"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-          data-slot="icon"
-          class="w-5 h-5"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-      </button>
-      <div class="flex-auto font-semibold text-sm text-white">
-        {{ date.toLocaleString('en-GB', { month: 'long' }) }}
-      </div>
-      <button
-        type="button"
-        class="-m-1.5 flex flex-none items-center justify-center p-1.5 text-stone-500 bms"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-          data-slot="icon"
-          class="w-5 h-5"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-      </button>
-    </div>
-    <div class="mt-6 grid grid-cols-7 text-xs">
-      <div>M</div>
-      <div>T</div>
-      <div>W</div>
-      <div>T</div>
-      <div>F</div>
-      <div>S</div>
-      <div>S</div>
-    </div>
+  <div class="dropdown">
+    <div tabindex="0" role="button" class="btn" v-bind="$attrs">Date</div>
     <div
-      class="isolate mt-2 grid grid-cols-7 rounded-lg bg-gray-300 text-sm ring-1 ring-zinc-500 gap-px"
+      tabindex="0"
+      class="dropdown-content z-[1] w-64 p-2 shadow bg-base-300 rounded-box"
     >
-      <button
-        type="button"
-        class="py-1.5 bjx boc bg-gray-300 text-stone-500 rounded-tl-lg"
-        @click="toast.triggerToast('Operation successful!')"
+      <div
+        class="text-center lg:col-start-9 lg:col-end-13 lg:row-start-1 xl:col-start-9"
       >
-        <time
-          datetime="2021-12-27"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >27</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2021-12-28"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >28</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2021-12-29"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >29</time
-        ></button
-      ><button
-        type="button"
-        class="py-1.5 bjx boc bg-gray-300 bg-gr text-stone-500"
-      >
-        <time
-          datetime="2021-12-30"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >30</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2021-12-31"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >31</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-01"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >1</time
-        ></button
-      ><button
-        type="button"
-        class="py-1.5 bjx boc bg-white text-black rounded-tr-lg"
-      >
-        <time
-          datetime="2022-01-02"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >2</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-03"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >3</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-04"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >4</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-05"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >5</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-06"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >6</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-07"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >7</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-08"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >8</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-09"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >9</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-10"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >10</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-11"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >11</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-purple-700">
-        <time
-          datetime="2022-01-12"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full font-semibold"
-          >12</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-13"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >13</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-14"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >14</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-15"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >15</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-16"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >16</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-17"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >17</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-18"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >18</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-19"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >19</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-20"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >20</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-21"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >21</time
-        ></button
-      ><button
-        type="button"
-        class="py-1.5 bjx boc bg-white font-semibold text-white"
-      >
-        <time
-          datetime="2022-01-22"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-black"
-          >22</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-23"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >23</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-24"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >24</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-25"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >25</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-26"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >26</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-27"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >27</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-28"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >28</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-29"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >29</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-white text-black">
-        <time
-          datetime="2022-01-30"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >30</time
-        ></button
-      ><button
-        type="button"
-        class="py-1.5 bjx boc bg-white text-black rounded-bl-lg"
-      >
-        <time
-          datetime="2022-01-31"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >31</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2022-02-01"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >1</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2022-02-02"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >2</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2022-02-03"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >3</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2022-02-04"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >4</time
-        ></button
-      ><button type="button" class="py-1.5 bjx boc bg-gray-300 text-stone-500">
-        <time
-          datetime="2022-02-05"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >5</time
-        ></button
-      ><button
-        type="button"
-        class="py-1.5 bjx boc bg-gray-300 text-stone-500 rounded-br-lg"
-      >
-        <time
-          datetime="2022-02-06"
-          class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
-          >6</time
+        <div class="flex items-center">
+          <button
+            type="button"
+            class="btn btn-sm btn-circle btn-ghost"
+            @click="navigateMonth(-1)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              class="w-5 h-5 fill-current"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            class="flex-auto dropdown"
+            :class="{ 'dropdown-open': settings.view !== 'none' }"
+          >
+            <div
+              tabindex="0"
+              role="button"
+              class="btn btn-sm"
+              @click="settings.view = 'year'"
+            >
+              {{
+                new Date(settings.selectedPeriod).toLocaleDateString(
+                  getLanguage(),
+                  {
+                    month: 'long',
+                    year: 'numeric',
+                  },
+                )
+              }}
+            </div>
+
+            <div
+              class="dropdown-content overflow-y-auto overflow-x-hidden max-h-52 z-10 bg-base-100 text-base-content rounded-box"
+            >
+              <ul
+                v-if="settings.view === 'year'"
+                tabindex="0"
+                class="menu w-52 p-2 shadow"
+              >
+                <li v-for="year in years" :key="year" class="">
+                  <button @click="selectYear(year)">{{ year }}</button>
+                </li>
+              </ul>
+              <ul
+                v-if="settings.view === 'month'"
+                tabindex="0"
+                class="menu w-52 p-2 shadow"
+              >
+                <li
+                  v-for="(month, monthIndex) in months"
+                  :key="monthIndex"
+                  class=""
+                >
+                  <button @click="selectMonth(month.getMonth())">
+                    {{
+                      month.toLocaleDateString(getLanguage(), { month: 'long' })
+                    }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-circle btn-ghost"
+            @click="navigateMonth(1)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              class="w-5 h-5 fill-current"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="mt-6 grid grid-cols-7 text-xs">
+          <div>M</div>
+          <div>T</div>
+          <div>W</div>
+          <div>T</div>
+          <div>F</div>
+          <div>S</div>
+          <div>S</div>
+        </div>
+
+        <div
+          class="isolate mt-2 grid grid-cols-7 rounded-lg bg-gray-300 text-sm ring-1 ring-zinc-500 gap-px"
         >
-      </button>
+          <button
+            v-for="(date, dateIndex) in daysOfMonth"
+            :key="`date-${dateIndex}`"
+            type="button"
+            class="py-1.5 hover:bg-gray-100"
+            :class="{
+              'rounded-tl-lg': dateIndex === 0,
+              'rounded-tr-lg': dateIndex === 6,
+              'rounded-bl-lg': dateIndex === daysOfMonth.length - 7,
+              'rounded-br-lg': dateIndex === daysOfMonth.length - 1,
+              'bg-gray-100 text-stone-500':
+                toLocalPeriod(date) !== settings.selectedPeriod,
+              'bg-white text-black':
+                toLocalPeriod(date) === settings.selectedPeriod,
+              'text-primary':
+                toLocaleISODate(date) === toLocaleISODate(new Date()) &&
+                toLocaleISODate(date) !== toLocaleISODate(selectedDate),
+              'text-white':
+                toLocaleISODate(date) === toLocaleISODate(selectedDate),
+            }"
+            @click="handleDateSelect(date)"
+          >
+            <time
+              :datetime="toLocaleISODate(date)"
+              class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
+              :class="{
+                'font-semibold':
+                  toLocaleISODate(date) === toLocaleISODate(new Date()) ||
+                  toLocaleISODate(date) === toLocaleISODate(selectedDate),
+                'bg-black':
+                  toLocaleISODate(date) === toLocaleISODate(selectedDate),
+              }"
+            >
+              {{ date.getDate() }}
+            </time>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

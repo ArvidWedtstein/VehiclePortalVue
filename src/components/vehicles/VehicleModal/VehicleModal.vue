@@ -5,7 +5,11 @@ import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import CheckboxTile from '@/components/general/form/CheckboxTile.vue';
 
-import { type TablesInsert, type TablesUpdate } from '@/database.types';
+import {
+  type Tables,
+  type TablesInsert,
+  type TablesUpdate,
+} from '@/database.types';
 import InputHelperTip from '@/components/general/form/InputHelperTip.vue';
 import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
@@ -73,11 +77,14 @@ const onFormSubmit = async () => {
   }
 };
 
-const handleOpen = (vehicle_id: TablesUpdate<'Vehicles'>['id']) => {
+const handleOpen = (vehicle_id?: Tables<'Vehicles'>['id']) => {
   stepControl.step = 0;
-  console.log('open', vehicle_id);
 
   if (vehicle_id == null || vehicle_id === undefined) {
+    vehicle.value = {
+      ...defaultValues,
+    };
+
     modalRef.value.modalRef.showModal();
     return;
   }
@@ -108,7 +115,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     @submit="onFormSubmit"
   >
     <FormStepper
-      class="mt-2"
+      class="my-2"
       v-model="stepControl.step"
       :steps="stepControl.steps"
     >
@@ -170,6 +177,66 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         >
           <FormInput
             wrapperClass="sm:col-span-2"
+            label="Fuel Type"
+            type="select"
+            v-model="vehicle.fuel_type"
+            :options="[
+              {
+                value: 'Gasoline',
+              },
+              {
+                value: 'Diesel',
+              },
+              {
+                value: 'Kerosene',
+              },
+              {
+                value: 'Gas',
+              },
+              {
+                value: 'Electric',
+              },
+              {
+                value: 'Hydrogen',
+              },
+              {
+                value: 'Other',
+              },
+              {
+                value: 'Biodiesel',
+              },
+              {
+                value: 'Biogasoline',
+              },
+              {
+                value: 'LPG-gas',
+              },
+              {
+                value: 'CNG-gas',
+              },
+              {
+                value: 'Metanol',
+              },
+              {
+                value: 'Etanol',
+              },
+              {
+                value: 'LPG-A',
+              },
+              {
+                value: 'LPG-B',
+              },
+              {
+                value: 'CNG 20',
+              },
+              {
+                value: 'CNG 25',
+              },
+            ]"
+          />
+
+          <FormInput
+            wrapperClass="sm:col-span-3"
             label="Fuel Capacity"
             type="number"
             inputmode="decimal"
@@ -177,6 +244,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             join
           >
             <template #addon>
+              <!-- TODO: make dynamic. Depending on what fuel type is selected, adjust available units-->
               <FormInput
                 wrapperClass="max-w-28"
                 class="join-item"
@@ -185,6 +253,8 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
                 :options="[
                   { value: 'liter', label: 'Liter' },
                   { value: 'us_gallon', label: 'US Gallon' },
+                  { value: 'kilometer', label: 'Kilometer' },
+                  { value: 'mile', label: 'Miles' },
                 ]"
               />
             </template>

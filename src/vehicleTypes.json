@@ -1,0 +1,157 @@
+{
+  "entries": [
+    { "kode": "BB", "beskrivelse": "Beltebil" },
+    { "kode": "BM", "beskrivelse": "Beltemotorsykkel" },
+    {
+      "kode": "C1",
+      "beskrivelse": "Beltetraktor med maksimal hastighet 40 km/t eller mindre, minste sporvidde for akselen nærmest føreren 1150 mm eller over, egenvekt over 600 kg, frihøyde 1000 mm eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "C2",
+      "beskrivelse": "Beltetraktor med maksimal hastighet 40 km/t eller mindre, minste sporvidde under 1150 mm, egenvekt over 600 kg, frihøyde ikke over 600 mm. Når tyngdepunktshøyde delt på sporvidde er over 0,9, er maksimal hastighet 30 km/t. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "C3",
+      "beskrivelse": "Beltetraktor med maksimal hastighet 40 km/t eller mindre og egenvekt 600 kg eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "C4",
+      "beskrivelse": "Beltetraktor til særlige formål og med maksimal hastighet 40 km/t eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "C5",
+      "beskrivelse": "Beltetraktor med maksimal hastighet over 40 km/t. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    { "kode": "L1e", "beskrivelse": "Moped" },
+    { "kode": "L2e", "beskrivelse": "Moped med 3 hjul" },
+    {
+      "kode": "L3e",
+      "beskrivelse": "Motorsykkel (lett -, mellomtung – og tung motorsykkel)."
+    },
+    { "kode": "L4e", "beskrivelse": "Motorsykkel med sidevogn" },
+    { "kode": "L5e", "beskrivelse": "Motorsykkel med 3 hjul" },
+    { "kode": "L6e", "beskrivelse": "Moped med 4 hjul" },
+    { "kode": "L7e", "beskrivelse": "Motorsykkel med 4 hjul" },
+    {
+      "kode": "M1",
+      "beskrivelse": "Bil for persontransport med høyst 8 sitteplasser i tillegg til førersetet (Personbil)"
+    },
+    {
+      "kode": "M1G",
+      "beskrivelse": "Terrenggående bil for persontransport med høyst 8 sitteplasser i tillegg til førersetet"
+    },
+    {
+      "kode": "M2",
+      "beskrivelse": "Bil for persontransport med over 8 sitteplasser i tillegg til førersetet og tillatt totalvekt ikke over 5000 kg"
+    },
+    {
+      "kode": "M2G",
+      "beskrivelse": "Terrenggående bil for persontransport med over 8 sitteplasser i tillegg til førersetet og tillatt totalvekt ikke over 5000 kg"
+    },
+    {
+      "kode": "M3",
+      "beskrivelse": "Bil for persontransport med over 8 sitteplasser i tillegg til førersetet og tillatt totalvekt over 5 000 kg (Buss)"
+    },
+    {
+      "kode": "M3G",
+      "beskrivelse": "Terrenggående bil for persontransport med over 8 sitteplasser i tillegg til førersetet og tillatt totalvekt over 5 000 kg (Buss)"
+    },
+    {
+      "kode": "MCL",
+      "beskrivelse": "Lett motorsykkel (reg i Norge før 9. november 2003)"
+    },
+    {
+      "kode": "MCM",
+      "beskrivelse": "Moped (reg i Norge før 9. november 2003)"
+    },
+    {
+      "kode": "MCT",
+      "beskrivelse": "Tung motorsykkel (reg i Norge før 9. november 2003)"
+    },
+    { "kode": "MR", "beskrivelse": "Motorredskap" },
+    {
+      "kode": "N1",
+      "beskrivelse": "Bil for godsbefordring med tillatt totalvekt ikke over 3 500 kg (Varebil)"
+    },
+    {
+      "kode": "N1G",
+      "beskrivelse": "Terrenggående bil for godsbefordring med tillatt totalvekt ikke over 3 500 kg"
+    },
+    {
+      "kode": "N2",
+      "beskrivelse": "Bil for godsbefordring med tillatt totalvekt på over 3 500 kg, men ikke over 12 000 kg (Lastebil)"
+    },
+    {
+      "kode": "N2G",
+      "beskrivelse": "Terrenggående bil for godsbefordring med tillatt totalvekt på over 3 500 kg, men ikke over 12 000 kg (Lastebil)"
+    },
+    {
+      "kode": "N3",
+      "beskrivelse": "Bil for godsbefordring med tillatt totalvekt over 12 000 kg (Lastebil)"
+    },
+    {
+      "kode": "N3G",
+      "beskrivelse": "Terrenggående bil for godsbefordring med tillatt totalvekt over 12 000 kg (Lastebil)"
+    },
+    {
+      "kode": "O1",
+      "beskrivelse": "Tilhenger med tillatt totalvekt ikke over 750 kg. For påhengsvogn og semitrailer skal summen av tillatte aksellaster legges til grunn for klassifiseringen."
+    },
+    {
+      "kode": "O2",
+      "beskrivelse": "Tilhenger med tillatt totalvekt over 750 kg, men ikke over 3 500 kg. For påhengsvogn og semitrailer skal summen av tillatte aksellaster legges til grunn for klassifiseringen."
+    },
+    {
+      "kode": "O3",
+      "beskrivelse": "Tilhenger med tillatt totalvekt over 3 500 kg, men ikke over 10 000 kg. For påhengsvogn og semitrailer skal summen av tillatte aksellaster legges til grunn for klassifiseringen."
+    },
+    {
+      "kode": "O4",
+      "beskrivelse": "Tilhenger med tillatt totalvekt over 10 000 kg. For påhengsvogn og semitrailer skal summen av tillatte aksellaster legges til grunn for klassifiseringen."
+    },
+    {
+      "kode": "R1",
+      "beskrivelse": "Tilhenger til traktor der summen av tillatte aksellaster ikke er over 1500 kg."
+    },
+    {
+      "kode": "R2",
+      "beskrivelse": "Tilhenger til traktor der summen av tillatte aksellaster er over 1500 kg, men ikke over 3500 kg."
+    },
+    {
+      "kode": "R3",
+      "beskrivelse": "Tilhenger til traktor der summen av tillatte aksellaster er 3500 kg, men ikke over 21000 kg."
+    },
+    {
+      "kode": "R4",
+      "beskrivelse": "Tilhenger til traktor der summen av tillatte aksellaster er over 21000 kg."
+    },
+    {
+      "kode": "T1",
+      "beskrivelse": "Traktor med maksimal hastighet 40 km/t eller mindre, minste sporvidde for akselen nærmest føreren 1150 mm eller over, egenvekt over 600 kg, frihøyde 1000 mm eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "T2",
+      "beskrivelse": "Traktor med maksimal hastighet 40 km/t eller mindre, minste sporvidde under 1150 mm, egenvekt over 600 kg, frihøyde ikke over 600 mm. Når tyngdepunktshøyde delt på sporvidde er over 0,9, er maksimal hastighet 30 km/t. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "T3",
+      "beskrivelse": "Traktor med maksimal hastighet 40 km/t eller mindre og egenvekt 600 kg eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "T4",
+      "beskrivelse": "Traktor til særlige formål og med maksimal hastighet 40 km/t eller mindre. Omfatter Jordbruks- eller skogbrukstraktor og traktor godkjent 1. juli 2005 og senere."
+    },
+    {
+      "kode": "T5",
+      "beskrivelse": "Traktor med maksimal hastighet over 40 km/t. Omfatter traktor godkjent 1. juli 2005 og senere."
+    },
+    { "kode": "TR", "beskrivelse": "Traktor (Godkjente før 1. juli 2005)" },
+    {
+      "kode": "TT",
+      "beskrivelse": "Traktortilhenger (reg i Norge før 1. juli 2005)"
+    }
+  ],
+  "page": 1,
+  "pages": 1,
+  "posts": 45
+}

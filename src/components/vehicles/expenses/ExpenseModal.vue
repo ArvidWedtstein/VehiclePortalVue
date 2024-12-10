@@ -20,8 +20,8 @@ const { upsertExpense, deleteExpense } = expensesStore;
 
 const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   vehicle_id: currentVehicle.value?.id || -1,
-  expense_date: new Date().toISOString().split('.')[0].slice(0, -3),
-  expense_type: '',
+  date: new Date().toISOString().split('.')[0].slice(0, -3),
+  type: '',
   amount: 0,
   notes: '',
   cost: 0,
@@ -47,18 +47,19 @@ const onFormSubmit = () => {
 const handleOpen = async (
   expense_id: TablesUpdate<'VehicleExpenses'>['id'],
 ) => {
-  const { data, error } = await supabase.rpc('get_last_mileage', {
-    vehicle_id: currentVehicle.value?.id || -1,
-    type: 'expenses',
-  });
-
-  if (error) throw error;
-
-  const [{ mileage }] = data;
-
   if (expense_id == null || expense_id === undefined) {
+    const { data, error } = await supabase.rpc('get_last_mileage', {
+      vehicle_id: currentVehicle.value?.id || -1,
+      type: 'expenses',
+    });
+
+    if (error) throw error;
+
+    const [{ mileage }] = data;
+
     expense.value = { ...defaultValues, mileage };
     modalRef.value?.modalRef?.showModal();
+
     return;
   }
 
@@ -72,7 +73,7 @@ const handleOpen = async (
   expense.value = {
     ...defaultValues,
     ...editExpense,
-    expense_date: new Date(editExpense.expense_date || '')
+    date: new Date(editExpense.date || '')
       .toISOString()
       .split('.')[0]
       .slice(0, -3),
@@ -96,7 +97,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         wrapperClass="sm:col-span-2"
         label="Date"
         type="datetime-local"
-        v-model="expense.expense_date"
+        v-model="expense.date"
         required
       />
 
@@ -104,7 +105,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         wrapperClass="sm:col-span-4"
         label="Type"
         type="select"
-        v-model="expense.expense_type"
+        v-model="expense.type"
         required
         :options="[
           {

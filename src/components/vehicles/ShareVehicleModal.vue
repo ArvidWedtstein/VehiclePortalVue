@@ -60,13 +60,15 @@ const onFormSubmit = async (event: Event) => {
   toast.triggerToast(`Successfully updated shares`, 'success', 1000);
 };
 
-const handleOpen = async () => {
+const handleOpen = async (vehicle_id?: Tables<'Vehicles'>['id']) => {
   addedShares.value = [];
   removedShares.value = [];
 
   modalRef.value.modalRef.showModal();
 
-  const vehicleShares = await getVehicleShares(currentVehicle.value?.id);
+  const vehicleShares = await getVehicleShares(
+    vehicle_id || currentVehicle.value?.id,
+  );
 
   vehiclesShare.value = vehicleShares;
 
@@ -113,7 +115,7 @@ onMounted(async () => {
   users.value = profiles;
 });
 
-defineExpose({ modalRef: modalRef });
+defineExpose({ modalRef: modalRef, open: handleOpen });
 </script>
 
 <template>

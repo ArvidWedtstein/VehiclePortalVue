@@ -33,12 +33,9 @@ onMounted(async () => {
             v-if="vehicle.type"
             class="flex justify-center items-center w-12 text-base-content p-2"
           >
-            <CarIcon v-if="vehicle.type === 'M1'" class="h-8" />
+            <CarIcon v-if="vehicle.type === 'Car'" class="h-8" />
 
-            <MotorcycleIcon
-              v-if="vehicle.type === 'L3e' || vehicle.type === 'MCT'"
-              class="w-7"
-            />
+            <MotorcycleIcon v-if="vehicle.type === 'Motorcycle'" class="w-7" />
           </div>
         </div>
         <h2 class="card-title !mb-0 grow">

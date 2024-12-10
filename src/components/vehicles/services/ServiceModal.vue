@@ -19,10 +19,9 @@ const { upsertService } = serviceStore;
 const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
 const defaultValues: TablesUpdate<'VehicleServiceLogs'> = {
-  created_at: new Date().toISOString(),
   vehicle_id: currentVehicle.value?.id,
-  service_date: new Date().toISOString().split('.')[0].slice(0, -3),
-  service_provider: '',
+  date: new Date().toISOString().split('.')[0].slice(0, -3),
+  provider: '',
   cost: 0,
   currency: 'NOK',
   mileage: 0,
@@ -49,16 +48,16 @@ const onFormSubmit = () => {
 const handleOpen = async (
   service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
-  const { data, error } = await supabase.rpc('get_last_mileage', {
-    vehicle_id: currentVehicle.value?.id || -1,
-    type: 'services',
-  });
-
-  if (error) throw error;
-
-  const [{ mileage }] = data;
-
   if (service_id == null || service_id === undefined) {
+    const { data, error } = await supabase.rpc('get_last_mileage', {
+      vehicle_id: currentVehicle.value?.id || -1,
+      type: 'services',
+    });
+
+    if (error) throw error;
+
+    const [{ mileage }] = data;
+
     service.value = { ...defaultValues, mileage };
     modalRef.value?.modalRef?.showModal();
     return;
@@ -71,15 +70,10 @@ const handleOpen = async (
     return;
   }
 
-  console.log({
-    ...defaultValues,
-    ...editService,
-  });
-
   service.value = {
     ...defaultValues,
     ...editService,
-    service_date: new Date(editService.service_date || '')
+    date: new Date(editService.date || '')
       .toISOString()
       .split('.')[0]
       .slice(0, -3),
@@ -103,7 +97,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         wrapperClass="md:col-span-2"
         label="Date"
         type="datetime-local"
-        v-model="service.service_date"
+        v-model="service.date"
         required
       />
 
@@ -119,8 +113,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         wrapperClass="md:col-span-2"
         label="Provider"
         type="text"
-        v-model.trim="service.service_provider"
-        required
+        v-model.trim="service.provider"
       />
 
       <FormInput

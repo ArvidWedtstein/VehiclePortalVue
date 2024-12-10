@@ -67,9 +67,9 @@ export const adjustCalendarDate = (
     } else if (period === 'month') {
       result.setMonth(result.getMonth() + 1, 0);
     } else if (period === 'week') {
-      const dayOfWeek = result.getUTCDay();
-      const diff = (6 - dayOfWeek + 7) % 7;
-      result.setDate(result.getUTCDate() + diff);
+      const dayOfWeek = result.getDay();
+      const diff = (6 - dayOfWeek + (7 + startOn)) % 7;
+      result.setDate(result.getDate() + diff);
     } else if (period === 'year') {
       result.setMonth(11, 31);
       // result.setUTCHours(2, 0, 0, 0);
@@ -200,8 +200,8 @@ export const getRangeBetweenDates = <
   returnAs: R = 'object' as R,
 ): DateRangeResult<T, R> => {
   const result: (Date | { year: number; month?: number; date?: number })[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate.setHours(1, 0, 0));
+  const start = new Date(startDate.setHours(0, 0, 0));
+  const end = new Date(endDate.setHours(0, 0, 0));
 
   switch (unit) {
     case 'days': {
@@ -279,4 +279,66 @@ export const relativeDate = (
     const days = Math.floor(diffInSeconds / 86400);
     return rtf.format(-days, 'day');
   }
+};
+
+export const toLocalPeriod = (date: Date): string => {
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}`;
+};
+
+export const toLocaleISODate = (date: Date | null) => {
+  if (!date) return;
+  return `${date.getFullYear()}-${(date.getMonth() + 1 + '').padStart(
+    2,
+    '0',
+  )}-${(date.getDate() + '').padStart(2, '0')}`;
+};
+
+export const getDateUnit = (
+  type: 'weekday' | 'month' = 'weekday',
+  firstDayOfWeek = 1,
+): Date[] => {
+  const days: Date[] = [];
+  const date = new Date();
+
+  // Set the date to the first day of the week (Monday)
+
+  if (type === 'month') {
+    date.setMonth(0);
+  } else {
+    date.setDate(date.getDate() - ((date.getDay() - firstDayOfWeek + 7) % 7));
+  }
+
+  // Get the weekdays (Monday to Sunday)
+  for (let i = 0; i < (type === 'weekday' ? 7 : 12); i++) {
+    days.push(new Date(date));
+    if (type === 'weekday') {
+      date.setDate(date.getDate() + 1);
+    } else {
+      date.setMonth(date.getMonth() + 1);
+    }
+  }
+
+  return days;
+};
+
+export const addToDate = (
+  date: Date,
+  value: number = 0,
+  unit: 'day' | 'week' | 'month' | 'year' = 'day',
+) => {
+  const result = new Date(date);
+
+  if (unit === 'day') {
+    result.setDate(result.getDate() + value);
+  } else if (unit === 'week') {
+    result.setDate(result.getDate() + value * 7);
+  } else if (unit === 'month') {
+    result.setMonth(result.getMonth() + value);
+  } else if (unit === 'year') {
+    result.setFullYear(result.getFullYear() + value);
+  }
+
+  return result;
 };
