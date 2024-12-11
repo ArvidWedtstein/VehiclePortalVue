@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import CalendarInput from '@/components/general/form/CalendarInput.vue';
 import type { Tables } from '@/database.types';
 import { useVehiclesStore } from '@/stores/vehicles';
 import { toRef } from 'vue';
@@ -75,7 +74,5 @@ const emit = defineEmits<{
         <small>{{ currentVehicle.fuel_type }}</small>
       </div>
     </div>
-
-    <CalendarInput />
   </div>
 </template>

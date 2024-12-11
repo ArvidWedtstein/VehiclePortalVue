@@ -17,7 +17,7 @@ onMounted(() => {
   <main class="min-h-full bg-base-100">
     <PageNavbar />
 
-    <div class="px-4 py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-3 sm:px-6 lg:px-8 max-w-full">
       <RouterView />
     </div>
 

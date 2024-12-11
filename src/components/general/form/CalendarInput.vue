@@ -72,14 +72,6 @@ const handleDateSelect = (date: Date) => {
   const monthDiff =
     (selectedYear - currentYear) * 12 + (selectedMonth - currentMonth);
 
-  console.log(
-    'selectm',
-    selectedPeriod,
-    date.getMonth(),
-    parseInt(selectedPeriod.substring(5)) - 1,
-    'diff',
-    monthDiff,
-  );
   if (monthDiff !== 0) {
     navigateMonth(monthDiff > 0 ? 1 : -1);
   }

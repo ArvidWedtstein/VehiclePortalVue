@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { formatFileSize, formatListDisjunction } from '@/utils/format';
+import {
+  convertBytes,
+  formatFileSize,
+  formatListDisjunction,
+} from '@/utils/format';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
 import { ref, watch } from 'vue';
@@ -37,7 +41,8 @@ type FileUploadProps = {
    */
   accept?: string;
   /**
-   * Max size in bytes
+   * Max size in megabytes
+   * @default 5 mb
    */
   maxSize?: number;
 };
@@ -54,7 +59,7 @@ type iFile = {
   url?: string;
   path: string;
   error?: {
-    type: 'oversized' | 'invalidType' | 'uploadError';
+    type: 'oversized' | 'invalidType' | 'uploadError' | 'invalidCharacters';
     message: string;
   };
 };
@@ -66,7 +71,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   hideFilesGrid: false,
   storagePath: '',
   accept: 'image/png, image/jpg, image/jpeg, image/webp',
-  maxSize: 3150000,
+  maxSize: 5,
   valueFormatter: (filename: string | null) => {
     return filename || '';
   },
@@ -74,6 +79,38 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
 });
 
 const files = ref<Partial<iFile>[]>([]);
+
+const validateFile = (file: File) => {
+  let fileError: iFile['error'] = undefined;
+
+  if (file.size > convertBytes(props.maxSize, 'megabytes', 'bytes')) {
+    fileError = {
+      type: 'oversized',
+      message: `File is too large.${` Max size is ${formatFileSize(convertBytes(props.maxSize, 'megabytes', 'bytes'))}.`}`,
+    };
+  }
+
+  if (
+    !props.accept
+      .split(',')
+      .map(a => a.trim().toUpperCase())
+      .includes(file.type.toUpperCase())
+  ) {
+    fileError = {
+      type: 'invalidType',
+      message: `Invalid file type.`,
+    };
+  }
+
+  if (!/^(\w|\/|!|-|\.|\*|'|\(|\)| |&|\$|@|=|;|:|\+|,|\?)*$/.test(file.name)) {
+    fileError = {
+      type: 'invalidCharacters',
+      message: `File name contains invalid characters.`,
+    };
+  }
+
+  return fileError;
+};
 
 const readFiles = (ifiles: FileList): void => {
   Array.prototype.forEach.call(ifiles, (file: File) => {
@@ -90,21 +127,7 @@ const readFiles = (ifiles: FileList): void => {
         url: fileloader.target.result.toString(),
         state: 'newfile',
         preview: false,
-        error:
-          props.maxSize && file.size > props.maxSize
-            ? {
-                type: 'oversized',
-                message: `File is too large.${` Max size is ${formatFileSize(props.maxSize)}.`}`,
-              }
-            : !props.accept
-                  .split(',')
-                  .map(a => a.trim().toUpperCase())
-                  .includes(file.type.toUpperCase())
-              ? {
-                  type: 'invalidType',
-                  message: `Invalid file type.`,
-                }
-              : undefined,
+        error: validateFile(file),
       });
     };
 
@@ -146,8 +169,6 @@ const handleUpload = () => {
           : f,
       );
 
-      // TODO: consider moving this to store?
-
       const { data, error } = await supabase.storage
         .from(props.bucket)
         .upload(
@@ -166,6 +187,7 @@ const handleUpload = () => {
         console.error(error.message);
       }
 
+      // TODO: change state back to default.
       files.value = files.value.map(f =>
         f.file?.name === (file?.name || '')
           ? {
@@ -210,6 +232,7 @@ const fetchFiles = async () => {
 
 const handleFileDelete = async (file: Partial<iFile>) => {
   try {
+    console.info('HandleFileDelete', file);
     if (!file.path) return;
 
     const { error } = await supabase.storage
@@ -282,7 +305,7 @@ watch(
             </span>
 
             <span v-if="maxSize">{{
-              ` (Max. ${formatFileSize(maxSize)})`
+              ` (Max. ${formatFileSize(convertBytes(maxSize, 'megabytes', 'bytes'))})`
             }}</span>
           </p>
 
@@ -300,7 +323,7 @@ watch(
           class="hidden"
           :accept="accept"
           :multiple="props.multiple"
-          :size="maxSize"
+          :size="convertBytes(maxSize, 'megabytes', 'bytes')"
           @change="handleFileChange"
           hidden
         />

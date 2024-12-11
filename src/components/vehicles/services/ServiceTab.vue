@@ -178,9 +178,9 @@ onMounted(async () => {
     </div>
   </div>
 
-  <ul class="mt-4 text-sm divide-y divide-neutral">
+  <ul class="mt-4 text-sm divide-y divide-neutral max-h-96 overflow-y-auto">
     <li
-      class="relative flex items-center space-x-6 py-6 xl:static"
+      class="relative flex items-center space-x-6 py-3"
       v-for="(service, index) in services"
       :key="index"
     >

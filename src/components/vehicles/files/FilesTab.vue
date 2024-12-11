@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FileDrop from '@/components/general/file/FileDrop.vue';
+import ImageCropper from '@/components/general/file/ImageCropper.vue';
 import { useDocumentsStore } from '@/stores/documents';
 import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, toRef, toRefs } from 'vue';
@@ -22,12 +23,14 @@ onMounted(() => {
       bucket="VehicleDocuments"
       :storagePath="`${currentVehicle.licenseplate_number}/`"
       :initialFiles="
-        documents.map(({ name, file_path }) => ({
-          file: { name: name || '' },
+        documents.map(({ name, file_path, file_size }) => ({
+          file: { name: name || '', size: file_size || 0 },
           path: file_path,
           state: 'uploaded',
         }))
       "
     />
+
+    <ImageCropper />
   </div>
 </template>

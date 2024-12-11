@@ -169,7 +169,7 @@ onMounted(() => {
 
   <ul class="mt-4 text-sm divide-y divide-neutral max-h-96 overflow-y-auto">
     <li
-      class="relative flex items-center space-x-6 py-3 xl:static"
+      class="relative flex items-center space-x-6 py-3"
       v-for="(expense, index) in expenses"
       :key="index"
     >

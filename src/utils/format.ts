@@ -1,6 +1,8 @@
 import { getLanguage } from './utils';
 
 export const formatFileSize = (size: number) => {
+  if (size === 0) return `${size} B`;
+
   const i = Math.floor(Math.log(size) / Math.log(1024));
   return `${(size / Math.pow(1024, i)).toFixed(2)} ${['B', 'KB', 'MB', 'GB', 'TB'][i]}`;
 };
@@ -33,4 +35,28 @@ export const formatNumber = (
   const formatter = new Intl.NumberFormat(language, options);
 
   return formatter.format(num);
+};
+
+type Bytes = 'bytes' | 'kilobytes' | 'megabytes' | 'gigabytes' | 'terabytes';
+
+export const convertBytes = (value: number, fromUnit: Bytes, toUnit: Bytes) => {
+  if (typeof value !== 'number' || value < 0) {
+    throw new Error('Input must be a non-negative number.');
+  }
+
+  const units = {
+    bytes: 1,
+    kilobytes: 1024,
+    megabytes: 1024 * 1024,
+    gigabytes: 1024 * 1024 * 1024,
+    terabytes: 1024 * 1024 * 1024 * 1024,
+  };
+
+  if (!units[fromUnit] || !units[toUnit]) {
+    throw new Error(
+      'Invalid unit specified. Supported units are: bytes, kilobytes, megabytes, gigabytes, terabytes.',
+    );
+  }
+
+  return (value * units[fromUnit]) / units[toUnit];
 };
