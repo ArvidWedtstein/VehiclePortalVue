@@ -35,7 +35,6 @@ const handleImageUpload = async (event: Event) => {
 
   image.value.onload = async () => {
     await nextTick();
-    await setCanvasSize();
     drawImage();
     if (ctx.value && canvas.value) {
       originalImageData.value = ctx.value.getImageData(
@@ -47,22 +46,7 @@ const handleImageUpload = async (event: Event) => {
     }
     imageLoaded.value = true;
     cropOverlayVisible.value = true;
-
-    console.log('Image loaded', ctx.value, canvas.value);
   };
-};
-const setCanvasSize = async () => {
-  if (!canvas.value || !image.value) return;
-  // const maxCanvasWidth = 500;
-  // const aspectRatio = image.value.width / image.value.height;
-  // if (image.value.width > maxCanvasWidth) {
-  //   canvas.value.width = maxCanvasWidth;
-  //   canvas.value.height = maxCanvasWidth / aspectRatio;
-  // } else {
-  //   canvas.value.width = image.value.width;
-  //   canvas.value.height = image.value.height;
-  // }
-  ctx.value = canvas.value.getContext('2d')!;
 };
 
 const drawImage = () => {
@@ -81,7 +65,32 @@ const drawImage = () => {
   ctx.value.rotate((rotation * Math.PI) / 180);
   ctx.value.translate(-width / 2, -height / 2);
 
-  ctx.value.drawImage(image.value, 0, 0, width, height);
+  const imageAspectRatio = image.value.width / image.value.height;
+  const canvasAspectRatio = width / height;
+
+  let drawWidth, drawHeight;
+  if (imageAspectRatio > canvasAspectRatio) {
+    // Image is wider than the canvas
+    drawWidth = width;
+    drawHeight = drawWidth / imageAspectRatio;
+  } else {
+    // Image is taller than or fits within the canvas
+    drawHeight = height;
+    drawWidth = drawHeight * imageAspectRatio;
+  }
+
+  // Draw image scaled within the canvas, starting at the top-left corner
+  ctx.value.drawImage(
+    image.value,
+    0, // Source X
+    0, // Source Y
+    image.value.width, // Source Width
+    image.value.height, // Source Height
+    0, // Destination X
+    0, // Destination Y
+    drawWidth, // Destination Width
+    drawHeight, // Destination Height
+  );
   ctx.value.restore();
 };
 
@@ -119,7 +128,6 @@ const resetImage = () => {
   cropRegion.y = 0;
   cropRegion.width = width;
   cropRegion.height = height;
-  setCanvasSize();
   drawImage();
 };
 
@@ -165,7 +173,10 @@ const onResize = (event: MouseEvent) => {
   }
   if (resizeDirection.includes('top')) {
     // TODO: fix resizing from top
-    const newHeight = Math.max(20, resizeStart.height - deltaY);
+    const newHeight = Math.max(
+      20,
+      Math.min(resizeStart.height - deltaY, height),
+    );
     console.log(newHeight);
     cropRegion.y = Math.max(0, cropRegion.y - (newHeight - cropRegion.height));
     cropRegion.height = newHeight;
@@ -196,7 +207,6 @@ const onDrag = (event: MouseEvent) => {
 
   const { width, height } = canvas.value.getBoundingClientRect();
 
-  // Calculate new position while clamping within canvas bounds
   cropRegion.x = Math.max(
     0,
     Math.min(event.clientX - dragStart.x, width - cropRegion.width),
@@ -221,7 +231,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-4 border rounded space-y-4">
+  <div class="space-y-4">
     <input
       type="file"
       accept="image/*"
@@ -266,14 +276,37 @@ onMounted(() => {
         ></div>
       </div>
 
-      <div class="controls flex space-x-2 mt-2">
-        <button class="btn btn-sm btn-primary" @click="rotateImage(90)">
+      <div class="flex w-full join mt-2">
+        <button
+          class="btn btn-sm btn-primary join-item"
+          @click="rotateImage(90)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="w-3 fill-current"
+          >
+            <path
+              d="M463.5 224l8.5 0c13.3 0 24-10.7 24-24l0-128c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8l119.5 0z"
+            />
+          </svg>
           Rotate 90°
         </button>
-        <button class="btn btn-sm btn-secondary" @click="cropImage">
+        <button class="btn btn-sm btn-secondary join-item" @click="cropImage">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="fill-current w-3"
+          >
+            <path
+              d="M448 109.3l54.6-54.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L402.7 64 160 64l0 64 178.7 0L128 338.7 128 32c0-17.7-14.3-32-32-32S64 14.3 64 32l0 32L32 64C14.3 64 0 78.3 0 96s14.3 32 32 32l32 0 0 256c0 35.3 28.7 64 64 64l224 0 0-64-178.7 0L384 173.3 384 480c0 17.7 14.3 32 32 32s32-14.3 32-32l0-32 32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-32 0 0-274.7z"
+            />
+          </svg>
           Crop
         </button>
-        <button class="btn btn-sm btn-accent" @click="resetImage">Reset</button>
+        <button class="btn btn-sm btn-accent join-item" @click="resetImage">
+          Reset
+        </button>
       </div>
     </div>
   </div>
