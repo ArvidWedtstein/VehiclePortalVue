@@ -80,7 +80,9 @@ export const useSessionStore = defineStore('session', () => {
     await getProfile();
 
     supabase.auth.onAuthStateChange(async (event, _session) => {
-      console.info('Auth State Changed', event);
+      if (session.value?.refresh_token !== _session?.refresh_token) {
+        console.info('Auth State Changed', event);
+      }
       session.value = _session;
 
       if (!profile.value) {
