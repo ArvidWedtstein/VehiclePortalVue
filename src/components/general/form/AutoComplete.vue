@@ -36,7 +36,7 @@ function createFilterOptions<Value>(
       getOptionLabel,
     }: { inputValue: string; getOptionLabel: (option: Value) => string },
   ) => {
-    let input = trim ? inputValue.trim() : inputValue;
+    let input = trim ? inputValue.trim() : inputValue || '';
     if (ignoreCase) {
       input = input.toLowerCase();
     }
@@ -87,6 +87,7 @@ type AutocompleteProps<
   closeOnSelect?: boolean;
   clearOnBlur?: boolean;
   readonly?: boolean;
+  wrapperClass?: string;
   getOptionLabel?: (option: Value) => string;
   getOptionValue?: (option: Value) => string | number | boolean;
   isOptionEqualToValue?: (option: Value, value: Value) => boolean;
@@ -101,7 +102,7 @@ const props = withDefaults(
         return option.label as string;
       }
 
-      return JSON.stringify(option);
+      return typeof option !== 'string' ? JSON.stringify(option) : option;
     },
     getOptionValue: (option: Value | string) => {
       if (typeof option === 'object' && option !== null && 'value' in option) {
@@ -207,6 +208,7 @@ const handleInputChange = (event: Event) => {
     inputValue.value = newValue;
     // setInputPristine(false);
 
+    // TODO: emit?
     // if (onInputChange) {
     //   onInputChange(event, newValue, "input");
     // }
@@ -233,10 +235,13 @@ const handleValue = (event: Event, newValue: Value) => {
     ) {
       return;
     }
+
+    inputValue.value = '';
   } else if (props.modelValue === newValue) {
     return;
   }
 
+  // TODO: Replaced with emit?
   // if (onChange) {
   //   onChange?.(
   //     event,
@@ -245,6 +250,9 @@ const handleValue = (event: Event, newValue: Value) => {
   //     details as LookupChangeDetails<Value>
   //   );
   // }
+
+  const optionLabel = props.getOptionLabel(newValue);
+  inputValue.value = optionLabel;
 
   emit('select', newValue);
   emit('update:modelValue', newValue);
@@ -298,7 +306,6 @@ const onEnter = (event: Event) => {
     selectedIndex.value < filteredOptions.value.length
   ) {
     selectNewValue(event, filteredOptions.value[selectedIndex.value]);
-    // selectOption(filteredOptions.value[selectedIndex.value]);
   }
 };
 
@@ -375,8 +382,12 @@ onBeforeUnmount(() =>
 </script>
 
 <template>
-  <div class="w-full max-w-xs relative" ref="autocompleteRef">
-    <div class="dropdown" :class="{ 'dropdown-open': isDropdownOpen }">
+  <div
+    class="w-full max-w-xs relative"
+    :class="wrapperClass"
+    ref="autocompleteRef"
+  >
+    <div class="dropdown w-full" :class="{ 'dropdown-open': isDropdownOpen }">
       <div class="form-control mb-1">
         <slot name="label">
           <div class="label" v-show="label">
@@ -384,7 +395,7 @@ onBeforeUnmount(() =>
           </div>
         </slot>
 
-        <div class="input input-bordered w-full flex gap-2 items-center">
+        <div class="input input-bordered w-full flex gap-2 items-center grow">
           <template v-if="multiple && Array.isArray(props.modelValue)">
             <div
               role="button"

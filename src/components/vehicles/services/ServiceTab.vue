@@ -103,7 +103,7 @@ onMounted(async () => {
   <ServiceModal ref="serviceModal" />
 
   <div class="flex justify-between">
-    <button type="button" class="btn" @click="serviceModal.open()">
+    <button type="button" class="btn btn-accent" @click="serviceModal.open()">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 448 512"
@@ -225,7 +225,7 @@ onMounted(async () => {
             </dd>
           </div>
           <div
-            class="mt-2 flex items-start space-x-3 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-secondary xl:pl-3.5"
+            class="mt-2 flex items-start space-x-3 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-neutral xl:pl-3.5"
           >
             <dd>{{ service.notes }}</dd>
           </div>

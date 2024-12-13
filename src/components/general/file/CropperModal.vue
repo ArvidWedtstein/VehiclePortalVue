@@ -34,6 +34,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       ref="cropperRef"
       v-if="imageSource !== ''"
       :imageSrc="imageSource"
+      class="mb-2"
     />
   </FormDialog>
 </template>

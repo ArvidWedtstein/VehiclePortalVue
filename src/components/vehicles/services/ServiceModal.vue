@@ -7,6 +7,8 @@ import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useServicesStore } from '@/stores/services';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
+import { formatNumber } from '@/utils/format';
+import DataList from '@/components/general/form/Datalist.vue';
 
 const modalRef = ref();
 
@@ -58,7 +60,11 @@ const handleOpen = async (
 
     const [{ mileage }] = data;
 
-    service.value = { ...defaultValues, mileage };
+    service.value = {
+      ...defaultValues,
+      date: new Date().toISOString().split('.')[0].slice(0, -3),
+      mileage,
+    };
     modalRef.value?.modalRef?.showModal();
     return;
   }
@@ -106,8 +112,11 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         label="Type"
         type="text"
         v-model="service.type"
+        list="service_types"
         required
       />
+
+      <DataList id="service_types" :options="['Oil Change', 'Registerreim']" />
 
       <FormInput
         wrapperClass="md:col-span-2"
@@ -142,15 +151,27 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       <FormInput
         label="Odometer Reading"
         wrapperClass="md:col-span-2"
-        type="number"
-        join
+        type="text"
+        inputmode="decimal"
         v-model="service.mileage"
-      />
+      >
+        <template #addon>
+          <span class="absolute right-0 pr-3">
+            {{
+              formatNumber(0, {
+                style: 'unit',
+                unit: currentVehicle?.mileage_unit || 'kilometer',
+              }).replace('0', '')
+            }}
+          </span>
+        </template>
+      </FormInput>
 
       <FormInput
         label="Notes"
         wrapperClass="md:col-span-2"
         type="textarea"
+        rows="1"
         v-model="service.notes"
       />
     </div>

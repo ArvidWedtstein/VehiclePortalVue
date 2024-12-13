@@ -346,7 +346,7 @@ defineExpose({
     <div class="flex flex-col items-center relative">
       <canvas
         ref="canvas"
-        class="border rounded shadow w-full"
+        class="rounded shadow w-full"
         @mousedown="startDragImage"
       ></canvas>
 
@@ -354,10 +354,10 @@ defineExpose({
         v-if="cropOverlayVisible && imageLoaded"
         class="absolute"
         :style="{
-          top: cropRegion.y + 'px',
-          left: cropRegion.x + 'px',
-          width: cropRegion.width + 'px',
-          height: cropRegion.height + 'px',
+          top: `${cropRegion.y}px`,
+          left: `${cropRegion.x}px`,
+          width: `${cropRegion.width}px`,
+          height: `${cropRegion.height}px`,
         }"
         @mousedown="startDragImage"
       >
@@ -383,10 +383,10 @@ defineExpose({
         ></div>
       </div>
 
-      <div class="absolute right-0 top-0 flex justify-end w-full join m-1">
+      <div class="flex items-center gap-1 w-full join mt-2">
         <button
           type="button"
-          class="btn btn-sm btn-primary btn-square btn-outline join-item"
+          class="btn btn-sm btn-square btn-ghost btn-primary"
           @click="rotateImage(-90)"
         >
           <svg
@@ -401,7 +401,7 @@ defineExpose({
         </button>
         <button
           type="button"
-          class="btn btn-sm btn-primary btn-square btn-outline join-item"
+          class="btn btn-sm btn-square btn-ghost btn-primary"
           @click="rotateImage(90)"
         >
           <svg
@@ -415,9 +415,14 @@ defineExpose({
           </svg>
         </button>
 
+        <span class="mx-2">
+          {{ cropRegion.width.toFixed(0) }} x
+          {{ cropRegion.height.toFixed(0) }}
+        </span>
+        <div class="grow"></div>
         <button
           type="button"
-          class="btn btn-sm btn-accent join-item"
+          class="btn btn-sm btn-outline btn-error"
           @click="resetImage"
         >
           Reset

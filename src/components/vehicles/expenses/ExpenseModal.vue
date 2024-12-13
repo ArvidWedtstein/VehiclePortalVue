@@ -8,6 +8,7 @@ import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
+import { formatNumber } from '@/utils/format';
 
 const modalRef = ref();
 
@@ -137,7 +138,6 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         label="Amount"
         type="text"
         inputmode="numeric"
-        join
         v-model.number="expense.amount"
       />
 
@@ -186,7 +186,14 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
           </svg>
         </template>
         <template #addon>
-          <span class="absolute right-0 pr-3">km</span>
+          <span class="absolute right-0 pr-3">
+            {{
+              formatNumber(0, {
+                style: 'unit',
+                unit: currentVehicle?.mileage_unit || 'kilometer',
+              }).replace('0', '')
+            }}
+          </span>
         </template>
       </FormInput>
 

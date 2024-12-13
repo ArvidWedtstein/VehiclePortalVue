@@ -28,7 +28,7 @@ export const formatListDisjunction = (items: string[]): string => {
  * @returns A formatted string of your number
  */
 export const formatNumber = (
-  num: number,
+  num: number | bigint,
   options: Intl.NumberFormatOptions = { style: 'decimal' },
 ) => {
   const language = getLanguage();

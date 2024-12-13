@@ -67,7 +67,7 @@ onMounted(() => {
   <ExpenseModal ref="expenseModal" />
 
   <div class="flex justify-between">
-    <button class="btn" @click="expenseModal.open()">
+    <button class="btn btn-accent" @click="expenseModal.open()">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 448 512"
@@ -214,13 +214,12 @@ onMounted(() => {
           </div>
 
           <div
-            class="mt-2 flex items-center space-x-2 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-secondary xl:pl-3.5"
+            class="mt-2 flex items-center space-x-2 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-neutral xl:pl-3.5"
           >
             <dt class="mt-0.5">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
-                aria-hidden="true"
                 class="h-5 w-5 fill-current"
               >
                 <path
@@ -260,10 +259,7 @@ onMounted(() => {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-              data-slot="icon"
-              class="h-5 w-5"
+              class="h-5 w-5 fill-current"
             >
               <path
                 d="M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
@@ -308,32 +304,3 @@ onMounted(() => {
     </li>
   </ul>
 </template>
-
-<style scoped>
-.drawer-bottom {
-  grid-auto-columns: auto max-content;
-}
-.drawer-bottom > .drawer-toggle ~ .drawer-content {
-  grid-column-start: 1;
-}
-.drawer-bottom > .drawer-toggle ~ .drawer-side {
-  grid-column-start: 2;
-  justify-items: end;
-}
-.drawer-bottom > .drawer-toggle ~ .drawer-side > *:not(.drawer-overlay) {
-  transform: translateY(100%);
-}
-[dir='rtl']
-  .drawer-bottom
-  > .drawer-toggle
-  ~ .drawer-side
-  > *:not(.drawer-overlay) {
-  transform: translateY(-100%);
-}
-.drawer-bottom
-  > .drawer-toggle:checked
-  ~ .drawer-side
-  > *:not(.drawer-overlay) {
-  transform: translateY(0%);
-}
-</style>

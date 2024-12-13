@@ -65,7 +65,7 @@ defineExpose({ modalRef: modalRef });
   <dialog
     :id="id"
     ref="modalRef"
-    class="modal modal-top md:modal-middle"
+    class="modal modal-top md:modal-middle modal-scroll"
     @close="handleClose"
   >
     <form
@@ -79,7 +79,7 @@ defineExpose({ modalRef: modalRef });
       ref="formRef"
     >
       <button
-        class="btn btn-circle btn-ghost absolute right-2 top-2"
+        class="btn btn-circle btn-sm btn-ghost absolute right-2 top-2"
         formmethod="dialog"
         formnovalidate
         value="cancel"
