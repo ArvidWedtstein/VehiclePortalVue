@@ -8,7 +8,8 @@ import { useServicesStore } from '@/stores/services';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
 import { formatNumber } from '@/utils/format';
-import DataList from '@/components/general/form/Datalist.vue';
+import DataList from '@/components/general/form/DataList.vue';
+import { getLocalDateISO } from '@/utils/date';
 
 const modalRef = ref();
 
@@ -22,7 +23,7 @@ const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
 const defaultValues: TablesUpdate<'VehicleServiceLogs'> = {
   vehicle_id: currentVehicle.value?.id,
-  date: new Date().toISOString().split('.')[0].slice(0, -3),
+  date: new Date().toUTCString().split('.')[0].slice(0, -3),
   provider: '',
   cost: 0,
   currency: 'NOK',
@@ -38,7 +39,11 @@ const service = ref<
 const onFormSubmit = () => {
   console.log('submit', service.value);
 
-  upsertService(service.value);
+  upsertService({
+    ...service.value,
+    date:
+      service.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+  });
 
   toast.triggerToast(
     `Successfully ${service.value.id ? 'saved' : 'created'} service`,
@@ -51,8 +56,10 @@ const handleOpen = async (
   service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
   if (service_id == null || service_id === undefined) {
+    if (!currentVehicle.value) return;
+
     const { data, error } = await supabase.rpc('get_last_mileage', {
-      vehicle_id: currentVehicle.value?.id || -1,
+      vehicle_id: currentVehicle.value.id,
       type: 'services',
     });
 
@@ -62,10 +69,13 @@ const handleOpen = async (
 
     service.value = {
       ...defaultValues,
-      date: new Date().toISOString().split('.')[0].slice(0, -3),
+      date: getLocalDateISO().split('.')[0].slice(0, -3),
       mileage,
     };
+
+    console.log(new Date().getTimezoneOffset());
     modalRef.value?.modalRef?.showModal();
+
     return;
   }
 

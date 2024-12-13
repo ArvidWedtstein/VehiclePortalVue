@@ -20,11 +20,15 @@ const emit = defineEmits<{
     <div class="card-body">
       <div class="flex justify-between items-center gap-6">
         <h2 class="card-title !mb-0">
-          {{ currentVehicle.make }} {{ currentVehicle.model }},
           {{
-            currentVehicle.registered_date
-              ? new Date(currentVehicle.registered_date).getFullYear()
-              : ''
+            [
+              `${currentVehicle.make} ${currentVehicle.model}`,
+              currentVehicle.registered_date
+                ? new Date(currentVehicle.registered_date).getFullYear()
+                : null,
+            ]
+              .filter(Boolean)
+              .join(', ')
           }}
         </h2>
 

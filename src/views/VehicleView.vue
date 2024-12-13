@@ -3,15 +3,22 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import ExpenseTab from '@/components/vehicles/expenses/ExpenseTab.vue';
 import ServiceTab from '@/components/vehicles/services/ServiceTab.vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { onMounted, ref, watchEffect } from 'vue';
-import VehicleShareModal from '@/components/vehicles/ShareVehicleModal.vue';
+import { defineAsyncComponent, onMounted, ref, watchEffect } from 'vue';
 import FilesTab from '@/components/vehicles/files/FilesTab.vue';
 
 import { storeToRefs } from 'pinia';
 import ChangelogTab from '@/components/vehicles/changelog/ChangelogTab.vue';
-import VehicleModal from '@/components/vehicles/VehicleModal/VehicleModal.vue';
 import TabsContainer from '@/components/general/utils/TabsContainer.vue';
 import VehicleInfoCard from '@/components/vehicles/VehicleView/VehicleInfoCard.vue';
+
+const VehicleModal = defineAsyncComponent(
+  async () =>
+    await import('@/components/vehicles/VehicleModal/VehicleModal.vue'),
+);
+
+const VehicleShareModal = defineAsyncComponent(
+  async () => await import('@/components/vehicles/ShareVehicleModal.vue'),
+);
 
 const route = useRoute();
 const vehicleId = Array.isArray(route.params.id)
@@ -54,8 +61,8 @@ onMounted(async () => {
 
   <div class="flex w-full flex-col lg:flex-row" v-if="currentVehicle">
     <VehicleInfoCard
-      @edit="vehicleModal.open"
-      @share="vehicleShareModal.open"
+      @edit="vehicleModal?.open"
+      @share="vehicleShareModal?.open"
     />
     <div class="divider lg:divider-horizontal"></div>
     <div class="card grow">

@@ -11,6 +11,7 @@ import { getLanguage, groupBy } from '@/utils/utils';
 import { formatNumber } from '@/utils/format';
 import ScatterChart from '@/components/general/charts/ScatterChart.vue';
 import { sum } from '@/utils/math';
+import StepsTest from '@/components/general/form/StepsTest.vue';
 
 const expenseStore = useExpensesStore();
 
@@ -50,11 +51,14 @@ const statFuelCostPerMonth = computed(() => {
     sum(groupedExpensesPerMonth[prevMonth] || [], 'cost') || 0;
   const costThisMonth = sum(groupedExpensesPerMonth[currentMonth], 'cost') || 0;
 
+  const percentageDiffToPrevMonth =
+    ((costThisMonth - costPrevMonth) / costPrevMonth) * 100;
   return {
     costPrevMonth,
     costThisMonth,
-    percentageDiffToPrevMonth:
-      ((costThisMonth - costPrevMonth) / costPrevMonth) * 100,
+    percentageDiffToPrevMonth: isNaN(percentageDiffToPrevMonth)
+      ? 0
+      : percentageDiffToPrevMonth,
   };
 });
 
@@ -268,7 +272,7 @@ onMounted(() => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
           >
             <li>
               <button type="button" @click="expenseModal.open(expense.id)">

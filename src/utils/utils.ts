@@ -87,8 +87,13 @@ export type FilterKeys<T> = {
   [K in keyof T]?: T[K];
 };
 
-export const getLanguage = () =>
-  navigator.language || (navigator.languages || ['en'])[0];
+export const getLanguage = () => {
+  return (
+    Intl.DateTimeFormat().resolvedOptions().locale ||
+    navigator.language ||
+    (navigator.languages || ['en'])[0]
+  );
+};
 
 export const stripDiacritics = (string: string) => {
   return typeof string.normalize !== 'undefined'

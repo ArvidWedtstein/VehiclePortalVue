@@ -39,7 +39,7 @@ defineExpose({
       </li>
     </ul>
 
-    <div class="carousel w-full">
+    <div class="carousel w-full px-1">
       <template
         v-for="(step, stepIndex) in steps"
         :key="`step-panel-${stepIndex}`"

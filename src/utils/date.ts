@@ -1,5 +1,12 @@
 import { getLanguage } from './utils';
 
+export const getLocalDateISO = () => {
+  return new Date(
+    new Date().setHours(
+      new Date().getHours() - new Date().getTimezoneOffset() / 60,
+    ),
+  ).toISOString();
+};
 export const timeFormatL = (seconds: number, onlyLast: boolean = false) => {
   let time = '';
   const days = Math.floor(seconds / 86400);
@@ -88,13 +95,10 @@ export const formatDate = (
   dateTime: string | Date,
   { dateStyle, timeStyle }: options = {},
 ) => {
-  const formattedDateTime = new Date(dateTime).toLocaleString(
-    navigator && navigator.language,
-    {
-      timeStyle: timeStyle == 'none' ? undefined : timeStyle || 'short',
-      dateStyle: dateStyle || 'long',
-    },
-  );
+  const formattedDateTime = new Date(dateTime).toLocaleString(getLanguage(), {
+    timeStyle: timeStyle == 'none' ? undefined : timeStyle || 'short',
+    dateStyle: dateStyle || 'long',
+  });
 
   return formattedDateTime;
 };
@@ -324,20 +328,30 @@ export const getDateUnit = (
 };
 
 export const addToDate = (
-  date: Date,
+  date: Date | string,
   value: number = 0,
-  unit: 'day' | 'week' | 'month' | 'year' = 'day',
+  unit: 'minutes' | 'hour' | 'day' | 'week' | 'month' | 'year' = 'day',
 ) => {
   const result = new Date(date);
 
-  if (unit === 'day') {
-    result.setDate(result.getDate() + value);
-  } else if (unit === 'week') {
-    result.setDate(result.getDate() + value * 7);
-  } else if (unit === 'month') {
-    result.setMonth(result.getMonth() + value);
-  } else if (unit === 'year') {
-    result.setFullYear(result.getFullYear() + value);
+  switch (unit) {
+    case 'minutes':
+      result.setMinutes(result.getMinutes() + value);
+      break;
+    case 'hour':
+      result.setHours(result.getHours() + value);
+      break;
+    case 'day':
+      result.setDate(result.getDate() + value);
+    case 'week':
+      result.setDate(result.getDate() + value * 7);
+      break;
+    case 'month':
+      result.setMonth(result.getMonth() + value);
+      break;
+    case 'year':
+      result.setFullYear(result.getFullYear() + value);
+      break;
   }
 
   return result;

@@ -9,6 +9,7 @@ import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
 import { formatNumber } from '@/utils/format';
+import { getLocalDateISO } from '@/utils/date';
 
 const modalRef = ref();
 
@@ -36,7 +37,11 @@ const expense = ref<
 const onFormSubmit = () => {
   console.log('submit', expense.value);
 
-  upsertExpense(expense.value);
+  upsertExpense({
+    ...expense.value,
+    date:
+      expense.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+  });
 
   toast.triggerToast(
     `Successfully ${expense.value.id ? 'saved' : 'created'} expense`,
@@ -58,7 +63,11 @@ const handleOpen = async (
 
     const [{ mileage }] = data;
 
-    expense.value = { ...defaultValues, mileage };
+    expense.value = {
+      ...defaultValues,
+      date: getLocalDateISO().split('.')[0].slice(0, -3),
+      mileage,
+    };
     modalRef.value?.modalRef?.showModal();
 
     return;
@@ -74,10 +83,7 @@ const handleOpen = async (
   expense.value = {
     ...defaultValues,
     ...editExpense,
-    date: new Date(editExpense.date || '')
-      .toISOString()
-      .split('.')[0]
-      .slice(0, -3),
+    date: getLocalDateISO().split('.')[0].slice(0, -3),
   };
 
   modalRef.value.modalRef.showModal();

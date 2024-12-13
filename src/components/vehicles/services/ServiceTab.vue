@@ -219,9 +219,9 @@ onMounted(async () => {
               </svg>
             </dt>
             <dd>
-              <time v-if="service.date" :datetime="service.date">{{
-                formatDate(service.date)
-              }}</time>
+              <time v-if="service.date" :datetime="service.date">
+                {{ formatDate(service.date, { dateStyle: 'medium' }) }}
+              </time>
             </dd>
           </div>
           <div
@@ -269,7 +269,7 @@ onMounted(async () => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
           >
             <li>
               <button type="button" @click="serviceModal.open(service.id)">

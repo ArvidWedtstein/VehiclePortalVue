@@ -121,7 +121,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
     >
       <template #step-general>
         <div
-          class="mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
+          class="my-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
         >
           <FormInput
             wrapperClass="sm:col-span-2"
