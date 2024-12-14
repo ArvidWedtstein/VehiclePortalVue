@@ -41,7 +41,13 @@ const setActiveTabFromUrl = (
     tab => tab.toLowerCase() === name,
   );
 
-  if (!name && firstRender) {
+  if (
+    matchedTabIndex === -1 &&
+    firstRender &&
+    !props.tabs.some(tab =>
+      router.currentRoute.value.path.includes(tab.toLowerCase()),
+    )
+  ) {
     activeTab.value = 0;
 
     console.log('replace', router.currentRoute.value);

@@ -9,7 +9,7 @@ import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
 import { formatNumber } from '@/utils/format';
-import { getLocalDateISO } from '@/utils/date';
+import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
 
 const modalRef = ref();
 
@@ -81,6 +81,7 @@ const fuelTypes = [
   {
     value: 'CNG 25',
   },
+  { value: 'Fuel' },
 ];
 
 const expense = ref<
@@ -139,8 +140,8 @@ const handleOpen = async (
   expense.value = {
     ...defaultValues,
     ...editExpense,
-    type: currentVehicle.value.fuel_type,
-    date: getLocalDateISO().split('.')[0].slice(0, -3),
+    type: editExpense.type || currentVehicle.value.fuel_type,
+    date: convertToDatetimeLocal(editExpense.date),
   };
 
   modalRef.value.modalRef.showModal();
@@ -208,8 +209,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             :options="[
               { value: 'liter', label: 'Liter' },
               { value: 'us_gallon', label: 'US Gallon' },
-              { value: 'uk_gallon', label: 'UK Gallon' },
-              { value: 'percent', label: 'Percent' },
+              { value: 'imp_gallon', label: 'Imperial Gallon' },
             ]"
           />
         </template>

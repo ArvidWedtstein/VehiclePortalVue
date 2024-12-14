@@ -264,6 +264,17 @@ onMounted(async () => {
             />
           </svg>
         </button>
+        <RouterLink
+          class="btn btn-sm mr-3"
+          :to="{
+            name: 'service',
+            params: {
+              id: service.id,
+            },
+          }"
+        >
+          Details
+        </RouterLink>
         <div class="hidden md:dropdown dropdown-end">
           <div
             tabindex="0"

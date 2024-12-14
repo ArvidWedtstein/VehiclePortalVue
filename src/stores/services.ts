@@ -12,6 +12,8 @@ export const useServicesStore = defineStore('services', () => {
   const services = ref<Tables<'VehicleServiceLogs'>[]>([]);
   const servicesCache = new Map<number, Tables<'VehicleServiceLogs'>[]>();
 
+  const loading = ref(false);
+
   const getServices = async <
     Columns extends (keyof Tables<'VehicleServiceLogs'> | '*')[],
   >(
@@ -23,13 +25,16 @@ export const useServicesStore = defineStore('services', () => {
         throw new Error('No Vehicle Selected!');
       }
 
-      if (
-        services.value.filter(
-          ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
-        ).length > 0 ||
-        servicesCache.has(currentVehicle.value.id)
-      )
-        return;
+      // TODO: find better solution
+      // if (
+      //   services.value.filter(
+      //     ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
+      //   ).length > 0 ||
+      //   servicesCache.has(currentVehicle.value.id)
+      // )
+      //   return;
+
+      loading.value = true;
 
       const { data, error, status } = await supabase
         .from('VehicleServiceLogs')
@@ -37,6 +42,7 @@ export const useServicesStore = defineStore('services', () => {
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
+        .order('date', { ascending: false })
         .returns<Tables<'VehicleServiceLogs'>[]>();
 
       if (error && status !== 406) throw error;
@@ -45,6 +51,8 @@ export const useServicesStore = defineStore('services', () => {
       services.value = data ?? [];
     } catch (pErr) {
       console.error(pErr);
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -54,6 +62,8 @@ export const useServicesStore = defineStore('services', () => {
       | TablesUpdate<'VehicleServiceLogs'>,
   ) => {
     try {
+      loading.value = true;
+
       const { data, error } = await supabase
         .from('VehicleServiceLogs')
         .upsert({
@@ -80,6 +90,8 @@ export const useServicesStore = defineStore('services', () => {
       services.value.push(...data);
     } catch (pErr) {
       console.error(pErr);
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -87,6 +99,8 @@ export const useServicesStore = defineStore('services', () => {
     service_id: Tables<'VehicleServiceLogs'>['id'],
   ) => {
     try {
+      loading.value = true;
+
       const { error } = await supabase
         .from('VehicleServiceLogs')
         .delete()
@@ -103,10 +117,12 @@ export const useServicesStore = defineStore('services', () => {
       );
     } catch (error) {
       console.error(error);
+    } finally {
+      loading.value = false;
     }
   };
 
-  return { services, getServices, upsertService, deleteService };
+  return { services, getServices, upsertService, deleteService, loading };
 });
 
 if (import.meta.hot) {

@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/lib/toastManager';
 import { formatNumber } from '@/utils/format';
 import DataList from '@/components/general/form/DataList.vue';
-import { getLocalDateISO } from '@/utils/date';
+import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
 
 const modalRef = ref();
 
@@ -37,7 +37,11 @@ const service = ref<
 >({ ...defaultValues });
 
 const onFormSubmit = () => {
-  console.log('submit', service.value);
+  console.log('submit', {
+    ...service.value,
+    date:
+      service.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+  });
 
   upsertService({
     ...service.value,
@@ -73,7 +77,6 @@ const handleOpen = async (
       mileage,
     };
 
-    console.log(new Date().getTimezoneOffset());
     modalRef.value?.modalRef?.showModal();
 
     return;
@@ -89,11 +92,14 @@ const handleOpen = async (
   service.value = {
     ...defaultValues,
     ...editService,
-    date: new Date(editService.date || '')
-      .toISOString()
-      .split('.')[0]
-      .slice(0, -3),
+    date: convertToDatetimeLocal(editService.date),
   };
+
+  console.log(
+    editService.date,
+    convertToDatetimeLocal(editService.date),
+    service.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+  );
 
   modalRef.value.modalRef.showModal();
 };
@@ -143,6 +149,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         type="number"
         join
         v-model.number="service.cost"
+        :min="0"
       >
         <template #addon>
           <FormInput
@@ -167,6 +174,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         type="text"
         inputmode="decimal"
         v-model="service.mileage"
+        :min="0"
       >
         <template #addon>
           <span class="absolute right-0 pr-3">

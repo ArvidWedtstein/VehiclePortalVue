@@ -45,6 +45,7 @@ export const useExpensesStore = defineStore('expenses', () => {
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
+        .order('date', { ascending: false })
         .returns<Tables<'VehicleExpenses'>[]>();
 
       if (error && status !== 406) throw error;

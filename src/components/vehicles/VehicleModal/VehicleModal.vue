@@ -253,8 +253,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
                 :options="[
                   { value: 'liter', label: 'Liter' },
                   { value: 'us_gallon', label: 'US Gallon' },
-                  { value: 'kilometer', label: 'Kilometer' },
-                  { value: 'mile', label: 'Miles' },
+                  { value: 'imp_gallon', label: 'Imperial Gallon' },
                 ]"
               />
             </template>

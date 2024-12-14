@@ -13,6 +13,8 @@ type Props = {
   required?: boolean;
   mask?: string;
   placeholder?: string;
+  min?: number;
+  max?: number;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?:
     | 'error'
@@ -92,6 +94,14 @@ const computedClass = computed(() => {
 
 const onInput = (event: Event) => {
   const rawValue = (event.target as HTMLInputElement)?.value;
+
+  if (props.min !== undefined && parseInt(rawValue) < props.min) {
+    model.value = props.min;
+  }
+
+  if (props.max !== undefined && parseInt(rawValue) > props.max) {
+    model.value = props.max;
+  }
 
   if (!props.mask) return;
 
