@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 import { maskInput } from '@/lib/mask';
-import { useSlots, computed } from 'vue';
+import { useSlots, computed, type InputTypeHTMLAttribute } from 'vue';
+
 type Props = {
   wrapperClass?: string;
   class?: string;
-  type?: HTMLInputElement['type'] | 'select' | 'textarea';
+  type?: InputTypeHTMLAttribute | 'select' | 'textarea';
   options?: Array<{ value: string | number; label?: string }>;
   label?: string;
   helpText?: string;
-  placeholder?: string;
   join?: boolean;
   required?: boolean;
   mask?: string;
+  placeholder?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?:
     | 'error'
@@ -46,7 +47,7 @@ const model = defineModel<string | number | null>();
 
 const computedType = computed(() => {
   return props.type === 'select' || props.type === 'textarea'
-    ? props.type
+    ? (props.type as 'select' | 'textarea')
     : 'input';
 });
 

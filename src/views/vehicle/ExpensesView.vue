@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import ExpenseModal from './ExpenseModal.vue';
+import ExpenseModal from '@/components/vehicles/expenses/ExpenseModal.vue';
 import { computed, onMounted, ref, toRefs } from 'vue';
 import {
-  adjustCalendarDate,
+  //   adjustCalendarDate,
   formatDate,
-  getRangeBetweenDates,
+  //   getRangeBetweenDates,
 } from '@/utils/date';
 import { useExpensesStore } from '@/stores/expenses';
-import { getLanguage, groupBy } from '@/utils/utils';
-import { formatNumber } from '@/utils/format';
-import ScatterChart from '@/components/general/charts/ScatterChart.vue';
+import { groupBy } from '@/utils/utils';
+// import { formatNumber } from '@/utils/format';
+// import ScatterChart from '@/components/general/charts/ScatterChart.vue';
 import { sum } from '@/utils/math';
-import StepsTest from '@/components/general/form/StepsTest.vue';
 
 const expenseStore = useExpensesStore();
 
@@ -20,14 +19,14 @@ const { getExpenses, deleteExpense } = expenseStore;
 
 const expenseModal = ref();
 
-const monthsThisYear = computed(() => {
-  return getRangeBetweenDates(
-    adjustCalendarDate('start', 'year'),
-    adjustCalendarDate('end', 'year'),
-    'months',
-    'date',
-  );
-});
+// const monthsThisYear = computed(() => {
+//   return getRangeBetweenDates(
+//     adjustCalendarDate('start', 'year'),
+//     adjustCalendarDate('end', 'year'),
+//     'months',
+//     'date',
+//   );
+// });
 
 const statFuelCostPerMonth = computed(() => {
   const currentMonth = `${new Date().getFullYear()}-${new Date().getMonth()}`;
@@ -171,7 +170,9 @@ onMounted(() => {
     </div>
   </div>
 
-  <ul class="mt-4 text-sm divide-y divide-neutral max-h-96 overflow-y-auto">
+  <ul
+    class="my-4 mb-14 md:mb-4 text-sm divide-y divide-neutral h-auto md:max-h-[50vh] overflow-y-auto"
+  >
     <li
       class="relative flex items-center space-x-6 py-3"
       v-for="(expense, index) in expenses"
@@ -274,6 +275,28 @@ onMounted(() => {
             tabindex="0"
             class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
           >
+            <li>
+              <RouterLink
+                :to="{
+                  name: 'expense',
+                  params: {
+                    id: expense.vehicle_id,
+                    expense_id: expense.id,
+                  },
+                }"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 576 512"
+                  class="w-3 h-3 fill-current"
+                >
+                  <path
+                    d="M572.531 238.973C518.281 115.525 410.938 32 288 32S57.688 115.58 3.469 238.973C1.562 243.402 0 251.041 0 256C0 260.977 1.562 268.596 3.469 273.025C57.719 396.473 165.062 480 288 480S518.312 396.418 572.531 273.025C574.438 268.596 576 260.957 576 256C576 251.023 574.438 243.402 572.531 238.973ZM288 432C188.521 432 96.836 364.502 48.424 256.004C97.01 147.365 188.611 80 288 80C387.48 80 479.164 147.498 527.576 255.994C478.99 364.635 387.389 432 288 432ZM288 128C217.334 128 160 185.348 160 256S217.334 384 288 384H288.057C358.695 384 416 326.68 416 256.055V256C416 185.348 358.668 128 288 128ZM288 336C243.889 336 208 300.111 208 256C208 255.252 208.199 254.559 208.221 253.816C213.277 255.125 218.52 256 224 256C259.346 256 288 227.346 288 192C288 186.52 287.125 181.277 285.816 176.221C286.559 176.199 287.252 176 288 176C332.111 176 368 211.889 368 256.055C368 300.137 332.137 336 288 336Z"
+                  />
+                </svg>
+                View
+              </RouterLink>
+            </li>
             <li>
               <button type="button" @click="expenseModal.open(expense.id)">
                 <svg

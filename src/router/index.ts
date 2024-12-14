@@ -52,6 +52,43 @@ const router = createRouter({
       path: '/vehicles/:id',
       name: 'vehicle',
       component: async () => await import('../views/VehicleView.vue'),
+      children: [
+        {
+          name: 'expenses',
+          path: 'expenses',
+          component: async () =>
+            await import('../views/vehicle/ExpensesView.vue'),
+        },
+        {
+          name: 'expense',
+          path: 'expenses/:expense_id',
+          component: async () =>
+            await import('../views/vehicle/ExpenseView.vue'),
+        },
+        {
+          name: 'services',
+          path: 'services',
+          component: async () =>
+            await import('../views/vehicle/ServicesView.vue'),
+        },
+        {
+          name: 'service',
+          path: 'services/:service_id',
+          component: async () =>
+            await import('../views/vehicle/ServiceView.vue'),
+        },
+        {
+          name: 'files',
+          path: 'files',
+          component: async () => await import('../views/vehicle/FilesView.vue'),
+        },
+        {
+          name: 'changelog',
+          path: 'changelog',
+          component: async () =>
+            await import('../views/vehicle/ChangelogView.vue'),
+        },
+      ],
       meta: {
         showInNavbar: false,
       },

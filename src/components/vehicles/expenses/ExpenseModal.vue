@@ -23,12 +23,65 @@ const { upsertExpense, deleteExpense } = expensesStore;
 const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   vehicle_id: currentVehicle.value?.id || -1,
   date: new Date().toISOString().split('.')[0].slice(0, -3),
-  type: '',
   amount: 0,
-  notes: '',
   cost: 0,
   currency: 'NOK',
+  unit: 'liter',
 };
+
+const fuelTypes = [
+  {
+    value: 'Gasoline',
+  },
+  {
+    value: 'Diesel',
+  },
+  {
+    value: 'Kerosene',
+  },
+  {
+    value: 'Gas',
+  },
+  {
+    value: 'Electric',
+  },
+  {
+    value: 'Hydrogen',
+  },
+  {
+    value: 'Other',
+  },
+  {
+    value: 'Biodiesel',
+  },
+  {
+    value: 'Biogasoline',
+  },
+  {
+    value: 'LPG-gas',
+  },
+  {
+    value: 'CNG-gas',
+  },
+  {
+    value: 'Metanol',
+  },
+  {
+    value: 'Etanol',
+  },
+  {
+    value: 'LPG-A',
+  },
+  {
+    value: 'LPG-B',
+  },
+  {
+    value: 'CNG 20',
+  },
+  {
+    value: 'CNG 25',
+  },
+];
 
 const expense = ref<
   TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>
@@ -53,9 +106,11 @@ const onFormSubmit = () => {
 const handleOpen = async (
   expense_id: TablesUpdate<'VehicleExpenses'>['id'],
 ) => {
+  if (!currentVehicle.value) return;
+
   if (expense_id == null || expense_id === undefined) {
     const { data, error } = await supabase.rpc('get_last_mileage', {
-      vehicle_id: currentVehicle.value?.id || -1,
+      vehicle_id: currentVehicle.value.id,
       type: 'expenses',
     });
 
@@ -66,6 +121,7 @@ const handleOpen = async (
     expense.value = {
       ...defaultValues,
       date: getLocalDateISO().split('.')[0].slice(0, -3),
+      type: currentVehicle.value.fuel_type,
       mileage,
     };
     modalRef.value?.modalRef?.showModal();
@@ -83,6 +139,7 @@ const handleOpen = async (
   expense.value = {
     ...defaultValues,
     ...editExpense,
+    type: currentVehicle.value.fuel_type,
     date: getLocalDateISO().split('.')[0].slice(0, -3),
   };
 
@@ -114,15 +171,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         type="select"
         v-model="expense.type"
         required
-        :options="[
-          {
-            value: 'diesel',
-            label: 'Diesel',
-          },
-          { value: 'gasoline98', label: 'Gasoline 98' },
-          { value: 'gasoline95', label: 'Gasoline 95' },
-          { value: 'other', label: 'Other' },
-        ]"
+        :options="fuelTypes"
         placeholder="Please select a type"
       >
         <template #icon>
@@ -144,14 +193,34 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         label="Amount"
         type="text"
         inputmode="numeric"
+        join
         v-model.number="expense.amount"
-      />
+        :min="0"
+        :max="currentVehicle?.fuel_capacity || 10000"
+      >
+        <template #addon>
+          <FormInput
+            wrapperClass="max-w-fit"
+            class="join-item"
+            type="select"
+            v-model="expense.unit"
+            placeholder="Select a unit"
+            :options="[
+              { value: 'liter', label: 'Liter' },
+              { value: 'us_gallon', label: 'US Gallon' },
+              { value: 'uk_gallon', label: 'UK Gallon' },
+              { value: 'percent', label: 'Percent' },
+            ]"
+          />
+        </template>
+      </FormInput>
 
       <FormInput
         wrapperClass="sm:col-span-3"
         label="Cost"
         type="text"
         inputmode="decimal"
+        :disabled="expense.type === 'Electric'"
         join
         v-model.number="expense.cost"
       >
@@ -161,11 +230,13 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             class="join-item"
             type="select"
             v-model="expense.currency"
+            :disabled="expense.type === 'Electric'"
             placeholder="Select a currency"
             :options="[
               { value: 'NOK' },
-              { value: 'USD' },
               { value: 'EUR' },
+              { value: 'GBP' },
+              { value: 'USD' },
               { value: 'SEK' },
               { value: 'DDK' },
             ]"
@@ -211,7 +282,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       />
     </div>
 
-    <template #actions>
+    <template #actions="{ onSubmit }">
       <button
         v-if="expense.id"
         type="button"
@@ -229,7 +300,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         Cancel
       </button>
 
-      <button type="button" @click="onFormSubmit" class="btn btn-primary ms-1">
+      <button type="button" @click="onSubmit" class="btn btn-primary ms-1">
         {{ expense.id ? 'Save' : 'Create' }}
       </button>
     </template>

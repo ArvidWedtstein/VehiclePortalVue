@@ -123,10 +123,12 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         type="text"
         v-model="service.type"
         list="service_types"
-        required
       />
 
-      <DataList id="service_types" :options="['Oil Change', 'Registerreim']" />
+      <DataList
+        id="service_types"
+        :options="['Oil Change', 'Timing belt', 'Timing Chain', 'Brake Pads']"
+      />
 
       <FormInput
         wrapperClass="md:col-span-2"
@@ -149,8 +151,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             v-model="service.currency"
             :options="[
               { value: 'NOK' },
-              { value: 'USD' },
               { value: 'EUR' },
+              { value: 'GBP' },
+              { value: 'USD' },
               { value: 'SEK' },
               { value: 'DDK' },
             ]"

@@ -94,7 +94,7 @@ defineExpose({ modalRef: modalRef });
       <slot></slot>
 
       <div class="modal-action mt-auto">
-        <slot name="actions">
+        <slot name="actions" @submit="handleSubmit">
           <button
             class="btn btn-outline"
             value="cancel"

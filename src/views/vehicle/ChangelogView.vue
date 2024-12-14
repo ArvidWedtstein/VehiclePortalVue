@@ -36,7 +36,11 @@ const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
   const tableSentenceMappings: {
     [key in Exclude<
       TableNames,
-      'Changelog' | 'Roles' | 'Profiles' | 'RolesPermissions'
+      | 'Changelog'
+      | 'Roles'
+      | 'Profiles'
+      | 'RolesPermissions'
+      | 'VehicleManufacturers'
     >]: {
       INSERT?: string;
       UPDATE?: string;
@@ -44,7 +48,7 @@ const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
     };
   } = {
     Vehicles: {
-      INSERT: `Created a new vrhicle`,
+      INSERT: `Created a new vehicle`,
       UPDATE: `Updated vehicle`,
       DELETE: `Deleted a vehicle`,
     },
@@ -92,6 +96,14 @@ const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
               .replace('$nn', newChanges['name']) || 'updated an entry'
           : 'updated an entry';
 
+      //       .replace(
+      //             'expense',
+      //             `<a
+      //   href="${newChanges['vehicle_id']}/expenses/${newChanges['id']}"
+      //   class="font-semibold text-base-content text-nowrap"
+      // >Expense</a>`,
+      //           )
+
       sentence = `Changed ${changedValues.map(({ field, oldValue, newValue }) => `<code>${field}</code> ${!!oldValue ? `from '${oldValue}' ` : ''}to '${newValue}'`)}`;
 
       break;
@@ -134,19 +146,17 @@ const formattedChangelog = computed(() => {
 </script>
 
 <template>
-  <div class="flex justify-between">
-    <ChangelogList class="max-h-svh h-fit mt-4 w-full">
-      <ChangelogListItem
-        v-for="(change, changelogIndex) in formattedChangelog"
-        :key="changelogIndex"
-        :avatar="change.createdby_profile_image_url"
-        :actionBy="change.createdby_name || undefined"
-        :time="change.created_at"
-        :type="change.operation === 'UPDATE' ? 'comment' : 'default'"
-        :action="change.action"
-      >
-        <div v-if="change.sentence" v-html="change.sentence"></div>
-      </ChangelogListItem>
-    </ChangelogList>
-  </div>
+  <ChangelogList class="max-h-svh h-fit mt-4 w-full md:mb-0 mb-14">
+    <ChangelogListItem
+      v-for="(change, changelogIndex) in formattedChangelog"
+      :key="changelogIndex"
+      :avatar="change.createdby_profile_image_url"
+      :actionBy="change.createdby_name || undefined"
+      :time="change.created_at"
+      :type="change.operation === 'UPDATE' ? 'comment' : 'default'"
+      :action="change.action"
+    >
+      <div v-if="change.sentence" v-html="change.sentence"></div>
+    </ChangelogListItem>
+  </ChangelogList>
 </template>

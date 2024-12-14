@@ -200,12 +200,10 @@ Nothing to acknowledge yet :D
 [license-url]: https://github.com/ArvidWedtstein/VehicleHub/blob/prod/LICENSE.txt
 [version-shield]: https://img.shields.io/github/package-json/v/ArvidWedtstein/VehicleHub/dev?style=for-the-badge
 [version-url]: https://github.com/ArvidWedtstein/VehicleHub
-[react.js]: https://shields.io/badge/react-black?logo=react&style=for-the-badge
-[react-url]: https://react.dev/
+[vue.js]: https://shields.io/badge/vue-black?logo=vue&style=for-the-badge
+[vue-url]: https://vuejs.org/
 [supabase]: https://shields.io/badge/supabase-black?logo=supabase&style=for-the-badge
 [supabase-url]: https://supabase.com/
-[material-ui]: https://img.shields.io/badge/Material%20UI-007FFF?style=for-the-badge&logo=mui&logoColor=white
-[materialui-url]: https://mui.com/
 
 <!--
 Vercel deployment will guide you through creating a Supabase account and project.
