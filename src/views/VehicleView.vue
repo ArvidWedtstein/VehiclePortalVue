@@ -17,9 +17,9 @@ const VehicleShareModal = defineAsyncComponent(
 );
 
 const route = useRoute();
-const vehicleId = Array.isArray(route.params.id)
-  ? route.params.id[0]
-  : route.params.id;
+const vehicleId = Array.isArray(route.params.vehicle_id)
+  ? route.params.vehicle_id[0]
+  : route.params.vehicle_id;
 
 const vehiclesStore = useVehiclesStore();
 
@@ -30,7 +30,8 @@ const vehicleModal = ref();
 const vehicleShareModal = ref();
 
 watchEffect(() => {
-  if (route.params.id !== vehicleId) setCurrentVehicle(parseInt(vehicleId));
+  if (route.params.vehicle_id !== vehicleId)
+    setCurrentVehicle(parseInt(vehicleId));
 });
 
 onMounted(async () => {
@@ -66,13 +67,11 @@ onMounted(async () => {
         :tabs="['Expenses', 'Services', 'Files', 'Changelog']"
         urlMode
       >
-        <template #default>
-          <RouterView #default="{ Component }">
-            <KeepAlive max="10">
-              <component :is="Component"></component>
-            </KeepAlive>
-          </RouterView>
-        </template>
+        <RouterView v-slot="{ Component }">
+          <KeepAlive max="10">
+            <component :is="Component"></component>
+          </KeepAlive>
+        </RouterView>
       </TabsContainer>
     </div>
   </div>

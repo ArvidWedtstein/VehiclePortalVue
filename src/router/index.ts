@@ -43,54 +43,59 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: async () => await import('../views/VehiclesView.vue'),
-      meta: {
-        iconPath: `M112 256C94.328 256 80 270.326 80 288C80 305.672 94.328 320 112 320S144 305.672 144 288C144 270.326 129.672 256 112 256ZM400 256C382.328 256 368 270.326 368 288C368 305.672 382.328 320 400 320S432 305.672 432 288C432 270.326 417.672 256 400 256ZM462.939 188.74L422.375 87.328C408.938 53.719 376.859 32 340.672 32H171.328C135.141 32 103.062 53.719 89.625 87.328L49.061 188.74C19.91 205.219 0 236.125 0 272V448C0 465.672 14.326 480 32 480S64 465.672 64 448V400H448V448C448 465.672 462.326 480 480 480S512 465.672 512 448V272C512 236.125 492.09 205.219 462.939 188.74ZM134.188 105.141C140.297 89.875 154.875 80 171.328 80H340.672C357.125 80 371.703 89.875 377.812 105.141L406.156 176H105.844L134.188 105.141ZM464 352H48V272C48 245.533 69.533 224 96 224H416C442.467 224 464 245.533 464 272V352Z`,
-        showInNavbar: true,
-      },
-    },
-    {
-      path: '/vehicles/:id',
-      name: 'vehicle',
-      component: async () => await import('../views/VehicleView.vue'),
       children: [
         {
-          name: 'expenses',
-          path: 'expenses',
-          component: async () =>
-            await import('../views/vehicle/ExpensesView.vue'),
-        },
-        {
-          name: 'expense',
-          path: 'expenses/:expense_id',
-          component: async () =>
-            await import('../views/vehicle/ExpenseView.vue'),
-        },
-        {
-          name: 'services',
-          path: 'services',
-          component: async () =>
-            await import('../views/vehicle/ServicesView.vue'),
-        },
-        {
-          name: 'service',
-          path: 'services/:service_id',
-          component: async () =>
-            await import('../views/vehicle/ServiceView.vue'),
-        },
-        {
-          name: 'files',
-          path: 'files',
-          component: async () => await import('../views/vehicle/FilesView.vue'),
-        },
-        {
-          name: 'changelog',
-          path: 'changelog',
-          component: async () =>
-            await import('../views/vehicle/ChangelogView.vue'),
+          path: ':vehicle_id(\\d+)',
+          name: 'vehicle',
+          component: async () => await import('../views/VehicleView.vue'),
+          children: [
+            {
+              name: 'expenses',
+              path: 'expenses',
+              component: async () =>
+                await import('../views/vehicle/ExpensesView.vue'),
+              children: [
+                {
+                  name: 'expense',
+                  path: ':id(\\d+)',
+                  component: async () =>
+                    await import('../views/vehicle/ExpenseView.vue'),
+                },
+              ],
+            },
+            {
+              name: 'services',
+              path: 'services',
+              component: async () =>
+                await import('../views/vehicle/ServicesView.vue'),
+              children: [
+                {
+                  name: 'service',
+                  path: ':id(\\d+)',
+                  component: async () =>
+                    await import('../views/vehicle/ServiceView.vue'),
+                },
+              ],
+            },
+
+            {
+              name: 'files',
+              path: 'files',
+              component: async () =>
+                await import('../views/vehicle/FilesView.vue'),
+            },
+            {
+              name: 'changelog',
+              path: 'changelog',
+              component: async () =>
+                await import('../views/vehicle/ChangelogView.vue'),
+            },
+          ],
         },
       ],
       meta: {
-        showInNavbar: false,
+        iconPath: `M112 256C94.328 256 80 270.326 80 288C80 305.672 94.328 320 112 320S144 305.672 144 288C144 270.326 129.672 256 112 256ZM400 256C382.328 256 368 270.326 368 288C368 305.672 382.328 320 400 320S432 305.672 432 288C432 270.326 417.672 256 400 256ZM462.939 188.74L422.375 87.328C408.938 53.719 376.859 32 340.672 32H171.328C135.141 32 103.062 53.719 89.625 87.328L49.061 188.74C19.91 205.219 0 236.125 0 272V448C0 465.672 14.326 480 32 480S64 465.672 64 448V400H448V448C448 465.672 462.326 480 480 480S512 465.672 512 448V272C512 236.125 492.09 205.219 462.939 188.74ZM134.188 105.141C140.297 89.875 154.875 80 171.328 80H340.672C357.125 80 371.703 89.875 377.812 105.141L406.156 176H105.844L134.188 105.141ZM464 352H48V272C48 245.533 69.533 224 96 224H416C442.467 224 464 245.533 464 272V352Z`,
+        showInNavbar: true,
       },
     },
     {

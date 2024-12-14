@@ -43,7 +43,7 @@ onMounted(async () => {
         </h2>
 
         <RouterLink
-          :to="{ name: 'vehicle', params: { id: vehicle.id } }"
+          :to="{ name: 'vehicle', params: { vehicle_id: vehicle.id } }"
           class="btn btn-sm btn-square btn-primary btn-ghost md:hidden"
         >
           <svg
@@ -109,7 +109,7 @@ onMounted(async () => {
           </div> -->
         </div>
         <RouterLink
-          :to="{ name: 'vehicle', params: { id: vehicle.id } }"
+          :to="{ name: 'vehicle', params: { vehicle_id: vehicle.id } }"
           class="btn btn-sm btn-primary"
         >
           View

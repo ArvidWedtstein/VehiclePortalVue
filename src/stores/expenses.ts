@@ -12,6 +12,8 @@ export const useExpensesStore = defineStore('expenses', () => {
   const expenses = ref<Tables<'VehicleExpenses'>[]>([]);
   const expensesCache = new Map<number, Tables<'VehicleExpenses'>[]>();
 
+  const loading = ref(false);
+
   const getExpenses = async <
     Columns extends (keyof Tables<'VehicleExpenses'> | '*')[],
   >(
@@ -23,15 +25,21 @@ export const useExpensesStore = defineStore('expenses', () => {
         throw new Error('No Vehicle Selected!');
       }
 
-      if (
-        expenses.value.filter(
-          ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
-        ).length > 0 ||
-        expensesCache.has(currentVehicle.value.id)
-      )
-        return;
+      // if (
+      //   expenses.value.filter(
+      //     ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
+      //   ).length > 0 ||
+      //   expensesCache.has(currentVehicle.value.id)
+      // )
+      //   return expensesCache.get(currentVehicle.value.id);
 
-      const { data, error, status } = await supabase
+      loading.value = true;
+
+      const {
+        data = [],
+        error,
+        status,
+      } = await supabase
         .from('VehicleExpenses')
         .select(columns.join(','))
         .match(filters || {})
@@ -41,10 +49,27 @@ export const useExpensesStore = defineStore('expenses', () => {
 
       if (error && status !== 406) throw error;
 
-      expensesCache.set(currentVehicle.value.id, data ?? []);
-      expenses.value = data ?? [];
-    } catch (pErr) {
-      console.error(pErr);
+      expensesCache.set(currentVehicle.value.id, [
+        ...new Map(
+          [
+            ...(expensesCache.get(currentVehicle.value.id) ?? []),
+            ...(data ?? []),
+          ].map(item => [item['id'], item]),
+        ).values(),
+      ]);
+
+      expenses.value = [
+        ...new Map(
+          [...expenses.value, ...(data ?? [])].map(item => [item['id'], item]),
+        ).values(),
+      ];
+
+      return data ?? [];
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -52,6 +77,8 @@ export const useExpensesStore = defineStore('expenses', () => {
     pData: TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>,
   ) => {
     try {
+      loading.value = true;
+
       const { data, error } = await supabase
         .from('VehicleExpenses')
         .upsert({
@@ -60,7 +87,9 @@ export const useExpensesStore = defineStore('expenses', () => {
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       const vExpenseIndex = expenses.value.findIndex(
         ({ id }) => id === data[0].id,
@@ -78,11 +107,15 @@ export const useExpensesStore = defineStore('expenses', () => {
       expenses.value.push(...data);
     } catch (pErr) {
       console.error(pErr);
+    } finally {
+      loading.value = false;
     }
   };
 
   const deleteExpense = async (expense_id: Tables<'VehicleExpenses'>['id']) => {
     try {
+      loading.value = true;
+
       const { error } = await supabase
         .from('VehicleExpenses')
         .delete()
@@ -93,8 +126,11 @@ export const useExpensesStore = defineStore('expenses', () => {
       expenses.value = expenses.value.filter(({ id }) => id !== expense_id);
     } catch (error) {
       console.error(error);
+      throw error;
+    } finally {
+      loading.value = false;
     }
   };
 
-  return { expenses, getExpenses, upsertExpense, deleteExpense };
+  return { expenses, getExpenses, upsertExpense, deleteExpense, loading };
 });

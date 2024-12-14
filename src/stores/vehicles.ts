@@ -3,6 +3,7 @@ import { acceptHMRUpdate, defineStore } from 'pinia';
 import type { FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
+import { useRoute } from 'vue-router';
 
 export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = ref<Tables<'Vehicles'>[]>([]);
@@ -15,9 +16,17 @@ export const useVehiclesStore = defineStore('vehicles', () => {
 
   const setCurrentVehicle = async (pVehicle_ID?: Tables<'Vehicles'>['id']) => {
     try {
-      console.info('Set Current Vehicle');
+      const route = useRoute();
+
       if (!pVehicle_ID) {
-        const urlVehicleID = window.location.href.split('/').pop();
+        const entryIndex = Object.entries(route.params).findIndex(
+          ([k]) => k === 'vehicle_id',
+        );
+        if (entryIndex < 0) return;
+
+        const value = Object.values(route.params)[entryIndex];
+        const urlVehicleID = Array.isArray(value) ? value.pop() : value;
+
         if (!urlVehicleID || Number.isNaN(urlVehicleID)) return;
 
         pVehicle_ID = parseInt(urlVehicleID);

@@ -41,8 +41,10 @@ const setActiveTabFromUrl = (
     tab => tab.toLowerCase() === name,
   );
 
-  if ((!name || matchedTabIndex === -1) && firstRender) {
+  if (!name && firstRender) {
     activeTab.value = 0;
+
+    console.log('replace', router.currentRoute.value);
 
     router.replace({
       name: props.tabs[0].toLowerCase(),
@@ -87,7 +89,8 @@ onMounted(() => {
         type="button"
         role="tab"
         class="tab"
-        :to="{ name: tab.toLowerCase() }"
+        :to="urlMode ? { name: tab.toLowerCase() } : {}"
+        activeClass="tab-active"
         :class="{
           'tab-active': tabIndex === activeTab,
         }"

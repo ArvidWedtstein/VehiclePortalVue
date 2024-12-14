@@ -1,25 +1,44 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import { RouterLink, useRoute } from 'vue-router';
-import { onMounted, toRef } from 'vue';
+import { computed, onBeforeMount, watch } from 'vue';
 
 import { storeToRefs } from 'pinia';
 import { useExpensesStore } from '@/stores/expenses';
+import { formatDate } from '@/utils/date';
+import { formatNumber } from '@/utils/format';
 
 const vehiclesStore = useVehiclesStore();
 const expensesStore = useExpensesStore();
 
 const { currentVehicle } = storeToRefs(vehiclesStore);
-const expenses = toRef(expensesStore, 'expenses');
+const { expenses, loading } = storeToRefs(expensesStore);
+const { getExpenses } = expensesStore;
 
 const route = useRoute();
 
-const expenseId = Array.isArray(route.params.expense_id)
-  ? route.params.expense_id[0]
-  : parseInt(route.params.expense_id);
+const expenseId = Array.isArray(route.params.id)
+  ? parseInt(route.params.id[0])
+  : parseInt(route.params.id);
 
-onMounted(async () => {
-  console.log('expenses init', route.params);
+const expense = computed(() => {
+  const expenseId = Array.isArray(route.params.id)
+    ? parseInt(route.params.id[0])
+    : parseInt(route.params.id);
+
+  return expenses.value.filter(({ id }) => id === expenseId)[0];
+});
+
+watch(
+  () => route.params.id,
+  () => getExpenses({ id: expenseId }),
+  {
+    immediate: true,
+  },
+);
+
+onBeforeMount(async () => {
+  await getExpenses({ id: expenseId });
 });
 </script>
 
@@ -41,7 +60,77 @@ onMounted(async () => {
     Back to expenses
   </RouterLink>
 
-  <div class="flex w-full flex-col gap-3" v-if="currentVehicle">
-    Expenses {{ expenses.filter(({ id }) => id === expenseId) }}
+  <!-- TODO: add edit here -->
+
+  <div v-if="!loading" class="card bg-base-100 w-96 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">{{ expense.type }}</h2>
+
+      <ul class="flex flex-col gap-1 text-sm">
+        <li class="inline-flex gap-1 items-center">
+          <span class="font-semibold">Date:</span>
+          <span>
+            {{ formatDate(expense.date) }}
+          </span>
+        </li>
+        <li class="inline-flex gap-1 items-center">
+          <span class="font-semibold">Mileage:</span>
+          <span>
+            {{
+              formatNumber(expense.mileage || 0, {
+                style: 'unit',
+                unit: currentVehicle?.mileage_unit || 'kilometer',
+                compactDisplay: 'short',
+              })
+            }}
+          </span>
+        </li>
+        <li class="inline-flex gap-1 items-center">
+          <span class="font-semibold">Amount:</span>
+          <span>
+            {{
+              formatNumber(expense.amount || 0, {
+                style: 'unit',
+                unit: expense.unit || 'liter',
+                unitDisplay: 'long',
+                compactDisplay: 'short',
+              })
+            }}
+          </span>
+        </li>
+        <li class="inline-flex gap-1 items-center">
+          <span class="font-semibold">Cost:</span>
+          <span>
+            {{
+              formatNumber(expense.cost || 0, {
+                style: 'currency',
+                currency: expense.currency || 'EUR',
+                currencyDisplay: 'narrowSymbol',
+                compactDisplay: 'short',
+              })
+            }}
+          </span>
+        </li>
+        <li class="inline-flex gap-1 items-center">
+          <span class="font-semibold">Filled for:</span>
+          <span>
+            {{
+              formatNumber(expense.price_per_unit || 0, {
+                style: 'currency',
+                currency: expense.currency || 'EUR',
+                currencyDisplay: 'narrowSymbol',
+                maximumFractionDigits: 2,
+              })
+            }}
+            per
+            {{ expense.unit || 'liter' }}
+          </span>
+        </li>
+      </ul>
+
+      <div class="divider my-0"></div>
+
+      <p class="capitalize text-sm">{{ expense.notes }}</p>
+    </div>
   </div>
 </template>
