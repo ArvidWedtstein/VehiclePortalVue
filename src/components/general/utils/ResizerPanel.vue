@@ -15,7 +15,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed, type PropType } from 'vue';
+import {
+  defineComponent,
+  reactive,
+  computed,
+  type PropType,
+  onMounted,
+} from 'vue';
 
 export default defineComponent({
   name: 'ResizerPanel',
@@ -31,6 +37,10 @@ export default defineComponent({
     maxSize: {
       type: Number,
       default: 90, // percentage
+    },
+    localStorageKey: {
+      type: String,
+      default: 'resizer-panel-size',
     },
   },
   setup(props) {
@@ -63,6 +73,27 @@ export default defineComponent({
             second: { height: `${100 - state.firstPanelSize}%`, width: '100%' },
           };
     });
+
+    const savePanelSize = () => {
+      localStorage.setItem(
+        props.localStorageKey,
+        state.firstPanelSize.toString(),
+      );
+    };
+
+    const loadPanelSize = () => {
+      const savedSize = localStorage.getItem(props.localStorageKey);
+      if (savedSize) {
+        const parsedSize = parseFloat(savedSize);
+        if (
+          !isNaN(parsedSize) &&
+          parsedSize >= props.minSize &&
+          parsedSize <= props.maxSize
+        ) {
+          state.firstPanelSize = parsedSize;
+        }
+      }
+    };
 
     const startResize = (event: MouseEvent | TouchEvent) => {
       state.isResizing = true;
@@ -107,6 +138,7 @@ export default defineComponent({
       if (newFirstSize >= props.minSize && newFirstSize <= props.maxSize) {
         state.firstPanelSize = newFirstSize;
         state.initialPosition = currentPosition;
+        savePanelSize();
       }
     };
 
@@ -118,6 +150,10 @@ export default defineComponent({
       document.removeEventListener('touchmove', onResize);
       document.removeEventListener('touchend', stopResize);
     };
+
+    onMounted(() => {
+      loadPanelSize();
+    });
 
     return { containerClass, resizerClass, panelStyles, startResize };
   },
