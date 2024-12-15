@@ -1,4 +1,4 @@
-import { ref, toRef } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/database.types';
@@ -13,8 +13,31 @@ export const useChangelogStore = defineStore('Changelog', () => {
   const profilesStore = useProfilesStore();
   const profiles = toRef(profilesStore, 'profilesCache');
 
-  const changelog = ref<Tables<'changelog_with_profile'>[]>([]);
-  const changelogCache = new Map<number, Tables<'changelog_with_profile'>[]>();
+  const loading = ref(false);
+
+  const changelogCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Map<
+      Tables<'changelog_with_profile'>['id'],
+      Tables<'changelog_with_profile'>
+    >
+  >();
+
+  const changelog = computed(() => {
+    if (!currentVehicle.value || !currentVehicle.value.id) {
+      alert('No Vehicle Selected');
+
+      return [];
+    }
+
+    if (!changelogCache.has(currentVehicle.value.id) && !loading.value) {
+      getChangelog();
+    }
+
+    const vehicleChangelogs = changelogCache.get(currentVehicle.value.id);
+
+    return vehicleChangelogs ? Array.from(vehicleChangelogs.values()) : [];
+  });
 
   const getChangelog = async <
     Columns extends (keyof Tables<'changelog_with_profile'> | '*')[],
@@ -27,11 +50,7 @@ export const useChangelogStore = defineStore('Changelog', () => {
         throw new Error('No Vehicle Selected!');
       }
 
-      if (
-        changelogCache.has(currentVehicle.value.id) &&
-        (changelogCache.get(currentVehicle.value.id) || []).length > 0
-      )
-        return;
+      loading.value = true;
 
       const { data, error, status } = await supabase
         .from('changelog_with_profile')
@@ -46,8 +65,16 @@ export const useChangelogStore = defineStore('Changelog', () => {
 
       initRealtime();
 
-      changelogCache.set(currentVehicle.value.id, data ?? []);
-      changelog.value = data ?? [];
+      const vehicleChangelogCache =
+        changelogCache.get(currentVehicle.value.id) || new Map();
+
+      if (data) {
+        data.forEach(item => {
+          vehicleChangelogCache.set(item.id, item);
+        });
+      }
+
+      changelogCache.set(currentVehicle.value.id, vehicleChangelogCache);
     } catch (error) {
       console.error(error);
     }
@@ -71,9 +98,6 @@ export const useChangelogStore = defineStore('Changelog', () => {
             if (!currentVehicle.value || !currentVehicle.value.id) return;
             if (payload.errors) throw payload.errors;
 
-            const prevEntries =
-              changelogCache.get(currentVehicle.value.id) || [];
-
             // Get missing fields from profiles, since realtime does not work views
             const profile = profiles.value.find(
               ({ user_id }) => user_id === payload.new['createdby_id'],
@@ -85,10 +109,16 @@ export const useChangelogStore = defineStore('Changelog', () => {
               createdby_profile_image_url: profile?.profile_image_url || null,
             };
 
-            changelogCache.set(currentVehicle.value.id, [
-              ...prevEntries,
-              newEntryWithProfile,
-            ]);
+            const vehicleChangelogCache =
+              changelogCache.get(currentVehicle.value.id) || new Map();
+
+            if (newEntryWithProfile) {
+              [newEntryWithProfile].forEach(item => {
+                vehicleChangelogCache.set(item.id, item);
+              });
+            }
+
+            changelogCache.set(currentVehicle.value.id, vehicleChangelogCache);
           },
         )
         .subscribe();

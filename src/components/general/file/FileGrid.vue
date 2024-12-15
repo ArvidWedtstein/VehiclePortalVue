@@ -1,24 +1,9 @@
 <script setup lang="ts">
+import BindFileToServiceModal from '@/components/vehicles/services/BindFileToServiceModal.vue';
 import { formatDate } from '@/utils/date';
 import { formatFileSize } from '@/utils/format';
-
-type iFile = {
-  file: {
-    name: string;
-    lastModified?: number;
-    webkitRelativePath?: string;
-    size?: number;
-    type?: string;
-  };
-  [key: string]: unknown;
-  preview?: boolean;
-  state: 'newfile' | 'uploading' | 'uploaded' | 'newuploaded';
-  url: string;
-  error?: {
-    type: 'oversized' | 'invalidType' | 'uploadError' | 'invalidCharacters';
-    message: string;
-  };
-};
+import { ref } from 'vue';
+import type { iFile } from './FileDrop.vue';
 
 type Props = {
   files?: Partial<iFile>[];
@@ -33,12 +18,15 @@ const emit = defineEmits<{
   (e: 'deleteFile', file: Partial<iFile>): void;
 }>();
 
+const bindFileToServiceModalRef = ref();
+
 const handleFileDelete = async (file: Partial<iFile>) => {
   emit('deleteFile', file);
 };
 </script>
 
 <template>
+  <BindFileToServiceModal ref="bindFileToServiceModalRef" />
   <div
     class="table w-full table-auto rounded-lg border border-zinc-500 border-opacity-70 p-2 text-left"
   >
@@ -137,6 +125,14 @@ const handleFileDelete = async (file: Partial<iFile>) => {
             <li>
               <button type="button" @click="emit('previewFile', file)">
                 Preview
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                @click="bindFileToServiceModalRef.open(file)"
+              >
+                Bind to service
               </button>
             </li>
             <li>

@@ -5,10 +5,12 @@ import MotorcycleIcon from '@/assets/icons/MotorcycleIcon.vue';
 import type { Tables } from '@/database.types';
 import { useVehiclesStore } from '@/stores/vehicles';
 import { getInitials } from '@/utils/utils';
-import { onMounted, ref } from 'vue';
+import { onMounted, toRef } from 'vue';
 import { RouterLink } from 'vue-router';
 
-const { getVehicleShares } = useVehiclesStore();
+const vehicleStore = useVehiclesStore();
+const vehicleShares = toRef(vehicleStore, 'vehicleShares');
+const { getVehicleShares } = vehicleStore;
 
 type Props = {
   vehicle: Tables<'Vehicles'>;
@@ -16,9 +18,8 @@ type Props = {
 
 const props = defineProps<Props>();
 
-const shares = ref<Tables<'VehicleShares'>[]>([]);
 onMounted(async () => {
-  shares.value = await getVehicleShares(props.vehicle.id);
+  await getVehicleShares(props.vehicle.id);
 });
 </script>
 
@@ -88,7 +89,7 @@ onMounted(async () => {
         <!-- TODO: remove edit option here, and move to vehicle view-->
         <div class="avatar-group -space-x-4 rtl:space-x-reverse me-auto">
           <div
-            v-for="(share, shareIndex) in shares"
+            v-for="(share, shareIndex) in vehicleShares"
             :key="shareIndex"
             class="avatar"
             :class="{ placeholder: !share.Profiles.profile_image_url }"
@@ -98,7 +99,9 @@ onMounted(async () => {
                 v-if="share.Profiles.profile_image_url"
                 :src="share.Profiles.profile_image_url"
               />
-              <span v-else>{{ getInitials(share.Profiles.name) }}</span>
+              <span v-else-if="share.Profiles.name">{{
+                getInitials(share.Profiles.name)
+              }}</span>
             </div>
           </div>
 

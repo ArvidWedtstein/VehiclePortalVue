@@ -4,8 +4,8 @@ import VehiclesGrid from '@/components/vehicles/VehiclesGrid.vue';
 
 <template>
   <RouterView v-slot="{ Component }">
-    <VehiclesGrid v-if="!Component" />
+    <component v-if="Component" :is="Component" />
 
-    <component v-else :is="Component" />
+    <VehiclesGrid v-else />
   </RouterView>
 </template>

@@ -9,6 +9,7 @@ import FileGrid from '../file/FileGrid.vue';
 import { ref, watch } from 'vue';
 import { toast } from '@/lib/toastManager';
 
+// TODO: Exclude filegrid from filedrop
 type FileUploadProps = {
   hideDropArea?: boolean;
   hideFilesGrid?: boolean;
@@ -46,7 +47,7 @@ type FileUploadProps = {
    */
   maxSize?: number;
 };
-type iFile = {
+export type iFile = {
   file: {
     name: string;
     lastModified?: number;
@@ -232,8 +233,9 @@ const fetchFiles = async () => {
 
 const handleFileDelete = async (file: Partial<iFile>) => {
   try {
-    console.info('HandleFileDelete', file);
     if (!file.path) return;
+
+    // TODO: move into Documents store?
 
     const { error } = await supabase.storage
       .from(props.bucket)

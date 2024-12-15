@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { computed, onMounted, ref, toRef } from 'vue';
+import { computed, onMounted, ref, toRefs } from 'vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import ListGroupItem from '../general/list/ListGroupItem.vue';
 import ListSubGroup from '../general/list/ListSubGroup.vue';
@@ -15,8 +15,8 @@ const modalRef = ref();
 const vehiclesStore = useVehiclesStore();
 const { getProfiles } = useProfilesStore();
 
-const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
-const { shareVehicle, unShareVehicle, getVehicleShares } = vehiclesStore;
+const { currentVehicle, vehicleShares } = toRefs(vehiclesStore);
+const { shareVehicle, unShareVehicle } = vehiclesStore;
 
 const users = ref<Tables<'Profiles'>[]>([]);
 
@@ -39,8 +39,9 @@ const groupedPersons = computed(() =>
 const onFormSubmit = async (event: Event) => {
   event.preventDefault();
 
-  const currentVehicle_ID = currentVehicle.value?.id;
-  if (!currentVehicle_ID) return;
+  if (!currentVehicle.value) return;
+
+  const currentVehicle_ID = currentVehicle.value.id;
 
   if (removedShares.value.length > 0) {
     await unShareVehicle(currentVehicle_ID, removedShares.value);
@@ -60,20 +61,16 @@ const onFormSubmit = async (event: Event) => {
   toast.triggerToast(`Successfully updated shares`, 'success', 1000);
 };
 
-const handleOpen = async (vehicle_id?: Tables<'Vehicles'>['id']) => {
+const handleOpen = async () => {
   addedShares.value = [];
   removedShares.value = [];
 
   modalRef.value.modalRef.showModal();
 
-  const vehicleShares = await getVehicleShares(
-    vehicle_id || currentVehicle.value?.id,
-  );
-
-  vehiclesShare.value = vehicleShares;
+  vehiclesShare.value = vehicleShares.value;
 
   personsModel.value = users.value.filter(profile =>
-    vehicleShares?.some(pShare => pShare.user_id === profile.user_id),
+    vehicleShares.value.some(pShare => pShare.user_id === profile.user_id),
   );
 };
 
@@ -162,7 +159,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
       </ListSubGroup>
     </ListGroup>
 
-    <template #actions>
+    <template #actions="{ onSubmit }">
       <button
         class="btn btn-sm btn-outline"
         value="cancel"
@@ -172,7 +169,11 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         Close
       </button>
 
-      <button type="submit" class="btn btn-sm btn-primary ms-1" value="submit">
+      <button
+        type="button"
+        class="btn btn-sm btn-primary ms-1"
+        @click="onSubmit"
+      >
         Ok
       </button>
     </template>

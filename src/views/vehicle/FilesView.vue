@@ -5,13 +5,14 @@ import { useVehiclesStore } from '@/stores/vehicles';
 import { onMounted, toRef, toRefs } from 'vue';
 
 const vehicleStore = useVehiclesStore();
-const documentsStore = useDocumentsStore();
 const currentVehicle = toRef(vehicleStore, 'currentVehicle');
+
+const documentsStore = useDocumentsStore();
 const { documents } = toRefs(documentsStore);
 const { getDocuments } = documentsStore;
 
-onMounted(() => {
-  getDocuments();
+onMounted(async () => {
+  await getDocuments();
 });
 </script>
 
@@ -20,6 +21,7 @@ onMounted(() => {
     <FileDrop
       bucket="VehicleDocuments"
       :storagePath="`${currentVehicle.licenseplate_number}/`"
+      multiple
       :initialFiles="
         documents.map(({ name, file_path, file_size }) => ({
           file: { name: name || '', size: file_size || 0 },

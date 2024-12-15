@@ -1,4 +1,4 @@
-import { ref, toRef } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
@@ -9,10 +9,28 @@ export const useServicesStore = defineStore('services', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
-  const services = ref<Tables<'VehicleServiceLogs'>[]>([]);
-  const servicesCache = new Map<number, Tables<'VehicleServiceLogs'>[]>();
-
   const loading = ref(false);
+
+  const servicesCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Map<Tables<'VehicleServiceLogs'>['id'], Tables<'VehicleServiceLogs'>>
+  >();
+
+  const services = computed(() => {
+    if (!currentVehicle.value || !currentVehicle.value.id) {
+      alert('No Vehicle Selected');
+
+      return [];
+    }
+
+    if (!servicesCache.has(currentVehicle.value.id) && !loading.value) {
+      getServices();
+    }
+
+    const vehicleServices = servicesCache.get(currentVehicle.value.id);
+
+    return vehicleServices ? Array.from(vehicleServices.values()) : [];
+  });
 
   const getServices = async <
     Columns extends (keyof Tables<'VehicleServiceLogs'> | '*')[],
@@ -24,15 +42,6 @@ export const useServicesStore = defineStore('services', () => {
       if (!currentVehicle.value || !currentVehicle.value.id) {
         throw new Error('No Vehicle Selected!');
       }
-
-      // TODO: find better solution
-      // if (
-      //   services.value.filter(
-      //     ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
-      //   ).length > 0 ||
-      //   servicesCache.has(currentVehicle.value.id)
-      // )
-      //   return;
 
       loading.value = true;
 
@@ -47,8 +56,16 @@ export const useServicesStore = defineStore('services', () => {
 
       if (error && status !== 406) throw error;
 
-      servicesCache.set(currentVehicle.value.id, data ?? []);
-      services.value = data ?? [];
+      const currentVehicleServicesCache =
+        servicesCache.get(currentVehicle.value.id) || new Map();
+
+      if (data) {
+        data.forEach(item => {
+          currentVehicleServicesCache.set(item.id, item);
+        });
+      }
+
+      servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
     } catch (pErr) {
       console.error(pErr);
     } finally {
@@ -57,37 +74,35 @@ export const useServicesStore = defineStore('services', () => {
   };
 
   const upsertService = async (
-    pData:
+    serviceLog:
       | TablesInsert<'VehicleServiceLogs'>
       | TablesUpdate<'VehicleServiceLogs'>,
   ) => {
     try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
       loading.value = true;
 
       const { data, error } = await supabase
         .from('VehicleServiceLogs')
         .upsert({
-          ...pData,
+          ...serviceLog,
           vehicle_id: currentVehicle.value?.id || -1,
         })
         .select();
 
       if (error) throw error;
 
-      const vServiceIndex = services.value.findIndex(
-        ({ id }) => id === data[0].id,
-      );
+      const currentVehicleServicesCache =
+        servicesCache.get(currentVehicle.value.id) || new Map();
 
-      if (vServiceIndex !== -1) {
-        services.value[vServiceIndex] = {
-          ...services.value[vServiceIndex],
-          ...data[0],
-        };
+      data?.forEach(item => {
+        currentVehicleServicesCache.set(item.id, item);
+      });
 
-        return;
-      }
-
-      services.value.push(...data);
+      servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
     } catch (pErr) {
       console.error(pErr);
     } finally {
@@ -99,6 +114,10 @@ export const useServicesStore = defineStore('services', () => {
     service_id: Tables<'VehicleServiceLogs'>['id'],
   ) => {
     try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
       loading.value = true;
 
       const { error } = await supabase
@@ -108,19 +127,28 @@ export const useServicesStore = defineStore('services', () => {
 
       if (error) throw error;
 
-      services.value = services.value.filter(({ id }) => id !== service_id);
-      servicesCache.set(
-        currentVehicle.value?.id || -1,
-        servicesCache
-          .get(currentVehicle.value?.id || 0)
-          ?.filter(({ id }) => id !== service_id) || [],
-      );
+      const currentVehicleServicesCache =
+        servicesCache.get(currentVehicle.value.id) || new Map();
+
+      currentVehicleServicesCache.delete(service_id);
+
+      servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
     } catch (error) {
       console.error(error);
     } finally {
       loading.value = false;
     }
   };
+
+  // TODO: add for binding?
+  // watch(
+  //   () => currentVehicle.value?.id,
+  //   async newVehicleId => {
+  //     if (newVehicleId) {
+  //       await getServices();
+  //     }
+  //   },
+  // );
 
   return { services, getServices, upsertService, deleteService, loading };
 });

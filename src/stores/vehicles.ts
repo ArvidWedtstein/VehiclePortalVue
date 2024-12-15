@@ -1,50 +1,66 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import type { FilterKeys } from '@/utils/utils';
+import { groupBy, type FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
 import { useRoute } from 'vue-router';
 
+export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
+  Profiles: Pick<Tables<'Profiles'>, 'profile_image_url' | 'name'>;
+};
+
 export const useVehiclesStore = defineStore('vehicles', () => {
-  const vehicles = ref<Tables<'Vehicles'>[]>([]);
-  const currentVehicle = ref<Tables<'Vehicles'> | null>(null);
+  const vehiclesCache = new Map<Tables<'Vehicles'>['id'], Tables<'Vehicles'>>();
 
-  const vehicleSharesCache = new Map<
-    Tables<'Vehicles'>['id'],
-    Tables<'VehicleShares'>[]
-  >();
+  const currentVehicleId = ref<Tables<'Vehicles'>['id'] | null>(null);
 
-  const setCurrentVehicle = async (pVehicle_ID?: Tables<'Vehicles'>['id']) => {
+  const loading = ref(false);
+
+  const vehicles = computed(() => {
+    if (vehiclesCache.size < 2 && !loading.value) {
+      getVehicles();
+    }
+
+    return Array.from(vehiclesCache.values());
+  });
+
+  const currentVehicle = computed(() => {
+    const id = currentVehicleId.value;
+    if (!id) return null;
+
+    const vehicle = vehiclesCache.get(id);
+    if (vehicle) {
+      return vehicle;
+    }
+
+    getVehicles({ id: id });
+
+    return null;
+  });
+
+  const setCurrentVehicle = async (vehicle_id?: Tables<'Vehicles'>['id']) => {
     try {
       const route = useRoute();
 
-      if (!pVehicle_ID) {
+      if (!vehicle_id) {
         const entryIndex = Object.entries(route.params).findIndex(
           ([k]) => k === 'vehicle_id',
         );
         if (entryIndex < 0) return;
 
         const value = Object.values(route.params)[entryIndex];
-        const urlVehicleID = Array.isArray(value) ? value.pop() : value;
+        const urlVehicle_id = Array.isArray(value) ? value.pop() : value;
 
-        if (!urlVehicleID || Number.isNaN(urlVehicleID)) return;
+        if (!urlVehicle_id || Number.isNaN(urlVehicle_id)) return;
 
-        pVehicle_ID = parseInt(urlVehicleID);
+        vehicle_id = parseInt(urlVehicle_id);
       }
 
-      if (!vehicles.value.length) {
-        await getVehicles({ id: pVehicle_ID });
+      if (!vehiclesCache.has(vehicle_id)) {
+        await getVehicles({ id: vehicle_id });
       }
 
-      const vehicle = vehicles.value.find(({ id }) => id === pVehicle_ID);
-
-      if (!vehicle) {
-        throw new Error(`Vehicle with ID: ${pVehicle_ID} was not found`);
-      }
-
-      currentVehicle.value = vehicle;
-
-      return currentVehicle;
+      currentVehicleId.value = vehicle_id;
     } catch (pErr) {
       console.error(pErr);
     }
@@ -59,6 +75,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     try {
       console.info('Get Vehicles');
 
+      loading.value = true;
+
       const { data, error, status } = await supabase
         .from('Vehicles')
         .select(columns.join(','))
@@ -68,53 +86,95 @@ export const useVehiclesStore = defineStore('vehicles', () => {
 
       if (error && status !== 406) throw error;
 
-      vehicles.value = data ?? [];
+      vehiclesCache.clear();
+      data?.forEach(vehicle => {
+        vehiclesCache.set(vehicle.id, vehicle);
+      });
     } catch (pErr) {
       console.error(pErr);
+    } finally {
+      loading.value = false;
     }
   };
 
   const upsertVehicle = async (
-    pData: TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>,
+    vehicle: TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>,
   ) => {
     try {
       const { data, error } = await supabase
         .from('Vehicles')
-        .upsert(pData)
+        .upsert(vehicle)
         .returns<Tables<'Vehicles'>[]>()
         .select();
 
       if (error) throw error;
 
-      const vVehicleIndex = vehicles.value.findIndex(
-        ({ id }) => id === data[0].id,
-      );
-
-      if (vVehicleIndex !== -1) {
-        vehicles.value[vVehicleIndex] = {
-          ...vehicles.value[vVehicleIndex],
-          ...data[0],
-        };
-
-        return;
-      }
-
-      if (!data) return;
-
-      vehicles.value.push(...data);
+      data?.forEach(vehicle => {
+        vehiclesCache.set(vehicle.id, vehicle);
+      });
     } catch (pErr) {
       console.error(pErr);
     }
   };
+
+  // -- VehicleShares --
+  const sharesLoading = ref(false);
+
+  const vehiclesSharesCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Map<VehicleShareWithProfile['id'], VehicleShareWithProfile>
+  >();
+
+  const vehicleShares = computed(() => {
+    if (currentVehicleId.value === null) {
+      return [];
+    }
+
+    if (
+      !vehiclesSharesCache.has(currentVehicleId.value) &&
+      !sharesLoading.value
+    ) {
+      getVehicleShares(currentVehicleId.value);
+    }
+
+    const currentVehicleShares = vehiclesSharesCache.get(
+      currentVehicleId.value,
+    );
+
+    return currentVehicleShares
+      ? Array.from(currentVehicleShares.values())
+      : [];
+  });
 
   const shareVehicle = async (users: TablesInsert<'VehicleShares'>[]) => {
     try {
       const { data, error } = await supabase
         .from('VehicleShares')
         .upsert(users, { defaultToNull: true })
-        .select();
+        .select(
+          `
+          *,
+          Profiles (
+            name,
+            profile_image_url
+          )  
+        `,
+        );
 
       if (error) throw error;
+
+      const groupedShares = groupBy(data ?? [], 'vehicle_id');
+
+      Object.entries(groupedShares).forEach(([vehicle_id, shares]) => {
+        const vehicleShareCache =
+          vehiclesSharesCache.get(parseInt(vehicle_id)) || new Map();
+
+        shares?.forEach(share => {
+          vehicleShareCache.set(share.id, share);
+        });
+
+        vehiclesSharesCache.set(parseInt(vehicle_id), vehicleShareCache);
+      });
 
       return data;
     } catch (pErr) {
@@ -132,9 +192,27 @@ export const useVehiclesStore = defineStore('vehicles', () => {
         .delete()
         .in('user_id', users)
         .eq('vehicle_id', vehicle_id)
-        .select();
+        .select(
+          `
+          *,
+          Profiles (
+            name,
+            profile_image_url
+          )  
+        `,
+        )
+        .returns<Array<VehicleShareWithProfile>>();
 
       if (error) throw error;
+
+      const vehicleShareCache =
+        vehiclesSharesCache.get(vehicle_id) || new Map();
+
+      data?.forEach(share => {
+        vehicleShareCache.delete(share.id);
+      });
+
+      vehiclesSharesCache.set(vehicle_id, vehicleShareCache);
 
       return data;
     } catch (pErr) {
@@ -143,18 +221,18 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   };
 
   const getVehicleShares = async (
-    vehicle_ID?: Tables<'VehicleShares'>['vehicle_id'],
+    vehicle_id?: Tables<'VehicleShares'>['vehicle_id'],
   ) => {
     try {
-      const currentVehicle_ID = currentVehicle.value?.id || vehicle_ID;
+      const currentVehicle_id = currentVehicle.value
+        ? currentVehicle.value.id
+        : vehicle_id;
 
-      if (!currentVehicle_ID) {
+      if (!currentVehicle_id) {
         return [];
       }
 
-      if (vehicleSharesCache.has(currentVehicle_ID)) {
-        return vehicleSharesCache.get(currentVehicle_ID) || [];
-      }
+      sharesLoading.value = true;
 
       const { data, error, status } = await supabase
         .from('VehicleShares')
@@ -167,14 +245,19 @@ export const useVehiclesStore = defineStore('vehicles', () => {
           )  
         `,
         )
-        .eq('vehicle_id', currentVehicle_ID)
-        .returns<Tables<'VehicleShares'>[]>();
+        .eq('vehicle_id', currentVehicle_id)
+        .returns<Array<VehicleShareWithProfile>>();
 
       if (error && status !== 406) throw error;
 
-      console.log(data);
+      const currentVehicleShareCache =
+        vehiclesSharesCache.get(currentVehicle_id) || new Map();
 
-      vehicleSharesCache.set(currentVehicle_ID, data || []);
+      data?.forEach(share => {
+        currentVehicleShareCache.set(share.id, share);
+      });
+
+      vehiclesSharesCache.set(currentVehicle_id, currentVehicleShareCache);
 
       return data || [];
     } catch (error) {
@@ -183,6 +266,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       }
 
       return [];
+    } finally {
+      sharesLoading.value = false;
     }
   };
 
@@ -191,11 +276,12 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     currentVehicle,
     getVehicles,
     upsertVehicle,
-    vehicleSharesCache,
+    vehicleShares,
     shareVehicle,
     unShareVehicle,
     getVehicleShares,
     setCurrentVehicle,
+    loading,
   };
 });
 

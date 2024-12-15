@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/database.types';
@@ -11,9 +11,31 @@ import { useVehiclesStore } from './vehicles';
 // };
 
 export const useDocumentsStore = defineStore('documents', () => {
-  const { currentVehicle } = useVehiclesStore();
-  const documents = ref<Tables<'VehicleDocuments'>[]>([]);
-  const documentsCache = new Map<number, Tables<'VehicleDocuments'>[]>();
+  const vehiclesStore = useVehiclesStore();
+  const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+
+  const documentsCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Map<Tables<'VehicleDocuments'>['id'], Tables<'VehicleDocuments'>>
+  >();
+
+  const loading = ref(false);
+
+  const documents = computed(() => {
+    if (!currentVehicle.value || !currentVehicle.value.id) {
+      alert('No Vehicle Selected');
+
+      return [];
+    }
+
+    if (!documentsCache.has(currentVehicle.value.id) && !loading.value) {
+      getDocuments();
+    }
+
+    const vehicleDocuments = documentsCache.get(currentVehicle.value.id);
+
+    return vehicleDocuments ? Array.from(vehicleDocuments.values()) : [];
+  });
 
   const getDocuments = async <
     Columns extends (keyof Tables<'VehicleDocuments'> | '*')[],
@@ -22,29 +44,21 @@ export const useDocumentsStore = defineStore('documents', () => {
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
-      if (!currentVehicle || !currentVehicle.id) {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
         throw new Error('No Vehicle Selected!');
       }
 
-      if (
-        documents.value.filter(
-          ({ vehicle_id }) => vehicle_id === currentVehicle.id,
-        ).length > 0 ||
-        documentsCache.has(currentVehicle.id)
-      )
-        return;
+      loading.value = true;
 
       const { data, error, status } = await supabase
         .from('VehicleDocuments')
         .select(columns.join(','))
         .match(filters || {})
-        .eq('vehicle_id', currentVehicle.id)
+        .eq('vehicle_id', currentVehicle.value.id)
         .limit(100)
         .returns<Tables<'VehicleDocuments'>[]>();
 
       if (error && status !== 406) throw error;
-
-      const files = data ?? [];
 
       // TODO: remove this.
       // const { data: bucketData, error: bucketError } = await supabase.storage
@@ -74,12 +88,62 @@ export const useDocumentsStore = defineStore('documents', () => {
       //   };
       // });
 
-      documentsCache.set(currentVehicle.id, files);
-      documents.value = files;
+      const vehicleDocumentsCache =
+        documentsCache.get(currentVehicle.value.id) || new Map();
+
+      if (data) {
+        data.forEach(item => {
+          vehicleDocumentsCache.set(item.id, item);
+        });
+      }
+
+      documentsCache.set(currentVehicle.value.id, vehicleDocumentsCache);
     } catch (pErr) {
       console.error(pErr);
+    } finally {
+      loading.value = false;
     }
   };
 
-  return { documents, getDocuments };
+  const bindDocumentToService = async (
+    document_path: Tables<'VehicleDocuments'>['file_path'],
+    service_id: Tables<'VehicleServiceLogs'>['id'],
+  ) => {
+    try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
+      loading.value = true;
+
+      const { data, error, status } = await supabase
+        .from('VehicleDocuments')
+        .update({
+          service_log_id: service_id,
+        })
+        .eq('file_path', document_path)
+        .select();
+
+      if (error && status !== 406) throw error;
+
+      const currentVehicleDocumentsCache =
+        documentsCache.get(currentVehicle.value.id) || new Map();
+
+      if (data) {
+        data.forEach(item => {
+          currentVehicleDocumentsCache.set(item.id, item);
+        });
+      }
+
+      documentsCache.set(currentVehicle.value.id, currentVehicleDocumentsCache);
+
+      return data;
+    } catch (pErr) {
+      console.error(pErr);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  return { documents, getDocuments, bindDocumentToService, loading };
 });

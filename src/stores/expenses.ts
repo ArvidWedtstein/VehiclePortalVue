@@ -1,4 +1,4 @@
-import { ref, toRef } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
@@ -9,10 +9,30 @@ export const useExpensesStore = defineStore('expenses', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
-  const expenses = ref<Tables<'VehicleExpenses'>[]>([]);
-  const expensesCache = new Map<number, Tables<'VehicleExpenses'>[]>();
+  const expensesCache = new Map<
+    Tables<'Vehicles'>['id'],
+    Map<Tables<'VehicleExpenses'>['id'], Tables<'VehicleExpenses'>>
+  >();
 
   const loading = ref(false);
+
+  const expenses = computed(() => {
+    if (!currentVehicle.value || !currentVehicle.value.id) {
+      alert('No Vehicle Selected');
+
+      return [];
+    }
+
+    if (!expensesCache.has(currentVehicle.value.id) && !loading.value) {
+      getExpenses().then(retExpenses => {
+        return retExpenses;
+      });
+    }
+
+    const vehicleExpenses = expensesCache.get(currentVehicle.value.id);
+
+    return vehicleExpenses ? Array.from(vehicleExpenses.values()) : [];
+  });
 
   const getExpenses = async <
     Columns extends (keyof Tables<'VehicleExpenses'> | '*')[],
@@ -24,14 +44,6 @@ export const useExpensesStore = defineStore('expenses', () => {
       if (!currentVehicle.value || !currentVehicle.value.id) {
         throw new Error('No Vehicle Selected!');
       }
-
-      // if (
-      //   expenses.value.filter(
-      //     ({ vehicle_id }) => vehicle_id === currentVehicle.value?.id,
-      //   ).length > 0 ||
-      //   expensesCache.has(currentVehicle.value.id)
-      // )
-      //   return expensesCache.get(currentVehicle.value.id);
 
       loading.value = true;
 
@@ -50,20 +62,16 @@ export const useExpensesStore = defineStore('expenses', () => {
 
       if (error && status !== 406) throw error;
 
-      expensesCache.set(currentVehicle.value.id, [
-        ...new Map(
-          [
-            ...(expensesCache.get(currentVehicle.value.id) ?? []),
-            ...(data ?? []),
-          ].map(item => [item['id'], item]),
-        ).values(),
-      ]);
+      const currentVehicleExpensesCache =
+        expensesCache.get(currentVehicle.value.id) || new Map();
 
-      expenses.value = [
-        ...new Map(
-          [...expenses.value, ...(data ?? [])].map(item => [item['id'], item]),
-        ).values(),
-      ];
+      if (data) {
+        data.forEach(item => {
+          currentVehicleExpensesCache.set(item.id, item);
+        });
+      }
+
+      expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
 
       return data ?? [];
     } catch (err) {
@@ -75,16 +83,20 @@ export const useExpensesStore = defineStore('expenses', () => {
   };
 
   const upsertExpense = async (
-    pData: TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>,
+    expense: TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>,
   ) => {
     try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
       loading.value = true;
 
       const { data, error } = await supabase
         .from('VehicleExpenses')
         .upsert({
-          ...pData,
-          vehicle_id: currentVehicle.value?.id || -1,
+          ...expense,
+          vehicle_id: currentVehicle.value.id,
         })
         .select();
 
@@ -92,20 +104,16 @@ export const useExpensesStore = defineStore('expenses', () => {
         throw error;
       }
 
-      const vExpenseIndex = expenses.value.findIndex(
-        ({ id }) => id === data[0].id,
-      );
+      const currentVehicleExpensesCache =
+        expensesCache.get(currentVehicle.value.id) || new Map();
 
-      if (vExpenseIndex !== -1) {
-        expenses.value[vExpenseIndex] = {
-          ...expenses.value[vExpenseIndex],
-          ...data[0],
-        };
-
-        return;
+      if (data) {
+        data.forEach(expense => {
+          currentVehicleExpensesCache.set(expense.id, expense);
+        });
       }
 
-      expenses.value.push(...data);
+      expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
     } catch (pErr) {
       console.error(pErr);
     } finally {
@@ -115,6 +123,10 @@ export const useExpensesStore = defineStore('expenses', () => {
 
   const deleteExpense = async (expense_id: Tables<'VehicleExpenses'>['id']) => {
     try {
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
       loading.value = true;
 
       const { error } = await supabase
@@ -124,9 +136,14 @@ export const useExpensesStore = defineStore('expenses', () => {
 
       if (error) throw error;
 
-      expenses.value = expenses.value.filter(({ id }) => id !== expense_id);
+      const currentVehicleExpensesCache =
+        expensesCache.get(currentVehicle.value.id) || new Map();
+
+      currentVehicleExpensesCache.delete(expense_id);
+
+      expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
     } catch (error) {
-      console.error(error);
+      console.error('Error deleting expense:', error);
       throw error;
     } finally {
       loading.value = false;

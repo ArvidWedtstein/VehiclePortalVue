@@ -155,6 +155,7 @@ onMounted(async () => {
           </select>
         </div>
         <LineChart
+          class="max-h-64"
           :xAxis="[
             {
               data: monthsThisYear.map(p => {

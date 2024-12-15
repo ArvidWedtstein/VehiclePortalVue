@@ -50,8 +50,6 @@ const setActiveTabFromUrl = (
   ) {
     activeTab.value = 0;
 
-    console.log('replace', router.currentRoute.value);
-
     router.replace({
       name: props.tabs[0].toLowerCase(),
       params: { ...router.currentRoute.value.params },

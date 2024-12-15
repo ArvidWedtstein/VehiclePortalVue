@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
-import { defineAsyncComponent, onMounted, toRefs, ref } from 'vue';
+import { defineAsyncComponent, onMounted, toRef, ref } from 'vue';
 import VehicleGridItem from './VehicleGridItem.vue';
 
 const VehicleModal = defineAsyncComponent(
@@ -9,12 +9,11 @@ const VehicleModal = defineAsyncComponent(
 );
 
 const vehiclesStore = useVehiclesStore();
-
-const { vehicles } = toRefs(vehiclesStore);
+const vehicles = toRef(vehiclesStore, 'vehicles');
 const { getVehicles } = vehiclesStore;
 
-onMounted(() => {
-  getVehicles();
+onMounted(async () => {
+  await getVehicles();
 });
 
 const vehicleModal = ref();
@@ -32,7 +31,7 @@ const vehicleModal = ref();
           Your Vehicles
         </h2>
         <p class="mt-6 text-lg leading-8 dark:text-gray-300 text-gray-600">
-          Vehicles owned or shared by you
+          Vehicles owned or shared with you
         </p>
       </div>
       <ul role="list" class="grid gap-8 md:grid-cols-2 md:gap-16 xl:col-span-2">
