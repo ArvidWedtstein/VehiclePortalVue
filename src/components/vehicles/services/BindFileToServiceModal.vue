@@ -3,20 +3,22 @@ import { ref, toRef } from 'vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { Tables } from '@/database.types';
 import { useServicesStore } from '@/stores/services';
-import { toast } from '@/lib/toastManager';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import { formatDate } from '@/utils/date';
 import { useDocumentsStore } from '@/stores/documents';
 import type { iFile } from '@/components/general/file/FileDrop.vue';
+import { useToastStore } from '@/stores/toasts';
 
 const modalRef = ref();
 
+const { addToast } = useToastStore();
+
 const serviceStore = useServicesStore();
-const { bindDocumentToService } = useDocumentsStore();
+const { getServices } = serviceStore;
 const services = toRef(serviceStore, 'services');
 
-const { getServices } = serviceStore;
+const { bindDocumentToService } = useDocumentsStore();
 
 const selectedService = ref<Tables<'VehicleServiceLogs'> | null>(null);
 
@@ -31,14 +33,14 @@ const onFormSubmit = async () => {
       currentFile.value.path,
       selectedService.value.id,
     );
+
+    addToast(`Successfully bound file to service`, 'success', 2000);
   } catch (error) {
-    toast.triggerToast(
+    addToast(
       `Something went wrong while binding file to service\n${error}`,
       'error',
       2000,
     );
-  } finally {
-    toast.triggerToast(`Successfully bound file to service`, 'success', 2000);
   }
 };
 

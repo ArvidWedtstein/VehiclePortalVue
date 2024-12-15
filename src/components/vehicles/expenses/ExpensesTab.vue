@@ -63,7 +63,6 @@ const statFuelCostPerMonth = computed(() => {
 
 onMounted(async () => {
   getExpenses();
-  console.log('get expenses');
 });
 </script>
 
@@ -71,7 +70,7 @@ onMounted(async () => {
   <ExpenseModal ref="expenseModal" />
 
   <div class="flex justify-between">
-    <button class="btn btn-accent" @click="expenseModal.open()">
+    <button type="button" class="btn btn-accent" @click="expenseModal.open()">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 448 512"

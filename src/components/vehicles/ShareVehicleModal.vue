@@ -8,7 +8,7 @@ import ListGroup from '../general/list/ListGroup.vue';
 import { groupBy } from '@/utils/utils';
 import type { Tables } from '@/database.types';
 import { useProfilesStore } from '@/stores/profiles';
-import { toast } from '@/lib/toastManager';
+import { useToastStore } from '@/stores/toasts';
 
 const modalRef = ref();
 
@@ -17,6 +17,8 @@ const { getProfiles } = useProfilesStore();
 
 const { currentVehicle, vehicleShares } = toRefs(vehiclesStore);
 const { shareVehicle, unShareVehicle } = vehiclesStore;
+
+const { addToast } = useToastStore();
 
 const users = ref<Tables<'Profiles'>[]>([]);
 
@@ -58,7 +60,7 @@ const onFormSubmit = async (event: Event) => {
 
   console.log('submit', personsModel.value);
 
-  toast.triggerToast(`Successfully updated shares`, 'success', 1000);
+  addToast(`Successfully updated shares`, 'success', 2000);
 };
 
 const handleOpen = async () => {

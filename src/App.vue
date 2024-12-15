@@ -3,8 +3,8 @@ import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import PageNavbar from './components/layout/PageNavbar.vue';
 import { useSessionStore } from './stores/userSession';
-import ToastAlert from './components/general/utils/ToastAlert.vue';
 import MobileNavigation from './components/layout/MobileNavigation.vue';
+import ToastManager from './components/general/utils/ToastManager.vue';
 
 const { initialize } = useSessionStore();
 
@@ -21,7 +21,8 @@ onMounted(() => {
       <RouterView />
     </div>
 
-    <ToastAlert />
+    <ToastManager />
+
     <MobileNavigation />
   </main>
 </template>

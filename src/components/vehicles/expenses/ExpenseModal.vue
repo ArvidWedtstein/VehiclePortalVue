@@ -7,18 +7,20 @@ import FormDialog from '@/components/general/modal/FormDialog.vue';
 import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
-import { toast } from '@/lib/toastManager';
 import { formatNumber } from '@/utils/format';
 import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
+import { useToastStore } from '@/stores/toasts';
 
 const modalRef = ref();
+
+const { addToast } = useToastStore();
 
 const vehiclesStore = useVehiclesStore();
 const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
 const expensesStore = useExpensesStore();
-const expenses = toRef(expensesStore, 'expenses');
 const { upsertExpense, deleteExpense } = expensesStore;
+const expenses = toRef(expensesStore, 'expenses');
 
 const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   vehicle_id: currentVehicle.value?.id || -1,
@@ -43,7 +45,7 @@ const onFormSubmit = () => {
       expense.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
   });
 
-  toast.triggerToast(
+  addToast(
     `Successfully ${expense.value.id ? 'saved' : 'created'} expense`,
     'success',
     2000,

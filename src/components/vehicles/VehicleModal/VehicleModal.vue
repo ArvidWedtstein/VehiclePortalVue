@@ -13,7 +13,7 @@ import {
 import InputHelperTip from '@/components/general/form/InputHelperTip.vue';
 import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
-import { toast } from '@/lib/toastManager';
+import { useToastStore } from '@/stores/toasts';
 
 const stepControl = reactive({
   step: 0,
@@ -21,6 +21,8 @@ const stepControl = reactive({
 });
 
 const modalRef = ref();
+
+const { addToast } = useToastStore();
 
 const defaultValues: TablesUpdate<'Vehicles'> = {
   name: '',
@@ -66,14 +68,15 @@ const onFormSubmit = async () => {
 
     modalRef.value.modalRef.close();
 
-    toast.triggerToast(
+    addToast(
       `Successfully ${vehicle.value.id ? 'updated' : 'created'} vehicle`,
       'success',
       2000,
     );
   } catch (err) {
     console.error(err);
-    throw err;
+
+    addToast(`Something went wrong.${err}`, 'error', 5000);
   }
 };
 

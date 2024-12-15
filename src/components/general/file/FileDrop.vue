@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
 import { ref, watch } from 'vue';
-import { toast } from '@/lib/toastManager';
+import { useToastStore } from '@/stores/toasts';
 
 // TODO: Exclude filegrid from filedrop
 type FileUploadProps = {
@@ -80,6 +80,8 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
 });
 
 const files = ref<Partial<iFile>[]>([]);
+
+const { addToast } = useToastStore();
 
 const validateFile = (file: File) => {
   let fileError: iFile['error'] = undefined;
@@ -247,7 +249,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
 
     files.value = files.value.filter(({ path }) => path !== file.path);
 
-    toast.triggerToast(`Successfully deleted file`, 'success', 2000);
+    addToast(`Successfully deleted file`, 'success', 2000);
   } catch (error) {
     console.error(error);
   }
