@@ -364,7 +364,7 @@ export type Database = {
           mileage: number | null
           notes: string | null
           provider: string | null
-          type: string
+          type: string | null
           vehicle_id: number
         }
         Insert: {
@@ -377,7 +377,7 @@ export type Database = {
           mileage?: number | null
           notes?: string | null
           provider?: string | null
-          type: string
+          type?: string | null
           vehicle_id: number
         }
         Update: {
@@ -390,7 +390,7 @@ export type Database = {
           mileage?: number | null
           notes?: string | null
           provider?: string | null
-          type?: string
+          type?: string | null
           vehicle_id?: number
         }
         Relationships: [
