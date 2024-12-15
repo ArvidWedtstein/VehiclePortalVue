@@ -9,12 +9,14 @@ type Props = {
   title?: string;
   size?: 'sm' | 'md' | 'lg';
   backdrop?: boolean;
+  open?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
   id: crypto.randomUUID(),
   size: 'lg',
   backdrop: true,
+  open: false,
 });
 
 const emit = defineEmits<{
@@ -27,19 +29,20 @@ const handleSubmit = (event: Event) => {
   if (!modalRef.value) return;
 
   formRef.value?.checkValidity();
+
   const returnValue =
-    modalRef.value.returnValue ||
-    ((event as SubmitEvent).submitter as HTMLButtonElement).value;
+    ((event as SubmitEvent)?.submitter as HTMLButtonElement)?.value ||
+    modalRef.value.returnValue;
 
   // formRef.value?.reset();
   if (returnValue === 'cancel') {
-    modalRef.value.close();
+    modalRef.value.close('cancel');
     return;
   }
 
   emit('submit', event);
 
-  modalRef.value.close();
+  modalRef.value.close('submit');
 };
 
 const handleClose = (event: Event) => {
@@ -66,6 +69,7 @@ defineExpose({ modalRef: modalRef });
     :id="id"
     ref="modalRef"
     class="modal modal-top md:modal-middle modal-scroll"
+    :class="{ 'modal-open': open }"
     @close="handleClose"
   >
     <form
@@ -81,7 +85,6 @@ defineExpose({ modalRef: modalRef });
       <button
         class="btn btn-circle btn-sm btn-ghost absolute right-2 top-2"
         formmethod="dialog"
-        formnovalidate
         value="cancel"
       >
         ✕
@@ -93,7 +96,7 @@ defineExpose({ modalRef: modalRef });
 
       <slot></slot>
 
-      <div class="modal-action mt-auto">
+      <div class="modal-action gap-1 mt-auto">
         <slot name="actions" @submit="handleSubmit">
           <button
             class="btn btn-outline"
@@ -104,14 +107,14 @@ defineExpose({ modalRef: modalRef });
             Cancel
           </button>
 
-          <button type="submit" class="btn btn-primary ms-1" value="submit">
+          <button type="submit" class="btn btn-primary" value="submit">
             OK
           </button>
         </slot>
       </div>
     </form>
     <form v-if="backdrop" method="dialog" class="modal-backdrop">
-      <button>close</button>
+      <button value="cancel">close</button>
     </form>
   </dialog>
 </template>

@@ -63,12 +63,17 @@ const router = createRouter({
                 },
               ],
             },
-
             {
               name: 'files',
               path: 'files',
               component: async () =>
                 await import('../views/vehicle/FilesView.vue'),
+            },
+            {
+              name: 'stats',
+              path: 'stats',
+              component: async () =>
+                await import('../views/vehicle/StatsView.vue'),
             },
             {
               name: 'changelog',

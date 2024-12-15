@@ -37,24 +37,23 @@ const service = ref<
   TablesInsert<'VehicleServiceLogs'> | TablesUpdate<'VehicleServiceLogs'>
 >({ ...defaultValues });
 
-const onFormSubmit = () => {
-  console.log('submit', {
-    ...service.value,
-    date:
-      service.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
-  });
+const onFormSubmit = async () => {
+  try {
+    await upsertService({
+      ...service.value,
+      date:
+        service.value.date +
+        `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+    });
 
-  upsertService({
-    ...service.value,
-    date:
-      service.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
-  });
-
-  addToast(
-    `Successfully ${service.value.id ? 'saved' : 'created'} service`,
-    'success',
-    2000,
-  );
+    addToast(
+      `Successfully ${service.value.id ? 'saved' : 'created'} service`,
+      'success',
+      2000,
+    );
+  } catch (error) {
+    addToast(`Something went wrong. ${error}`, 'error', 5000);
+  }
 };
 
 const handleOpen = async (

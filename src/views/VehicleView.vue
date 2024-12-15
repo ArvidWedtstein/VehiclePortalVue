@@ -64,7 +64,7 @@ onMounted(async () => {
     <div class="card grow">
       <TabsContainer
         variant="boxed"
-        :tabs="['Expenses', 'Services', 'Files', 'Changelog']"
+        :tabs="['Expenses', 'Services', 'Files', 'Changelog', 'Stats']"
         urlMode
       >
         <RouterView v-slot="{ Component }">

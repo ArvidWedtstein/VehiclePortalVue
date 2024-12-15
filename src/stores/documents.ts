@@ -1,4 +1,4 @@
-import { computed, ref, toRef } from 'vue';
+import { computed, reactive, ref, toRef } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/database.types';
@@ -14,10 +14,12 @@ export const useDocumentsStore = defineStore('documents', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
-  const documentsCache = new Map<
-    Tables<'Vehicles'>['id'],
-    Map<Tables<'VehicleDocuments'>['id'], Tables<'VehicleDocuments'>>
-  >();
+  const documentsCache = reactive(
+    new Map<
+      Tables<'Vehicles'>['id'],
+      Map<Tables<'VehicleDocuments'>['id'], Tables<'VehicleDocuments'>>
+    >(),
+  );
 
   const loading = ref(false);
 

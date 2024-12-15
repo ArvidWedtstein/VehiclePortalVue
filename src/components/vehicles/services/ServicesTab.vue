@@ -1,20 +1,9 @@
-<script
-  setup
-  lang="ts"
-  generic="ChartData extends ReadonlyArray<{ id: string; name: string }>"
->
+<script setup lang="ts">
 import { useServicesStore } from '@/stores/services';
-import { computed, onMounted, reactive, ref, toRef } from 'vue';
-import {
-  adjustCalendarDate,
-  formatDate,
-  getRangeBetweenDates,
-} from '@/utils/date';
-import LineChart from '@/components/general/charts/LineChart.vue';
-import { getLanguage, groupBy } from '@/utils/utils';
+import { onBeforeMount, ref, toRef } from 'vue';
+import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import ServiceModal from '@/components/vehicles/services/ServiceModal.vue';
-import FormInput from '@/components/general/form/FormInput.vue';
 
 const servicesStore = useServicesStore();
 
@@ -23,83 +12,8 @@ const { getServices, deleteService } = servicesStore;
 
 const serviceModal = ref();
 
-type ChartSettings<T extends ReadonlyArray<{ id: string; name: string }>> = {
-  options: T;
-  selectedMode: T[number]['id'];
-  selectedCurrency: string;
-  currencyFormatOptions: Intl.NumberFormatOptions;
-};
-
-const chartSettings = reactive<ChartSettings<ChartData>>({
-  options: [
-    { id: 'costThisYear', name: 'Cost this Year' },
-    { id: 'repairsPerMonth', name: 'Repairs Per Month' },
-  ] as unknown as ChartData,
-  selectedCurrency: 'NOK',
-  selectedMode: 'costThisYear',
-  /** TODO: find solution for when user has registered services in different currencies */
-  currencyFormatOptions: {
-    style: 'currency',
-    currency: 'NOK',
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-    notation: 'compact',
-  },
-});
-
-const monthsThisYear = computed(() => {
-  return getRangeBetweenDates(
-    adjustCalendarDate('start', 'year'),
-    adjustCalendarDate('end', 'year'),
-    'months',
-    'date',
-  );
-});
-
-const serviceData = computed(() => {
-  const language = getLanguage();
-
-  const servicesGroupedByMonth = groupBy(
-    services.value.map(s => {
-      const monthYear = new Date(s.date).toLocaleDateString(language, {
-        month: 'short',
-        year: 'numeric',
-      });
-
-      return {
-        ...s,
-        monthYear,
-      };
-    }),
-    'monthYear',
-  );
-
-  const servicesGrouped = monthsThisYear.value.map(date => {
-    const monthYear = date.toLocaleDateString(getLanguage(), {
-      month: 'short',
-      year: 'numeric',
-    });
-
-    const items = servicesGroupedByMonth[monthYear] || [];
-
-    const totalCost = items.reduce(
-      (costAcc, currentItem) => costAcc + (currentItem.cost || 0),
-      0,
-    );
-
-    return {
-      monthYear,
-      cost: totalCost,
-      repairs: items.length,
-    };
-  }, []);
-
-  return servicesGrouped;
-});
-
-onMounted(async () => {
-  await getServices();
+onBeforeMount(() => {
+  getServices();
 });
 </script>
 
@@ -119,84 +33,6 @@ onMounted(async () => {
       </svg>
       Add Service
     </button>
-
-    <div
-      class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
-    >
-      <div class="card-body items-center text-center">
-        <div class="flex items-center justify-end gap-1 w-full">
-          <!-- 
-            TODO: finish 
-            All costs not in selected currency must be formatted somehow?
-          -->
-          <FormInput
-            type="select"
-            size="xs"
-            wrapperClass="max-w-36"
-            v-model="chartSettings.selectedCurrency"
-            :options="
-              services
-                .map(({ currency }) => currency || 'EUR')
-                .filter((value, index, array) => array.indexOf(value) === index)
-                .map(currency => ({ value: currency || 'EUR' }))
-            "
-          />
-          <select
-            class="select select-bordered select-xs w-full max-w-48"
-            v-model="chartSettings.selectedMode"
-          >
-            <option
-              v-for="{ id, name } in chartSettings.options"
-              :key="id"
-              :value="id"
-            >
-              {{ name }}
-            </option>
-          </select>
-        </div>
-        <LineChart
-          class="max-h-64"
-          :xAxis="[
-            {
-              data: monthsThisYear.map(p => {
-                p.setDate(15);
-                return p.toLocaleDateString(getLanguage(), {
-                  month: 'short',
-                });
-              }),
-              scaleType: 'band',
-            },
-          ]"
-          :yAxis="[
-            {
-              valueFormatter: value => {
-                const formattedNumber = formatNumber(
-                  parseInt((value || 0).toString()),
-                  chartSettings.selectedMode === 'costThisYear'
-                    ? chartSettings.currencyFormatOptions
-                    : undefined,
-                );
-                return value === null ? '' : formattedNumber;
-              },
-            },
-          ]"
-          :dataset="serviceData"
-          :series="[
-            {
-              dataKey:
-                chartSettings.selectedMode === 'costThisYear'
-                  ? 'cost'
-                  : 'repairs',
-              showMark: value => !!value,
-            },
-          ]"
-          :grid="{
-            vertical: true,
-          }"
-          :margin="{ top: 10, right: 10, bottom: 20 }"
-        />
-      </div>
-    </div>
   </div>
 
   <ul
@@ -229,10 +65,7 @@ onMounted(async () => {
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-                data-slot="icon"
-                class="h-5 w-5"
+                class="h-5 w-5 fill-current"
               >
                 <path
                   fill-rule="evenodd"
@@ -253,12 +86,21 @@ onMounted(async () => {
             <dd>
               {{
                 formatNumber(service.cost || 0, {
-                  ...chartSettings.currencyFormatOptions,
+                  style: 'currency',
                   currency: service.currency || 'EUR',
+                  currencyDisplay: 'narrowSymbol',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 1,
                   notation: 'standard',
                 })
               }}
             </dd>
+          </div>
+          <div
+            v-if="service.provider"
+            class="mt-2 flex items-start space-x-3 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-neutral xl:pl-3.5"
+          >
+            <dd>{{ service.provider }}</dd>
           </div>
           <div
             class="mt-2 flex items-start space-x-3 xl:ml-3.5 xl:mt-0 xl:border-l xl:border-neutral xl:pl-3.5"
@@ -268,24 +110,8 @@ onMounted(async () => {
         </dl>
       </div>
       <div class="xl:relative">
-        <button
-          type="button"
-          class="md:hidden btn btn-sm mr-3"
-          @click="serviceModal.open(service.id)"
-        >
-          Edit
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 512 512"
-            class="h-3 w-3 fill-current"
-          >
-            <path
-              d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
-            />
-          </svg>
-        </button>
         <RouterLink
-          class="btn btn-sm mr-3"
+          class="md:hidden btn btn-sm mr-3"
           :to="{
             name: 'service',
             params: {
@@ -330,7 +156,7 @@ onMounted(async () => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 576 512"
-                  class="w-3 h-3 fill-current"
+                  class="w-3 fill-current"
                 >
                   <path
                     d="M572.531 238.973C518.281 115.525 410.938 32 288 32S57.688 115.58 3.469 238.973C1.562 243.402 0 251.041 0 256C0 260.977 1.562 268.596 3.469 273.025C57.719 396.473 165.062 480 288 480S518.312 396.418 572.531 273.025C574.438 268.596 576 260.957 576 256C576 251.023 574.438 243.402 572.531 238.973ZM288 432C188.521 432 96.836 364.502 48.424 256.004C97.01 147.365 188.611 80 288 80C387.48 80 479.164 147.498 527.576 255.994C478.99 364.635 387.389 432 288 432ZM288 128C217.334 128 160 185.348 160 256S217.334 384 288 384H288.057C358.695 384 416 326.68 416 256.055V256C416 185.348 358.668 128 288 128ZM288 336C243.889 336 208 300.111 208 256C208 255.252 208.199 254.559 208.221 253.816C213.277 255.125 218.52 256 224 256C259.346 256 288 227.346 288 192C288 186.52 287.125 181.277 285.816 176.221C286.559 176.199 287.252 176 288 176C332.111 176 368 211.889 368 256.055C368 300.137 332.137 336 288 336Z"
@@ -344,7 +170,7 @@ onMounted(async () => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 512 512"
-                  class="h-3 w-3 fill-current"
+                  class="w-3 fill-current"
                 >
                   <path
                     d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
@@ -358,10 +184,10 @@ onMounted(async () => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 448 512"
-                  class="h-4 w-4 fill-current"
+                  class="w-3 fill-current"
                 >
                   <path
-                    d="M432 80H349.625L315.625 23.25C306.984 8.827 291.405 0 274.592 0H173.408C156.595 0 141.016 8.827 132.375 23.25L98.375 80H16C7.125 80 0 87.125 0 96V112C0 120.875 7.125 128 16 128H32V448C32 483.346 60.654 512 96 512H352C387.346 512 416 483.346 416 448V128H432C440.875 128 448 120.875 448 112V96C448 87.125 440.875 80 432 80ZM171.875 50.875C172.875 49.125 174.875 48 177 48H271C273.125 48 275.125 49.125 276.125 50.875L293.625 80H154.375L171.875 50.875ZM352 464H96C87.163 464 80 456.837 80 448V128H368V448C368 456.837 360.837 464 352 464ZM224 416C232.844 416 240 408.844 240 400V192C240 183.156 232.844 176 224 176S208 183.156 208 192V400C208 408.844 215.156 416 224 416ZM144 416C152.844 416 160 408.844 160 400V192C160 183.156 152.844 176 144 176S128 183.156 128 192V400C128 408.844 135.156 416 144 416ZM304 416C312.844 416 320 408.844 320 400V192C320 183.156 312.844 176 304 176S288 183.156 288 192V400C288 408.844 295.156 416 304 416Z"
+                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
                   />
                 </svg>
                 Delete

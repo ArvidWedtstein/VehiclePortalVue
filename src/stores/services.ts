@@ -1,4 +1,4 @@
-import { computed, ref, toRef } from 'vue';
+import { computed, reactive, ref, toRef } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
@@ -11,10 +11,12 @@ export const useServicesStore = defineStore('services', () => {
 
   const loading = ref(false);
 
-  const servicesCache = new Map<
-    Tables<'Vehicles'>['id'],
-    Map<Tables<'VehicleServiceLogs'>['id'], Tables<'VehicleServiceLogs'>>
-  >();
+  const servicesCache = reactive(
+    new Map<
+      Tables<'Vehicles'>['id'],
+      Map<Tables<'VehicleServiceLogs'>['id'], Tables<'VehicleServiceLogs'>>
+    >(),
+  );
 
   const services = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
@@ -89,7 +91,7 @@ export const useServicesStore = defineStore('services', () => {
         .from('VehicleServiceLogs')
         .upsert({
           ...serviceLog,
-          vehicle_id: currentVehicle.value?.id || -1,
+          vehicle_id: currentVehicle.value.id,
         })
         .select();
 
@@ -139,16 +141,6 @@ export const useServicesStore = defineStore('services', () => {
       loading.value = false;
     }
   };
-
-  // TODO: add for binding?
-  // watch(
-  //   () => currentVehicle.value?.id,
-  //   async newVehicleId => {
-  //     if (newVehicleId) {
-  //       await getServices();
-  //     }
-  //   },
-  // );
 
   return { services, getServices, upsertService, deleteService, loading };
 });
