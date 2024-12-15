@@ -27,62 +27,8 @@ const defaultValues: TablesUpdate<'VehicleExpenses'> = {
   cost: 0,
   currency: 'NOK',
   unit: 'liter',
+  type: 'Fuel',
 };
-
-const fuelTypes = [
-  {
-    value: 'Gasoline',
-  },
-  {
-    value: 'Diesel',
-  },
-  {
-    value: 'Kerosene',
-  },
-  {
-    value: 'Gas',
-  },
-  {
-    value: 'Electric',
-  },
-  {
-    value: 'Hydrogen',
-  },
-  {
-    value: 'Other',
-  },
-  {
-    value: 'Biodiesel',
-  },
-  {
-    value: 'Biogasoline',
-  },
-  {
-    value: 'LPG-gas',
-  },
-  {
-    value: 'CNG-gas',
-  },
-  {
-    value: 'Metanol',
-  },
-  {
-    value: 'Etanol',
-  },
-  {
-    value: 'LPG-A',
-  },
-  {
-    value: 'LPG-B',
-  },
-  {
-    value: 'CNG 20',
-  },
-  {
-    value: 'CNG 25',
-  },
-  { value: 'Fuel' },
-];
 
 const expense = ref<
   TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>
@@ -122,7 +68,6 @@ const handleOpen = async (
     expense.value = {
       ...defaultValues,
       date: getLocalDateISO().split('.')[0].slice(0, -3),
-      type: currentVehicle.value.fuel_type,
       mileage,
     };
     modalRef.value?.modalRef?.showModal();
@@ -140,7 +85,6 @@ const handleOpen = async (
   expense.value = {
     ...defaultValues,
     ...editExpense,
-    type: editExpense.type || currentVehicle.value.fuel_type,
     date: convertToDatetimeLocal(editExpense.date),
   };
 
@@ -172,7 +116,12 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         type="select"
         v-model="expense.type"
         required
-        :options="fuelTypes"
+        :options="[
+          { value: 'Fuel' },
+          {
+            value: 'Other',
+          },
+        ]"
         placeholder="Please select a type"
       >
         <template #icon>

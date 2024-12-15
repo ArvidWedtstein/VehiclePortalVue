@@ -14,6 +14,7 @@ import LineChart from '@/components/general/charts/LineChart.vue';
 import { getLanguage, groupBy } from '@/utils/utils';
 import { formatNumber } from '@/utils/format';
 import ServiceModal from '@/components/vehicles/services/ServiceModal.vue';
+import FormInput from '@/components/general/form/FormInput.vue';
 
 const servicesStore = useServicesStore();
 
@@ -25,6 +26,7 @@ const serviceModal = ref();
 type ChartSettings<T extends ReadonlyArray<{ id: string; name: string }>> = {
   options: T;
   selectedMode: T[number]['id'];
+  selectedCurrency: string;
   currencyFormatOptions: Intl.NumberFormatOptions;
 };
 
@@ -33,6 +35,7 @@ const chartSettings = reactive<ChartSettings<ChartData>>({
     { id: 'costThisYear', name: 'Cost this Year' },
     { id: 'repairsPerMonth', name: 'Repairs Per Month' },
   ] as unknown as ChartData,
+  selectedCurrency: 'NOK',
   selectedMode: 'costThisYear',
   /** TODO: find solution for when user has registered services in different currencies */
   currencyFormatOptions: {
@@ -121,7 +124,23 @@ onMounted(async () => {
       class="hidden md:card card-bordered card-compact bg-neutral text-neutral-content w-1/2 mt-2"
     >
       <div class="card-body items-center text-center">
-        <div class="flex justify-end w-full">
+        <div class="flex items-center justify-end gap-1 w-full">
+          <!-- 
+            TODO: finish 
+            All costs not in selected currency must be formatted somehow?
+          -->
+          <FormInput
+            type="select"
+            size="xs"
+            wrapperClass="max-w-36"
+            v-model="chartSettings.selectedCurrency"
+            :options="
+              services
+                .map(({ currency }) => currency || 'EUR')
+                .filter((value, index, array) => array.indexOf(value) === index)
+                .map(currency => ({ value: currency || 'EUR' }))
+            "
+          />
           <select
             class="select select-bordered select-xs w-full max-w-48"
             v-model="chartSettings.selectedMode"
