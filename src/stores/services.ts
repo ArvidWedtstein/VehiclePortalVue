@@ -31,7 +31,11 @@ export const useServicesStore = defineStore('services', () => {
 
     const vehicleServices = servicesCache.get(currentVehicle.value.id);
 
-    return vehicleServices ? Array.from(vehicleServices.values()) : [];
+    return vehicleServices
+      ? Array.from(vehicleServices.values()).sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        )
+      : [];
   });
 
   const getServices = async <

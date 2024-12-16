@@ -36,7 +36,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
       <div class="table-cell p-1"></div>
       <div class="table-cell p-2">Name</div>
       <div class="table-cell w-1/5 p-2">Size</div>
-      <div class="table-cell p-2">Last Modified</div>
+      <div class="hidden md:table-cell p-2">Last Modified</div>
       <div class="table-cell p-2">Action</div>
     </div>
 
@@ -45,7 +45,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
       <div class="table-cell p-2 text-gray-400">No files uploaded yet</div>
       <div class="table-cell"></div>
       <div class="table-cell"></div>
-      <div class="table-cell"></div>
+      <div class="hidden md:table-cell"></div>
       <div class="table-cell"></div>
     </div>
     <div
@@ -97,7 +97,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
       <div class="table-cell p-2">
         {{ formatFileSize(file.file?.size || 0) }}
       </div>
-      <div class="table-cell truncate p-2">
+      <div class="hidden md:table-cell truncate p-2">
         {{
           formatDate(new Date(file.file?.lastModified || new Date()), {
             dateStyle: 'medium',
@@ -120,7 +120,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
           </div>
           <ul
             tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
           >
             <li>
               <button type="button" @click="emit('previewFile', file)">
@@ -140,10 +140,10 @@ const handleFileDelete = async (file: Partial<iFile>) => {
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 448 512"
-                  class="h-3 w-3 fill-current"
+                  class="w-3 fill-current"
                 >
                   <path
-                    d="M432 80H349.625L315.625 23.25C306.984 8.827 291.405 0 274.592 0H173.408C156.595 0 141.016 8.827 132.375 23.25L98.375 80H16C7.125 80 0 87.125 0 96V112C0 120.875 7.125 128 16 128H32V448C32 483.346 60.654 512 96 512H352C387.346 512 416 483.346 416 448V128H432C440.875 128 448 120.875 448 112V96C448 87.125 440.875 80 432 80ZM171.875 50.875C172.875 49.125 174.875 48 177 48H271C273.125 48 275.125 49.125 276.125 50.875L293.625 80H154.375L171.875 50.875ZM352 464H96C87.163 464 80 456.837 80 448V128H368V448C368 456.837 360.837 464 352 464ZM224 416C232.844 416 240 408.844 240 400V192C240 183.156 232.844 176 224 176S208 183.156 208 192V400C208 408.844 215.156 416 224 416ZM144 416C152.844 416 160 408.844 160 400V192C160 183.156 152.844 176 144 176S128 183.156 128 192V400C128 408.844 135.156 416 144 416ZM304 416C312.844 416 320 408.844 320 400V192C320 183.156 312.844 176 304 176S288 183.156 288 192V400C288 408.844 295.156 416 304 416Z"
+                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
                   />
                 </svg>
                 Delete

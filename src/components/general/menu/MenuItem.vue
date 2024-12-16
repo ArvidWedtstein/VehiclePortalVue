@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import type {
+  RouteLocationAsPathGeneric,
+  RouteLocationAsRelativeGeneric,
+} from 'vue-router';
 type Props = {
   active?: boolean;
   disabled?: boolean;
   href?: string;
+  to?: string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric;
 };
 
 withDefaults(defineProps<Props>(), {
@@ -14,9 +19,13 @@ withDefaults(defineProps<Props>(), {
 <template>
   <li>
     <component
-      :is="href ? 'a' : 'button'"
+      :is="href ? 'a' : to ? 'RouterLink' : 'button'"
       v-bind="
-        !href ? { type: 'button', disabled: disabled, ...$attrs } : $attrs
+        !href && !to
+          ? { type: 'button', disabled: disabled, ...$attrs }
+          : to
+            ? { to: to, ...$attrs }
+            : $attrs
       "
       :class="{ disabled: disabled, active: active }"
     >

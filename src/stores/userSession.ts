@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { type Session } from '@supabase/supabase-js';
 import type { Tables } from '@/database.types';
 
-// TODO: fix google login
 export const useSessionStore = defineStore('session', () => {
   const session = ref<Session | null>(null);
   const profile = ref<Tables<'Profiles'> | null>(null);

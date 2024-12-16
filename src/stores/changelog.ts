@@ -77,6 +77,8 @@ export const useChangelogStore = defineStore('Changelog', () => {
       changelogCache.set(currentVehicle.value.id, vehicleChangelogCache);
     } catch (error) {
       console.error(error);
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -127,7 +129,7 @@ export const useChangelogStore = defineStore('Changelog', () => {
     }
   };
 
-  return { changelog, getChangelog };
+  return { changelog, getChangelog, loading };
 });
 
 if (import.meta.hot) {

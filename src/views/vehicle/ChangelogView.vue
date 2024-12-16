@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import ChangelogList from '@/components/general/changelog/ChangelogList.vue';
 import ChangelogListItem from '@/components/general/changelog/ChangelogListItem.vue';
+import ChangeLogListItemPlaceholder from '@/components/general/changelog/ChangeLogListItemPlaceholder.vue';
 import type { Database, Tables } from '@/database.types';
 import { useChangelogStore } from '@/stores/changelog';
 import { calculateJsonChanges } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted } from 'vue';
+import { computed, onBeforeMount } from 'vue';
 
 const changelogStore = useChangelogStore();
 
-const { changelog } = storeToRefs(changelogStore);
+const { changelog, loading } = storeToRefs(changelogStore);
 const { getChangelog } = changelogStore;
 
 type TableNames = keyof Database[Extract<keyof Database, 'public'>]['Tables'];
-
-onMounted(async () => {
-  getChangelog();
-});
 
 const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
   const { table_name, operation, changes, createdby_name } = entry;
@@ -133,7 +130,6 @@ const generateChangelogSentence = (entry: Tables<'changelog_with_profile'>) => {
 };
 
 const formattedChangelog = computed(() => {
-  // @ts-expect-error it's not that deep
   return changelog.value.map(changelogEntry => {
     const formattedText = generateChangelogSentence(changelogEntry);
 
@@ -143,10 +139,17 @@ const formattedChangelog = computed(() => {
     };
   });
 });
+
+onBeforeMount(async () => {
+  getChangelog();
+});
 </script>
 
 <template>
   <ChangelogList class="max-h-svh h-fit mt-4 w-full md:mb-0 mb-14">
+    <template v-if="loading">
+      <ChangeLogListItemPlaceholder v-for="i in 10" :key="i" />
+    </template>
     <ChangelogListItem
       v-for="(change, changelogIndex) in formattedChangelog"
       :key="changelogIndex"

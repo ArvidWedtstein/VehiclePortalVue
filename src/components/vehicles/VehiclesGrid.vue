@@ -22,7 +22,7 @@ const vehicleModal = ref();
 <template>
   <VehicleModal ref="vehicleModal" />
 
-  <div class="py-6 md:py-32">
+  <div class="py-6 mb-12 md:mb-0 md:py-32">
     <div class="mx-auto grid max-w-7xl px-6 gap-6 md:gap-16 xl:grid-cols-3">
       <div class="max-w-xl">
         <h2
