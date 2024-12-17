@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <nav class="overflow-y-auto">
+  <div class="overflow-y-auto" v-bind="$attrs">
     <slot></slot>
-  </nav>
+  </div>
 </template>

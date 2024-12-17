@@ -145,7 +145,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
           :class="{ active: personsModel.some(p => p.id === person.id) }"
           @click="checkPerson(person)"
         >
-          <template #icon>
+          <template #endIcon>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 448 512"

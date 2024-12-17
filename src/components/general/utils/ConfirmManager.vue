@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { setupConfirm } from '@/lib/hooks/useConfirm';
+import { setupConfirm } from '@/lib/composables/useConfirm';
 import FormDialog from '../modal/FormDialog.vue';
 import { ref, watch } from 'vue';
 

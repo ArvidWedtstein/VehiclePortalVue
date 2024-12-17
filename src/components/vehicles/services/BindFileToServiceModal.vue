@@ -51,6 +51,7 @@ const handleOpen = async (file: Partial<iFile>) => {
     await getServices();
   }
 
+  // TODO: check if file already is bound to service?
   currentFile.value = file;
 
   modalRef.value.modalRef.showModal();
@@ -82,7 +83,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         :class="{ active: selectedService?.id === service.id }"
         @click="checkService(service)"
       >
-        <template #icon>
+        <template #endIcon>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 448 512"

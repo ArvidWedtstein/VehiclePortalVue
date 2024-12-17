@@ -7,7 +7,7 @@ import { storeToRefs } from 'pinia';
 import { useExpensesStore } from '@/stores/expenses';
 import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
-import { useConfirm } from '@/lib/hooks/useConfirm';
+import { useConfirm } from '@/lib/composables/useConfirm';
 
 const vehiclesStore = useVehiclesStore();
 const expensesStore = useExpensesStore();

@@ -9,14 +9,17 @@ type Props = {
   title?: string;
   size?: 'sm' | 'md' | 'lg';
   backdrop?: boolean;
-  open?: boolean;
+  /**
+   * Disables submit button
+   */
+  loading?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
   id: crypto.randomUUID(),
   size: 'lg',
   backdrop: true,
-  open: false,
+  loading: false,
 });
 
 const emit = defineEmits<{
@@ -65,56 +68,62 @@ defineExpose({ modalRef: modalRef });
 </script>
 
 <template>
-  <dialog
-    :id="id"
-    ref="modalRef"
-    class="modal modal-top md:modal-middle modal-scroll"
-    :class="{ 'modal-open': open }"
-    @close="handleClose"
-  >
-    <form
-      class="modal-box flex flex-col"
-      :class="{
-        '!w-4/12': size === 'sm',
-        'md:!w-8/12 !max-w-2xl': size === 'md',
-        'md:!w-11/12 !max-w-5xl max-h-full h-full md:h-fit': size === 'lg',
-      }"
-      @submit.prevent="handleSubmit"
-      ref="formRef"
+  <Teleport to="body">
+    <dialog
+      :id="id"
+      ref="modalRef"
+      class="modal modal-top md:modal-middle modal-scroll"
+      @close="handleClose"
     >
-      <button
-        class="btn btn-circle btn-sm btn-ghost absolute right-2 top-2"
-        formmethod="dialog"
-        value="cancel"
+      <form
+        class="modal-box flex flex-col"
+        :class="{
+          '!w-4/12': size === 'sm',
+          'md:!w-8/12 !max-w-2xl': size === 'md',
+          'md:!w-11/12 !max-w-5xl max-h-full h-full md:h-fit': size === 'lg',
+        }"
+        @submit.prevent="handleSubmit"
+        ref="formRef"
       >
-        ✕
-      </button>
+        <button
+          class="btn btn-circle btn-sm btn-ghost absolute right-2 top-2"
+          formmethod="dialog"
+          value="cancel"
+        >
+          ✕
+        </button>
 
-      <h3 class="text-lg font-bold">
-        {{ title }}
-      </h3>
+        <h3 class="text-lg font-bold">
+          {{ title }}
+        </h3>
 
-      <slot></slot>
+        <slot></slot>
 
-      <div class="modal-action gap-1 mt-auto">
-        <slot name="actions" @submit="handleSubmit">
-          <button
-            class="btn btn-outline"
-            value="cancel"
-            formmethod="dialog"
-            formnovalidate
-          >
-            Cancel
-          </button>
+        <div class="modal-action gap-1 mt-auto">
+          <slot name="actions" :loading="loading" @submit="handleSubmit">
+            <button
+              class="btn btn-outline"
+              value="cancel"
+              formmethod="dialog"
+              formnovalidate
+            >
+              Cancel
+            </button>
 
-          <button type="submit" class="btn btn-primary" value="submit">
-            OK
-          </button>
-        </slot>
-      </div>
-    </form>
-    <form v-if="backdrop" method="dialog" class="modal-backdrop">
-      <button value="cancel">close</button>
-    </form>
-  </dialog>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              value="submit"
+              :disabled="loading"
+            >
+              OK
+            </button>
+          </slot>
+        </div>
+      </form>
+      <form v-if="backdrop" method="dialog" class="modal-backdrop">
+        <button value="cancel">close</button>
+      </form>
+    </dialog>
+  </Teleport>
 </template>

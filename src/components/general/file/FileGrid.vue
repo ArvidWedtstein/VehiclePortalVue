@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import BindFileToServiceModal from '@/components/vehicles/services/BindFileToServiceModal.vue';
 import { formatDate } from '@/utils/date';
 import { formatFileSize } from '@/utils/format';
-import { ref } from 'vue';
+import { defineAsyncComponent, ref } from 'vue';
 import type { iFile } from './FileDrop.vue';
+
+const BindFileToServiceModal = defineAsyncComponent(
+  async () =>
+    await import('@/components/vehicles/services/BindFileToServiceModal.vue'),
+);
 
 type Props = {
   files?: Partial<iFile>[];
@@ -63,11 +67,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
           :class="[file.error ? 'bg-red-500' : 'bg-zinc-500']"
         >
           <svg
-            v-if="
-              file.error ||
-              file.state === 'uploading' ||
-              file.state === 'newuploaded'
-            "
+            v-if="file.error || file.state === 'uploading'"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 512 512"
             class="inline-block h-3 w-3 fill-current"
@@ -76,10 +76,6 @@ const handleFileDelete = async (file: Partial<iFile>) => {
             <path
               v-if="file.error"
               d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 480c-123.5 0-224-100.5-224-224s100.5-224 224-224s224 100.5 224 224S379.5 480 256 480zM256 304c8.844 0 16-7.156 16-16V128c0-8.844-7.156-16-16-16S240 119.2 240 128v160C240 296.8 247.2 304 256 304zM256 344c-13.25 0-24 10.75-24 24s10.75 24 24 24s24-10.75 24-24S269.3 344 256 344z"
-            />
-            <path
-              v-else-if="file.state === 'newuploaded'"
-              d="M475.3 123.3l-272 272C200.2 398.4 196.1 400 192 400s-8.188-1.562-11.31-4.688l-144-144c-6.25-6.25-6.25-16.38 0-22.62s16.38-6.25 22.62 0L192 361.4l260.7-260.7c6.25-6.25 16.38-6.25 22.62 0S481.6 117.1 475.3 123.3z"
             />
             <path
               v-else-if="file.state == 'uploading'"

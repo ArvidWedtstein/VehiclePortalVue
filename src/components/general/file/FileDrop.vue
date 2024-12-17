@@ -40,13 +40,14 @@ type FileUploadProps = {
   /**
    * Comma seperated list of mime file types
    */
-  accept?: string;
+  accept?: ReadonlyArray<string>;
   /**
    * Max size in megabytes
    * @default 5 mb
    */
   maxSize?: number;
 };
+
 export type iFile = {
   file: {
     name: string;
@@ -56,9 +57,9 @@ export type iFile = {
     type?: string;
   };
   preview?: boolean;
-  state: 'newfile' | 'uploading' | 'uploaded' | 'newuploaded';
+  state: 'newfile' | 'uploading' | 'uploaded';
   url?: string;
-  path: string;
+  path?: string;
   error?: {
     type: 'oversized' | 'invalidType' | 'uploadError' | 'invalidCharacters';
     message: string;
@@ -71,7 +72,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   hideDropArea: false,
   hideFilesGrid: false,
   storagePath: '',
-  accept: 'image/png, image/jpg, image/jpeg, image/webp',
+  accept: () => ['image/png', 'image/jpg', 'image/jpeg', 'image/webp', '.pdf'],
   maxSize: 5,
   valueFormatter: (filename: string | null) => {
     return filename || '';
@@ -95,9 +96,15 @@ const validateFile = (file: File) => {
 
   if (
     !props.accept
-      .split(',')
-      .map(a => a.trim().toUpperCase())
-      .includes(file.type.toUpperCase())
+      .map(type =>
+        type
+          .substring(type.indexOf('/') + '/'.length)
+          .toUpperCase()
+          .replace(/[^a-zA-Z0-9]/g, ''),
+      )
+      .includes(
+        file.type.substring(file.type.indexOf('/') + '/'.length).toUpperCase(),
+      )
   ) {
     fileError = {
       type: 'invalidType',
@@ -125,13 +132,21 @@ const readFiles = (ifiles: FileList): void => {
         return;
       }
 
-      files.value.push({
+      const fileErrors = validateFile(file);
+
+      const newFile: iFile = {
         file: file,
         url: fileloader.target.result.toString(),
         state: 'newfile',
         preview: false,
-        error: validateFile(file),
-      });
+        error: fileErrors,
+      };
+
+      files.value = [...files.value, newFile];
+
+      if (!fileErrors) {
+        handleUpload();
+      }
     };
 
     reader.readAsDataURL(file);
@@ -141,9 +156,10 @@ const readFiles = (ifiles: FileList): void => {
 const handleFileChange = (e: Event) => {
   return new Promise(() => {
     const inputElement = e.target as HTMLInputElement;
-    if (inputElement?.files?.length) {
-      readFiles(inputElement.files);
-    }
+
+    if (!inputElement?.files || !inputElement?.files?.length) return;
+
+    readFiles(inputElement.files);
   });
 };
 
@@ -153,55 +169,61 @@ const handleDrop = (e: DragEvent) => {
 
   return new Promise(() => {
     const { dataTransfer } = e;
-    if (dataTransfer?.files.length) {
-      readFiles(dataTransfer.files);
-    }
+
+    if (!dataTransfer?.files.length) return;
+
+    readFiles(dataTransfer.files);
   });
 };
 
 const handleUpload = () => {
-  files.value
-    .filter(f => f.error == null && f.state === 'newfile')
-    .forEach(async ({ file }) => {
-      files.value = files.value.map(f =>
-        f.file?.name === file?.name || ''
-          ? {
-              ...f,
-              state: 'uploading',
-            }
-          : f,
+  const filesToBeUploaded = files.value.filter(
+    ({ error, state }) => state === 'newfile' && !error,
+  );
+
+  if (!filesToBeUploaded.length) return;
+
+  filesToBeUploaded.forEach(async ({ file }) => {
+    if (!file) return;
+
+    files.value = files.value.map(f =>
+      f.file?.name === file?.name
+        ? {
+            ...f,
+            state: 'uploading',
+          }
+        : f,
+    );
+
+    const { data, error } = await supabase.storage
+      .from(props.bucket)
+      .upload(
+        `${props.storagePath}${props.valueFormatter(file?.name || '', true)}`,
+        file as File,
       );
 
-      const { data, error } = await supabase.storage
-        .from(props.bucket)
-        .upload(
-          `${props.storagePath}${props.valueFormatter(file?.name || '', true)}`,
-          file as File,
-        );
+    let hasError: iFile['error'] = undefined;
 
-      let hasError: iFile['error'] = undefined;
+    if (error) {
+      hasError = {
+        type: 'uploadError',
+        message: error.message,
+      };
 
-      if (error) {
-        hasError = {
-          type: 'uploadError',
-          message: error.message,
-        };
+      console.error(error.message);
+    }
 
-        console.error(error.message);
-      }
-
-      // TODO: change state back to default.
-      files.value = files.value.map(f =>
-        f.file?.name === (file?.name || '')
-          ? {
-              ...f,
-              path: data?.path,
-              state: 'newuploaded',
-              error: hasError,
-            }
-          : f,
-      );
-    });
+    files.value = files.value.map(f =>
+      f.file?.name === file?.name
+        ? {
+            ...f,
+            path: data?.path,
+            state: 'uploaded',
+            error: hasError,
+          }
+        : f,
+    );
+  });
 };
 
 const fetchFiles = async () => {
@@ -220,11 +242,11 @@ const fetchFiles = async () => {
     }
 
     files.value = props.initialFiles.map(file => {
-      const url = data.find(({ path }) => path === file.path);
+      const storageFile = data.find(({ path }) => path === file.path);
 
       return {
         ...file,
-        url: url?.signedUrl || '',
+        url: storageFile?.signedUrl ?? '',
         error: undefined,
       };
     });
@@ -235,24 +257,29 @@ const fetchFiles = async () => {
 
 const handleFileDelete = async (file: Partial<iFile>) => {
   try {
+    files.value = files.value.filter(({ path }) => path !== file.path);
+
     if (!file.path) return;
 
     // TODO: move into Documents store?
+    // Implement some way to delete file, regardless of store
 
     const { error } = await supabase.storage
       .from(props.bucket)
-      .remove([file.path || '']);
+      .remove([file.path]);
 
     if (error) {
       throw error;
     }
 
-    files.value = files.value.filter(({ path }) => path !== file.path);
-
     addToast(`Successfully deleted file`, 'success', 2000);
   } catch (error) {
     console.error(error);
   }
+};
+
+const onDragOver = (event: DragEvent) => {
+  event.preventDefault();
 };
 
 watch(
@@ -266,7 +293,7 @@ watch(
 <template>
   <div
     class="group relative flex flex-col gap-2 text-gray-900 transition-colors dark:text-stone-200"
-    @dragover="($event: DragEvent) => $event.preventDefault()"
+    @dragover="onDragOver"
     @drop="handleDrop"
   >
     <div class="flex w-full items-center justify-center" v-if="!hideDropArea">
@@ -301,9 +328,11 @@ watch(
             <span v-if="accept">
               {{
                 formatListDisjunction(
-                  accept
-                    .split(',')
-                    .map(type => type.trim().split('/')[1].toUpperCase()),
+                  accept.map(type =>
+                    type
+                      .substring(type.indexOf('/') + '/'.length)
+                      .toUpperCase(),
+                  ),
                 )
               }}
             </span>
@@ -320,12 +349,13 @@ watch(
             Invalid files will not be uploaded
           </p>
         </div>
+
         <input
           ref="inputRef"
           id="dropzone-files"
           type="file"
           class="hidden"
-          :accept="accept"
+          :accept="accept.join(', ')"
           :multiple="props.multiple"
           :size="convertBytes(maxSize, 'megabytes', 'bytes')"
           @change="handleFileChange"
@@ -385,7 +415,10 @@ watch(
     <button
       class="btn w-full btn-primary"
       @click="handleUpload"
-      :disabled="!files.filter(({ state }) => state === 'newfile').length"
+      :disabled="
+        !files.filter(({ state, error }) => state === 'newfile' && !error)
+          .length
+      "
     >
       Upload
     </button>

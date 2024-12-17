@@ -41,6 +41,7 @@ export const useExpensesStore = defineStore('expenses', () => {
   >(
     filters?: FilterKeys<Tables<'VehicleExpenses'>>,
     columns: Columns = ['*'] as Columns,
+    range: [number, number] = [0, 99],
   ) => {
     try {
       if (!currentVehicle.value || !currentVehicle.value.id) {
@@ -55,14 +56,16 @@ export const useExpensesStore = defineStore('expenses', () => {
         status,
       } = await supabase
         .from('VehicleExpenses')
-        .select(columns.join(','))
+        .select(columns.join(','), { count: 'exact' })
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value.id)
-        .limit(100)
         .order('date', { ascending: false })
+        .range(...range)
         .returns<Tables<'VehicleExpenses'>[]>();
 
       if (error && status !== 406) throw error;
+
+      console.info('Getting Expenses', range, data);
 
       const currentVehicleExpensesCache =
         expensesCache.get(currentVehicle.value.id) || new Map();
