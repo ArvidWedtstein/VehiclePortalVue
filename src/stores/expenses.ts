@@ -65,8 +65,6 @@ export const useExpensesStore = defineStore('expenses', () => {
 
       if (error && status !== 406) throw error;
 
-      console.info('Getting Expenses', range, data);
-
       const currentVehicleExpensesCache =
         expensesCache.get(currentVehicle.value.id) || new Map();
 

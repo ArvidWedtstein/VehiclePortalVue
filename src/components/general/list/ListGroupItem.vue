@@ -39,8 +39,8 @@ const handleClick = (event: MouseEvent) => {
         name="icon"
         :sizeClass="{
           'w-10 h-10': size === 'sm',
-          'w-12 h-12': size === 'md',
-          'w-14 h-14': size === 'lg',
+          'size-10 md:size-12': size === 'md',
+          'size-12 md:size-14': size === 'lg',
         }"
       >
         <img
@@ -50,7 +50,7 @@ const handleClick = (event: MouseEvent) => {
           class="flex-none rounded-full bg-base-100"
           :class="{
             'w-10 h-10': size === 'sm',
-            'w-12 h-12': size === 'md',
+            'size-10 md:size-12': size === 'md',
             'w-14 h-14': size === 'lg',
           }"
         />

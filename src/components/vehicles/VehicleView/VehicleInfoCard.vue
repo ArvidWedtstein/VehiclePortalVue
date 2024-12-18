@@ -2,6 +2,7 @@
 import type { Tables } from '@/database.types';
 import { useVehiclesStore } from '@/stores/vehicles';
 import { toRef } from 'vue';
+import ShareVehicleDrawer from '../VehicleModal/ShareVehicleDrawer.vue';
 
 const vehiclesStore = useVehiclesStore();
 const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
@@ -67,6 +68,8 @@ const emit = defineEmits<{
               />
             </svg>
           </button>
+
+          <ShareVehicleDrawer />
         </div>
       </div>
       <div class="-mt-2 text-gray-500 flex gap-1 items-center">

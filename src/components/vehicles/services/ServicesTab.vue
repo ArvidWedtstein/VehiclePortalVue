@@ -109,28 +109,41 @@ onBeforeMount(() => {
 
       <template #subtitle>
         <dl class="flex items-center flex-nowrap gap-1">
-          <dt>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              class="w-4 fill-current"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </dt>
-          <dd class="md:pr-2">
-            <time v-if="service.date" :datetime="service.date">
-              {{ formatDate(service.date, { dateStyle: 'medium' }) }}
-            </time>
-          </dd>
+          <template v-if="service.date">
+            <dt>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                class="w-4 fill-current"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </dt>
+            <dd>
+              <time class="hidden md:block" :datetime="service.date">
+                {{
+                  formatDate(service.date, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })
+                }}
+              </time>
+              <time class="md:hidden" :datetime="service.date">
+                {{
+                  formatDate(service.date, {
+                    dateStyle: 'short',
+                    timeStyle: 'none',
+                  })
+                }}
+              </time>
+            </dd>
+          </template>
 
-          <dt
-            class="hidden md:block md:border-l xl:border-neutral md:ml-2 md:pl-2"
-          >
+          <dt class="hidden md:block border-l border-neutral ml-2 pl-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 512 512"
@@ -154,7 +167,7 @@ onBeforeMount(() => {
             }}
           </dd>
 
-          <dt class="md:border-l xl:border-neutral md:ml-1 md:pl-2">
+          <dt class="border-l border-neutral ml-2 pl-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 576 512"
@@ -165,7 +178,7 @@ onBeforeMount(() => {
               />
             </svg>
           </dt>
-          <dd>
+          <dd class="text-nowrap truncate">
             {{ service.provider }}
           </dd>
         </dl>
@@ -192,10 +205,7 @@ onBeforeMount(() => {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-              data-slot="icon"
-              class="h-5 w-5"
+              class="h-5 w-5 fill-current"
             >
               <path
                 d="M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
