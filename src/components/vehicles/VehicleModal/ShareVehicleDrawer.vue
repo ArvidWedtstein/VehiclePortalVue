@@ -8,7 +8,10 @@ import { useToastStore } from '@/stores/toasts';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import MobileDrawer from './MobileDrawer.vue';
+import { useBreakpoints } from '@/lib/composables/useBreakpoints';
+import MobileDrawer from '@/components/general/modal/MobileDrawer.vue';
+
+const { isMd } = useBreakpoints();
 
 const vehiclesStore = useVehiclesStore();
 const { getProfiles } = useProfilesStore();
@@ -17,6 +20,8 @@ const { currentVehicle, vehicleShares } = toRefs(vehiclesStore);
 const { shareVehicle, unShareVehicle } = vehiclesStore;
 
 const { addToast } = useToastStore();
+
+const drawerRef = ref<InstanceType<typeof MobileDrawer> | null>(null);
 
 const users = ref<Tables<'Profiles'>[]>([]);
 
@@ -77,6 +82,8 @@ const resetModal = () => {
   removedShares.value = [];
 
   vehiclesShare.value = [];
+
+  drawerRef.value?.close();
 };
 
 const checkPerson = (person: Tables<'Profiles'>) => {
@@ -109,15 +116,35 @@ onMounted(async () => {
 
   users.value = profiles;
 });
-
-defineExpose({
-  open: handleOpen,
-});
 </script>
 
 <template>
-  <MobileDrawer direction="bottom">
-    <ListGroup class="min-h-full flex-grow">
+  <MobileDrawer
+    ref="drawerRef"
+    :direction="isMd ? 'left' : 'bottom'"
+    title="Share Vehicle"
+    @shown="handleOpen"
+  >
+    <template #trigger="{ toggleDrawer }">
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary btn-outline"
+        title="Share"
+        @click="toggleDrawer(true)"
+      >
+        Share
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 512 512"
+          class="w-3 fill-current"
+        >
+          <path
+            d="M307 34.8c-11.5 5.1-19 16.6-19 29.2l0 64-112 0C78.8 128 0 206.8 0 304C0 417.3 81.5 467.9 100.2 478.1c2.5 1.4 5.3 1.9 8.1 1.9c10.9 0 19.7-8.9 19.7-19.7c0-7.5-4.3-14.4-9.8-19.5C108.8 431.9 96 414.4 96 384c0-53 43-96 96-96l96 0 0 64c0 12.6 7.4 24.1 19 29.2s25 3 34.4-5.4l160-144c6.7-6.1 10.6-14.7 10.6-23.8s-3.8-17.7-10.6-23.8l-160-144c-9.4-8.5-22.9-10.6-34.4-5.4z"
+          />
+        </svg>
+      </button>
+    </template>
+    <ListGroup class="min-h-full flex-grow min-w-80">
       <ListSubGroup
         v-for="(people, group) in groupedPersons"
         :key="group"
@@ -153,5 +180,28 @@ defineExpose({
         </ListGroupItem>
       </ListSubGroup>
     </ListGroup>
+
+    <template #actions>
+      <button type="button" class="btn btn-sm btn-outline" @click="resetModal">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn btn-sm btn-primary"
+        @click="onFormSubmit"
+        :disabled="!personsModel.length"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 448 512"
+          class="fill-current w-3"
+        >
+          <path
+            d="M48 96l0 320c0 8.8 7.2 16 16 16l320 0c8.8 0 16-7.2 16-16l0-245.5c0-4.2-1.7-8.3-4.7-11.3l33.9-33.9c12 12 18.7 28.3 18.7 45.3L448 416c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96C0 60.7 28.7 32 64 32l245.5 0c17 0 33.3 6.7 45.3 18.7l74.5 74.5-33.9 33.9L320.8 84.7c-.3-.3-.5-.5-.8-.8L320 184c0 13.3-10.7 24-24 24l-192 0c-13.3 0-24-10.7-24-24L80 80 64 80c-8.8 0-16 7.2-16 16zm80-16l0 80 144 0 0-80L128 80zm32 240a64 64 0 1 1 128 0 64 64 0 1 1 -128 0z"
+          />
+        </svg>
+        Save
+      </button>
+    </template>
   </MobileDrawer>
 </template>

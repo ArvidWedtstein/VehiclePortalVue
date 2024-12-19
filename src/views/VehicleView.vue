@@ -12,10 +12,6 @@ const VehicleModal = defineAsyncComponent(
     await import('@/components/vehicles/VehicleModal/VehicleModal.vue'),
 );
 
-const VehicleShareModal = defineAsyncComponent(
-  async () => await import('@/components/vehicles/ShareVehicleModal.vue'),
-);
-
 const route = useRoute();
 const vehicleId = Array.isArray(route.params.vehicle_id)
   ? route.params.vehicle_id[0]
@@ -27,7 +23,6 @@ const { currentVehicle } = storeToRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;
 
 const vehicleModal = ref();
-const vehicleShareModal = ref();
 
 watchEffect(() => {
   if (route.params.vehicle_id !== vehicleId)
@@ -41,7 +36,6 @@ onMounted(async () => {
 
 <template>
   <VehicleModal ref="vehicleModal" />
-  <VehicleShareModal ref="vehicleShareModal" />
 
   <RouterLink to="/vehicles" class="flex gap-2 mb-2">
     <svg
@@ -57,10 +51,7 @@ onMounted(async () => {
   </RouterLink>
 
   <div class="flex w-full flex-col gap-3" v-if="currentVehicle">
-    <VehicleInfoCard
-      @edit="vehicleModal?.open"
-      @share="vehicleShareModal?.open"
-    />
+    <VehicleInfoCard @edit="vehicleModal?.open" />
     <div class="card grow">
       <TabsContainer
         variant="boxed"

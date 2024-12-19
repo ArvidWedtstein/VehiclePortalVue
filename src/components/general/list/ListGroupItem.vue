@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import type {
+  RouteLocationAsPathGeneric,
+  RouteLocationAsRelativeGeneric,
+} from 'vue-router';
+
 type Props = {
   imageUrl?: string;
   title?: string | null;
   subtitle?: string;
   size?: 'sm' | 'md' | 'lg';
-  as?: 'a' | 'button';
+  as?: 'a' | 'button' | 'RouterLink';
+
+  to?: string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric;
 };
 
 withDefaults(defineProps<Props>(), {
@@ -30,9 +37,14 @@ const handleClick = (event: MouseEvent) => {
         'px-2 py-3 gap-x-2': size === 'sm',
         'px-3 py-5 gap-x-4': size === 'md',
       }"
+      v-bind="
+        as === 'button'
+          ? { type: 'button', ...$attrs }
+          : as === 'RouterLink'
+            ? { to: to, ...$attrs }
+            : $attrs
+      "
       :is="as"
-      type="button"
-      v-bind="$attrs"
       @click="handleClick"
     >
       <slot

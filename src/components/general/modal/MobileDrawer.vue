@@ -15,8 +15,20 @@ const props = withDefaults(defineProps<Props>(), {
   direction: 'left',
 });
 
+const emit = defineEmits<{
+  (e: 'shown'): void;
+  (e: 'hidden'): void;
+}>();
+
 const toggleDrawer = (open: boolean = false) => {
   isDrawerOpen.value = open;
+
+  if (open) {
+    emit('shown');
+    return;
+  }
+
+  emit('hidden');
 };
 
 const drawerClasses = computed(() => {
@@ -26,7 +38,7 @@ const drawerClasses = computed(() => {
     case 'bottom':
       return 'bottom-0 left-0 w-full transform rounded-t-box';
     case 'left':
-      return 'top-16 left-0 h-full transform rounded-r-box ';
+      return 'top-0 left-0 h-full transform rounded-r-box pt-16';
     case 'right':
       return 'top-16 right-0 h-full transform rounded-l-box';
     default:
@@ -85,16 +97,20 @@ const onTouchEnd = () => {
   startPoint.value = 0;
   currentPoint.value = 0;
 };
+
+defineExpose({
+  open: () => toggleDrawer(true),
+  close: () => toggleDrawer(false),
+});
 </script>
 
 <template>
   <div class="relative">
-    <button
-      @click="toggleDrawer(true)"
-      class="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600"
-    >
-      Open Drawer
-    </button>
+    <slot name="trigger" :toggleDrawer="toggleDrawer">
+      <button @click="toggleDrawer(true)" class="btn btn-outline">
+        Open Drawer
+      </button>
+    </slot>
 
     <Transition name="fade">
       <div
@@ -113,20 +129,23 @@ const onTouchEnd = () => {
     >
       <div
         v-if="isDrawerOpen"
-        class="fixed z-50 bg-base-200 text-base-content shadow-lg"
+        class="fixed z-50 bg-base-200 text-base-content shadow-lg flex flex-col"
         :class="[drawerClasses, drawerTransform]"
         @touchstart="onTouchStart"
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
       >
-        <div class="p-4">
-          <h2 v-if="title" class="text-lg font-bold">{{ title }}</h2>
-          <div class="grow">
-            <slot></slot>
-          </div>
-          <button @click="toggleDrawer()" class="btn btn-sm btn-outline mt-2">
-            Close
-          </button>
+        <div class="grow">
+          <h2 v-if="title" class="text-lg font-bold p-4">{{ title }}</h2>
+          <slot></slot>
+        </div>
+
+        <div class="flex gap-1 justify-end p-4 shrink-0">
+          <slot name="actions" :toggleDrawer="toggleDrawer">
+            <button @click="toggleDrawer()" class="btn btn-sm btn-outline">
+              Close
+            </button>
+          </slot>
         </div>
       </div>
     </Transition>

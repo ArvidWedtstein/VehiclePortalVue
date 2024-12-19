@@ -69,6 +69,14 @@ const handleExpenseDelete = async (
       v-for="(expense, index) in expenses"
       :key="index"
       :title="expense.type"
+      as="RouterLink"
+      class="hover:bg-base-content/5 transition-colors"
+      :to="{
+        name: 'expense',
+        params: {
+          id: expense.id,
+        },
+      }"
     >
       <template #icon="{ sizeClass }">
         <svg
