@@ -68,6 +68,14 @@ onBeforeMount(() => {
       v-for="(service, index) in services"
       :key="index"
       :title="service.type"
+      as="RouterLink"
+      class="hover:bg-base-content/5 transition-colors"
+      :to="{
+        name: 'service',
+        params: {
+          id: service.id,
+        },
+      }"
     >
       <template #icon="{ sizeClass }">
         <svg
