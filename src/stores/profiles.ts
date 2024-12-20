@@ -1,16 +1,32 @@
-import { ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/database.types';
 
 export const useProfilesStore = defineStore('profiles', () => {
-  const profilesCache = ref<Tables<'Profiles'>[]>([]);
+  const profilesCache = reactive(
+    new Map<Tables<'Profiles'>['id'], Tables<'Profiles'>>(),
+  );
+
+  const loading = ref(false);
+
+  const profiles = computed(() => {
+    if (profilesCache.size < 2 && !loading.value) {
+      getProfiles();
+
+      return [];
+    }
+
+    return Array.from(profilesCache.values());
+  });
 
   const getProfiles = async () => {
     try {
-      if (profilesCache.value.length > 0) {
-        return profilesCache.value;
+      if (profilesCache.size > 0) {
+        return Array.from(profilesCache.values());
       }
+
+      loading.value = true;
 
       const { data, error, status } = await supabase
         .from('Profiles')
@@ -25,7 +41,9 @@ export const useProfilesStore = defineStore('profiles', () => {
 
       if (error && status !== 406) throw error;
 
-      profilesCache.value = data || [];
+      data?.forEach(profile => {
+        profilesCache.set(profile.id, profile);
+      });
 
       return data || [];
     } catch (error) {
@@ -34,8 +52,10 @@ export const useProfilesStore = defineStore('profiles', () => {
       }
 
       return [];
+    } finally {
+      loading.value = false;
     }
   };
 
-  return { profilesCache, getProfiles };
+  return { profiles, getProfiles };
 });

@@ -11,7 +11,7 @@ export const useChangelogStore = defineStore('Changelog', () => {
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
 
   const profilesStore = useProfilesStore();
-  const profiles = toRef(profilesStore, 'profilesCache');
+  const profiles = toRef(profilesStore, 'profiles');
 
   const loading = ref(false);
 
@@ -25,9 +25,7 @@ export const useChangelogStore = defineStore('Changelog', () => {
 
   const changelog = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
-      alert('No Vehicle Selected');
-
-      return [];
+      throw new Error('No Vehicle Selected, Changelog');
     }
 
     if (!changelogCache.has(currentVehicle.value.id) && !loading.value) {

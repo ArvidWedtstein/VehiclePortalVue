@@ -8,6 +8,7 @@ import { useVehiclesStore } from './vehicles';
 export const useServicesStore = defineStore('services', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+  const { setCurrentVehicle } = vehiclesStore;
 
   const loading = ref(false);
 
@@ -20,7 +21,7 @@ export const useServicesStore = defineStore('services', () => {
 
   const services = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
-      alert('No Vehicle Selected');
+      setCurrentVehicle();
 
       return [];
     }

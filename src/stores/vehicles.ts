@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { groupBy, type FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,7 +10,9 @@ export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
 };
 
 export const useVehiclesStore = defineStore('vehicles', () => {
-  const vehiclesCache = new Map<Tables<'Vehicles'>['id'], Tables<'Vehicles'>>();
+  const vehiclesCache = reactive(
+    new Map<Tables<'Vehicles'>['id'], Tables<'Vehicles'>>(),
+  );
 
   const currentVehicleId = ref<Tables<'Vehicles'>['id'] | null>(null);
 
@@ -19,6 +21,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   const vehicles = computed(() => {
     if (vehiclesCache.size < 2 && !loading.value) {
       getVehicles();
+
+      return [];
     }
 
     return Array.from(vehiclesCache.values());

@@ -3,6 +3,7 @@ import type {
   RouteLocationAsPathGeneric,
   RouteLocationAsRelativeGeneric,
 } from 'vue-router';
+
 type Props = {
   active?: boolean;
   disabled?: boolean;
@@ -10,10 +11,22 @@ type Props = {
   to?: string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric;
 };
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   active: false,
   disabled: false,
 });
+
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent): void;
+}>();
+
+const handleClick = (event: MouseEvent) => {
+  if (props.href || props.to) {
+    return;
+  }
+
+  emit('click', event);
+};
 </script>
 
 <template>
@@ -27,6 +40,7 @@ withDefaults(defineProps<Props>(), {
             ? { to: to, ...$attrs }
             : $attrs
       "
+      @click="handleClick"
       :class="{ disabled: disabled, active: active }"
     >
       <slot></slot>

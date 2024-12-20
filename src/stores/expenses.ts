@@ -8,6 +8,7 @@ import { useVehiclesStore } from './vehicles';
 export const useExpensesStore = defineStore('expenses', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+  const { setCurrentVehicle } = vehiclesStore;
 
   const expensesCache = reactive(
     new Map<
@@ -20,7 +21,7 @@ export const useExpensesStore = defineStore('expenses', () => {
 
   const expenses = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
-      alert('No Vehicle Selected');
+      setCurrentVehicle();
 
       return [];
     }
@@ -45,7 +46,7 @@ export const useExpensesStore = defineStore('expenses', () => {
   ) => {
     try {
       if (!currentVehicle.value || !currentVehicle.value.id) {
-        throw new Error('No Vehicle Selected!');
+        throw new Error('No Vehicle Selected!, GetExpenses');
       }
 
       loading.value = true;

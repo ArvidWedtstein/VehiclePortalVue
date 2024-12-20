@@ -10,6 +10,7 @@ const VehicleModal = defineAsyncComponent(
 
 const vehiclesStore = useVehiclesStore();
 const vehicles = toRef(vehiclesStore, 'vehicles');
+
 const { getVehicles } = vehiclesStore;
 
 onMounted(async () => {
@@ -59,11 +60,9 @@ const vehicleModal = ref();
           </button>
         </li>
 
-        <template v-memo="[vehicles]">
-          <li v-for="(vehicle, index) in vehicles" :key="index">
-            <VehicleGridItem :vehicle="vehicle" />
-          </li>
-        </template>
+        <li v-for="(vehicle, index) in vehicles" :key="index">
+          <VehicleGridItem :vehicle="vehicle" />
+        </li>
       </ul>
     </div>
   </div>

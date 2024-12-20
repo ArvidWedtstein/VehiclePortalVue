@@ -268,6 +268,20 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             type="text"
             v-model="vehicle.engine_size"
           />
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Mileage Unit"
+            type="select"
+            v-model="vehicle.mileage_unit"
+            :options="[
+              { value: 'kilometer', label: 'Kilometer' },
+              { value: 'mile', label: 'Mile' },
+              { value: 'yards', label: 'Yards' },
+              { value: 'feet', label: 'Feet' },
+            ]"
+            helpText="The unit in which the mileage is measured"
+          />
         </div>
       </template>
       <template #step-transmission>
