@@ -116,6 +116,10 @@ onMounted(async () => {
 
   users.value = profiles;
 });
+
+defineExpose({
+  drawerRef: drawerRef,
+});
 </script>
 
 <template>

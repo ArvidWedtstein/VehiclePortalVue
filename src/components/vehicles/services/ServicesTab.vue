@@ -5,8 +5,8 @@ import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import { parseRowsToTable } from '@/utils/utils';
-import { exportToTxt } from '@/utils/export';
+import { parseRowsToTable, type ArrayElement } from '@/utils/utils';
+import { downloadBlob, exportToCSV, exportToTxt } from '@/utils/export';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 
 const ServiceModal = defineAsyncComponent(
@@ -20,8 +20,8 @@ const { getServices } = servicesStore;
 
 const serviceModal = ref();
 
-const handleServicesExport = () => {
-  const table = parseRowsToTable(services.value, [
+const handleServicesExport = (type: 'txt' | 'csv') => {
+  const columnsToExport: Array<keyof ArrayElement<typeof services.value>> = [
     'type',
     'vehicle_id',
     'date',
@@ -30,9 +30,21 @@ const handleServicesExport = () => {
     'currency',
     'mileage',
     'notes',
-  ]);
+  ];
+  const table = parseRowsToTable(services.value, columnsToExport);
 
-  exportToTxt(table, 'services');
+  let blob: Blob | null = null;
+
+  switch (type) {
+    case 'txt':
+      blob = exportToTxt(table);
+      break;
+    case 'csv':
+      blob = exportToCSV(services.value, columnsToExport);
+      break;
+  }
+
+  downloadBlob(blob, `services.${type}`);
 };
 
 onBeforeMount(() => {
@@ -61,6 +73,8 @@ onBeforeMount(() => {
       Add Service
     </button>
 
+    <button type="button" class="btn btn-ghost">Filter</button>
+
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost btn-accent">
         <svg
@@ -87,7 +101,7 @@ onBeforeMount(() => {
         tabindex="0"
         class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
       >
-        <MenuItem @click="handleServicesExport">
+        <MenuItem @click="handleServicesExport('txt')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 384 512"
@@ -99,11 +113,23 @@ onBeforeMount(() => {
           </svg>
           Text File
         </MenuItem>
+        <MenuItem @click="handleServicesExport('csv')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 384 512"
+            class="fill-current w-3"
+          >
+            <path
+              d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM112 256l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"
+            />
+          </svg>
+          CSV
+        </MenuItem>
       </ul>
     </div>
   </div>
 
-  <ListGroup class="h-auto md:max-h-[50vh] divide-y divide-neutral">
+  <ListGroup class="h-max divide-y divide-neutral">
     <ListGroupItem
       v-for="(service, index) in services"
       :key="index"

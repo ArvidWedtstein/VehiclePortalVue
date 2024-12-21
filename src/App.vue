@@ -15,10 +15,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-full bg-base-100">
+  <main class="bg-base-100 flex flex-col flex-grow">
     <PageNavbar />
 
-    <div class="px-4 py-3 sm:px-6 lg:px-8 max-w-full">
+    <div
+      class="flex flex-col px-4 py-3 sm:px-6 lg:px-8 max-w-full min-h-screen max-h-screen"
+    >
       <RouterView />
     </div>
 

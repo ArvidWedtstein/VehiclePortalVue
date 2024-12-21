@@ -14,6 +14,10 @@ const modelValue = defineModel<number>({
   default: 0,
 });
 
+const changeStep = (stepIndex: number) => {
+  modelValue.value = stepIndex;
+};
+
 defineExpose({
   currentStep: modelValue,
 });
@@ -32,8 +36,9 @@ defineExpose({
         :key="stepIndex"
         class="step"
         :class="{ 'step-primary': modelValue >= stepIndex }"
+        @click="changeStep(stepIndex)"
       >
-        <button type="button" @click="modelValue = stepIndex">
+        <button type="button" @click="changeStep(stepIndex)">
           {{ step }}
         </button>
       </li>

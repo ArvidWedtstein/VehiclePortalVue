@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import { RouterLink, useRoute } from 'vue-router';
-import { defineAsyncComponent, onMounted, ref, watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 
 import { storeToRefs } from 'pinia';
 import TabsContainer from '@/components/general/utils/TabsContainer.vue';
 import VehicleInfoCard from '@/components/vehicles/VehicleView/VehicleInfoCard.vue';
-
-const VehicleModal = defineAsyncComponent(
-  async () =>
-    await import('@/components/vehicles/VehicleModal/VehicleModal.vue'),
-);
 
 const route = useRoute();
 const vehicleId = Array.isArray(route.params.vehicle_id)
@@ -21,8 +16,6 @@ const vehiclesStore = useVehiclesStore();
 
 const { currentVehicle } = storeToRefs(vehiclesStore);
 const { setCurrentVehicle } = vehiclesStore;
-
-const vehicleModal = ref();
 
 watchEffect(() => {
   if (route.params.vehicle_id !== vehicleId)
@@ -35,8 +28,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VehicleModal ref="vehicleModal" />
-
   <RouterLink to="/vehicles" class="flex gap-2 mb-2">
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -50,20 +41,22 @@ onMounted(async () => {
     Back to vehicles
   </RouterLink>
 
-  <div class="flex w-full flex-col gap-3" v-if="currentVehicle">
-    <VehicleInfoCard @edit="vehicleModal?.open" />
-    <div class="card grow">
-      <TabsContainer
-        variant="boxed"
-        :tabs="['Expenses', 'Services', 'Files', 'Changelog']"
-        urlMode
-      >
-        <RouterView v-slot="{ Component }">
-          <KeepAlive max="10">
-            <component :is="Component"></component>
-          </KeepAlive>
-        </RouterView>
-      </TabsContainer>
-    </div>
+  <div
+    class="flex w-full flex-col gap-3 flex-grow max-h-max"
+    v-if="currentVehicle"
+  >
+    <VehicleInfoCard />
+    <TabsContainer
+      class="flex-grow h-full"
+      variant="boxed"
+      :tabs="['Expenses', 'Services', 'Files']"
+      urlMode
+    >
+      <RouterView v-slot="{ Component }">
+        <KeepAlive max="10">
+          <component :is="Component"></component>
+        </KeepAlive>
+      </RouterView>
+    </TabsContainer>
   </div>
 </template>

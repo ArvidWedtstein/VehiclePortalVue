@@ -368,3 +368,15 @@ export const convertToDatetimeLocal = (isoDate: string): string => {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+
+export const adjustDateToLocal = (date?: Date | string) => {
+  if (!date) {
+    return new Date(date || '');
+  }
+
+  const dateObj = new Date(date);
+  const offset = dateObj.getTimezoneOffset(); // Offset in minutes
+  const adjustedDate = new Date(dateObj.getTime() - offset * 60 * 1000); // Adjust the time
+
+  return adjustedDate;
+};

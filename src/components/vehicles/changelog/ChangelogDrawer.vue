@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import ChangelogList from '@/components/general/changelog/ChangelogList.vue';
-import ChangelogListItem from '@/components/general/changelog/ChangelogListItem.vue';
-import ChangeLogListItemPlaceholder from '@/components/general/changelog/ChangeLogListItemPlaceholder.vue';
-import type { Database, Tables } from '@/database.types';
-import { useChangelogStore } from '@/stores/changelog';
+import { computed, onBeforeMount, ref } from 'vue';
 import { calculateJsonChanges } from '@/utils/utils';
+import type { Database, Tables } from '@/database.types';
+import { useBreakpoints } from '@/lib/composables/useBreakpoints';
+import MobileDrawer from '@/components/general/modal/MobileDrawer.vue';
 import { storeToRefs } from 'pinia';
-import { computed, onBeforeMount } from 'vue';
+import { useChangelogStore } from '@/stores/changelog';
+import ChangelogList from '@/components/general/changelog/ChangelogList.vue';
+import ChangeLogListItemPlaceholder from '@/components/general/changelog/ChangeLogListItemPlaceholder.vue';
+import ChangelogListItem from '@/components/general/changelog/ChangelogListItem.vue';
+
+const { isMd } = useBreakpoints();
+const drawerRef = ref<InstanceType<typeof MobileDrawer> | null>(null);
 
 const changelogStore = useChangelogStore();
 
@@ -143,23 +148,33 @@ const formattedChangelog = computed(() => {
 onBeforeMount(async () => {
   getChangelog();
 });
+
+defineExpose({
+  drawerRef: drawerRef,
+});
 </script>
 
 <template>
-  <ChangelogList class="max-h-svh h-fit mt-4 w-full md:mb-0 mb-14">
-    <template v-if="loading">
-      <ChangeLogListItemPlaceholder v-for="i in 10" :key="i" />
-    </template>
-    <ChangelogListItem
-      v-for="(change, changelogIndex) in formattedChangelog"
-      :key="changelogIndex"
-      :avatar="change.createdby_profile_image_url"
-      :actionBy="change.createdby_name || undefined"
-      :time="change.created_at"
-      :type="change.operation === 'UPDATE' ? 'comment' : 'default'"
-      :action="change.action"
-    >
-      <div v-if="change.sentence" v-html="change.sentence"></div>
-    </ChangelogListItem>
-  </ChangelogList>
+  <MobileDrawer
+    ref="drawerRef"
+    :direction="isMd ? 'left' : 'bottom'"
+    title="Changelog"
+  >
+    <ChangelogList class="max-w-96">
+      <template v-if="loading">
+        <ChangeLogListItemPlaceholder v-for="i in 10" :key="i" />
+      </template>
+      <ChangelogListItem
+        v-for="(change, changelogIndex) in formattedChangelog"
+        :key="changelogIndex"
+        :avatar="change.createdby_profile_image_url"
+        :actionBy="change.createdby_name || undefined"
+        :time="change.created_at"
+        :type="change.operation === 'UPDATE' ? 'comment' : 'default'"
+        :action="change.action"
+      >
+        <div v-if="change.sentence" v-html="change.sentence"></div>
+      </ChangelogListItem>
+    </ChangelogList>
+  </MobileDrawer>
 </template>

@@ -5,8 +5,9 @@ import { useExpensesStore } from '@/stores/expenses';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import { parseRowsToTable } from '@/utils/utils';
-import { exportToTxt } from '@/utils/export';
+import { parseRowsToTable, type ArrayElement } from '@/utils/utils';
+import { downloadBlob, exportToCSV, exportToTxt } from '@/utils/export';
+import { formatNumber } from '@/utils/format';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -25,8 +26,8 @@ const expenseModal = ref();
 //   loading: virtualLoading,
 // } = useVirtualScroll(getExpenses, 88, 5, containerRef);
 
-const handleExpensesExport = () => {
-  const table = parseRowsToTable(expenses.value, [
+const handleExpensesExport = (type: 'txt' | 'csv') => {
+  const columnsToExport: Array<keyof ArrayElement<typeof expenses.value>> = [
     'type',
     'vehicle_id',
     'date',
@@ -37,9 +38,21 @@ const handleExpensesExport = () => {
     'price_per_unit',
     'mileage',
     'notes',
-  ]);
+  ];
+  const table = parseRowsToTable(expenses.value, columnsToExport);
 
-  exportToTxt(table, 'expenses');
+  let blob: Blob | null = null;
+
+  switch (type) {
+    case 'txt':
+      blob = exportToTxt(table);
+      break;
+    case 'csv':
+      blob = exportToCSV(expenses.value, columnsToExport);
+      break;
+  }
+
+  downloadBlob(blob, `expenses.${type}`);
 };
 </script>
 
@@ -90,7 +103,7 @@ const handleExpensesExport = () => {
         tabindex="0"
         class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
       >
-        <MenuItem @click="handleExpensesExport">
+        <MenuItem @click="handleExpensesExport('txt')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 384 512"
@@ -102,11 +115,23 @@ const handleExpensesExport = () => {
           </svg>
           Text File
         </MenuItem>
+        <MenuItem @click="handleExpensesExport('csv')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 384 512"
+            class="fill-current w-3"
+          >
+            <path
+              d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM112 256l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-160 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"
+            />
+          </svg>
+          CSV
+        </MenuItem>
       </ul>
     </div>
   </div>
 
-  <ListGroup class="h-auto md:max-h-[50vh] divide-y divide-neutral">
+  <ListGroup class="h-max divide-y divide-neutral">
     <ListGroupItem
       v-for="(expense, index) in expenses"
       :key="index"
@@ -154,22 +179,14 @@ const handleExpensesExport = () => {
             </time>
           </dd>
 
-          <dt
-            class="hidden md:block md:border-l xl:border-neutral md:ml-2 md:pl-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              class="w-4 fill-current"
-            >
-              <path
-                fill-rule="evenodd"
-                d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </dt>
-          <dd class="hidden md:block capitalize">{{ expense.notes }}</dd>
+          <dd class="md:border-l xl:border-neutral md:ml-2 md:pl-2 capitalize">
+            {{
+              formatNumber(expense.amount || 0, {
+                style: 'unit',
+                unit: expense.unit || 'liter',
+              })
+            }}
+          </dd>
         </dl>
       </template>
 

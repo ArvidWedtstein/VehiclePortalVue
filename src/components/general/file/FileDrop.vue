@@ -6,7 +6,7 @@ import {
 } from '@/utils/format';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toasts';
 
 // TODO: Exclude filegrid from filedrop
@@ -230,6 +230,8 @@ const fetchFiles = async () => {
   try {
     if (!props.initialFiles.length) return;
 
+    console.log('Fetching files...');
+
     const { data, error } = await supabase.storage
       .from(props.bucket)
       .createSignedUrls(
@@ -288,6 +290,10 @@ watch(
     fetchFiles();
   },
 );
+
+onMounted(() => {
+  fetchFiles();
+});
 </script>
 
 <template>
@@ -364,19 +370,21 @@ watch(
       </label>
     </div>
 
-    <FileGrid
-      v-if="!hideFilesGrid"
-      :files="files"
-      @previewFile="
-        file => {
-          files = files.map(f => ({
-            ...f,
-            preview: f.file?.name === file?.file?.name,
-          }));
-        }
-      "
-      @deleteFile="handleFileDelete"
-    />
+    <slot :files="files">
+      <FileGrid
+        v-if="!hideFilesGrid"
+        :files="files"
+        @previewFile="
+          file => {
+            files = files.map(f => ({
+              ...f,
+              preview: f.file?.name === file?.file?.name,
+            }));
+          }
+        "
+        @deleteFile="handleFileDelete"
+      />
+    </slot>
 
     <div
       v-if="files.some(p => p.preview)"

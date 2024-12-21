@@ -15,11 +15,6 @@ import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
 import { useToastStore } from '@/stores/toasts';
 
-const stepControl = reactive({
-  step: 0,
-  steps: ['General', 'Engine', 'Transmission'],
-});
-
 const modalRef = ref();
 
 const { addToast } = useToastStore();
@@ -53,6 +48,11 @@ const { upsertVehicle } = vehiclesStore;
 
 const vehicle = ref<TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>>({
   ...defaultValues,
+});
+
+const stepControl = reactive({
+  step: 0,
+  steps: ['General', 'Engine', 'Transmission'],
 });
 
 const changeStep = (stepIndex: number) => {

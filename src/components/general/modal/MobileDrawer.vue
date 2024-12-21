@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 
 const isDrawerOpen = ref(false);
+const isDrawerOpenAfter = ref(false);
 const startPoint = ref(0);
 const currentPoint = ref(0);
 const isSwiping = ref(false);
@@ -20,8 +21,21 @@ const emit = defineEmits<{
   (e: 'hidden'): void;
 }>();
 
-const toggleDrawer = (open: boolean = false) => {
+const toggleDrawer = async (open: boolean = false) => {
+  if (isDrawerOpenAfter.value) {
+    isDrawerOpenAfter.value = open;
+
+    await nextTick();
+
+    isDrawerOpen.value = open;
+    return;
+  }
+
   isDrawerOpen.value = open;
+
+  await nextTick();
+
+  isDrawerOpenAfter.value = open;
 
   if (open) {
     emit('shown');
@@ -38,7 +52,7 @@ const drawerClasses = computed(() => {
     case 'bottom':
       return 'bottom-0 left-0 w-full transform rounded-t-box';
     case 'left':
-      return 'top-0 left-0 h-full transform rounded-r-box pt-16';
+      return 'top-0 left-0 h-screen max-h-screen transform rounded-r-box pt-16';
     case 'right':
       return 'top-16 right-0 h-full transform rounded-l-box';
     default:
@@ -105,17 +119,11 @@ defineExpose({
 </script>
 
 <template>
-  <div class="relative">
-    <slot name="trigger" :toggleDrawer="toggleDrawer">
-      <button @click="toggleDrawer(true)" class="btn btn-outline">
-        Open Drawer
-      </button>
-    </slot>
-
-    <Transition name="fade">
+  <div class="absolute">
+    <Transition v-if="isDrawerOpen" name="fade">
       <div
         v-if="isDrawerOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50"
         @click="toggleDrawer()"
       ></div>
     </Transition>
@@ -128,15 +136,15 @@ defineExpose({
       "
     >
       <div
-        v-if="isDrawerOpen"
+        v-if="isDrawerOpenAfter"
         class="fixed z-50 bg-base-200 text-base-content shadow-lg flex flex-col"
         :class="[drawerClasses, drawerTransform]"
         @touchstart="onTouchStart"
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
       >
-        <div class="grow">
-          <h2 v-if="title" class="text-lg font-bold p-4">{{ title }}</h2>
+        <h2 v-if="title" class="shrink-0 text-lg font-bold p-4">{{ title }}</h2>
+        <div class="flex-grow overflow-auto">
           <slot></slot>
         </div>
 

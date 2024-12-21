@@ -33,8 +33,6 @@ export const useSessionStore = defineStore('session', () => {
       if (error && status !== 406) throw error;
 
       profile.value = data;
-
-      console.log(data);
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
