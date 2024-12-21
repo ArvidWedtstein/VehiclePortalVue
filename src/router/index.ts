@@ -75,12 +75,6 @@ const router = createRouter({
               component: async () =>
                 await import('../views/vehicle/StatsView.vue'),
             },
-            {
-              name: 'changelog',
-              path: 'changelog',
-              component: async () =>
-                await import('../views/vehicle/ChangelogView.vue'),
-            },
           ],
         },
       ],
