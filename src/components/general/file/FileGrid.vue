@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { formatDate } from '@/utils/date';
 import { formatFileSize } from '@/utils/format';
-import { defineAsyncComponent, ref } from 'vue';
 import type { iFile } from './FileDrop.vue';
-
-const BindFileToServiceModal = defineAsyncComponent(
-  async () =>
-    await import('@/components/vehicles/services/BindFileToServiceModal.vue'),
-);
 
 type Props = {
   files?: Partial<iFile>[];
@@ -16,41 +10,29 @@ type Props = {
 withDefaults(defineProps<Props>(), {
   files: () => [],
 });
-
-const emit = defineEmits<{
-  (e: 'previewFile', file: Partial<iFile>): void;
-  (e: 'deleteFile', file: Partial<iFile>): void;
-}>();
-
-const bindFileToServiceModalRef = ref();
-
-const handleFileDelete = async (file: Partial<iFile>) => {
-  emit('deleteFile', file);
-};
 </script>
 
 <template>
-  <BindFileToServiceModal ref="bindFileToServiceModalRef" />
   <div
     class="table w-full table-auto rounded-lg border border-zinc-500 border-opacity-70 p-2 text-left"
   >
     <div
       class="table-header-group w-full text-xs text-black dark:text-zinc-300"
     >
-      <div class="table-cell p-1"></div>
+      <div class="table-cell p-1 max-w-3"></div>
       <div class="table-cell p-2">Name</div>
       <div class="table-cell w-1/5 p-2">Size</div>
       <div class="hidden md:table-cell p-2">Last Modified</div>
-      <div class="table-cell p-2">Action</div>
+      <div v-if="!!$slots.actions" class="table-cell p-2">Action</div>
     </div>
 
     <div class="table-row-group w-full" v-if="!files.length">
-      <div class="table-cell"></div>
+      <div class="table-cell max-w-3"></div>
       <div class="table-cell p-2 text-gray-400">No files uploaded yet</div>
       <div class="table-cell"></div>
       <div class="table-cell"></div>
       <div class="hidden md:table-cell"></div>
-      <div class="table-cell"></div>
+      <div v-if="!!$slots.actions" class="table-cell"></div>
     </div>
     <div
       v-for="(file, index) in files"
@@ -60,7 +42,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
       }"
       :key="`file-${index}`"
     >
-      <div class="table-cell">
+      <div class="table-cell max-w-3">
         <span
           :title="file.error?.message"
           class="truncate rounded p-1 text-center align-middle text-xs uppercase text-black dark:text-white"
@@ -100,53 +82,8 @@ const handleFileDelete = async (file: Partial<iFile>) => {
           })
         }}
       </div>
-      <div class="table-cell align-middle relative">
-        <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-sm btn-ghost m-1">
-            <svg
-              class="w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 448 512"
-              fill="currentColor"
-            >
-              <path
-                d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"
-              />
-            </svg>
-          </div>
-          <ul
-            tabindex="0"
-            class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
-          >
-            <li>
-              <button type="button" @click="emit('previewFile', file)">
-                Preview
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                @click="bindFileToServiceModalRef.open(file)"
-              >
-                Bind to service
-              </button>
-            </li>
-            <li>
-              <button type="button" @click="handleFileDelete(file)">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 448 512"
-                  class="w-3 fill-current"
-                >
-                  <path
-                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
-                  />
-                </svg>
-                Delete
-              </button>
-            </li>
-          </ul>
-        </div>
+      <div v-if="!!$slots.actions" class="table-cell align-middle relative">
+        <slot name="actions" :file="file"></slot>
       </div>
     </div>
   </div>

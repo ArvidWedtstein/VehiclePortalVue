@@ -8,20 +8,34 @@ import { useServicesStore } from '@/stores/services';
 import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import { useConfirm } from '@/lib/composables/useConfirm';
+import FileGrid from '@/components/general/file/FileGrid.vue';
+import { useDocumentsStore } from '@/stores/documents';
+import type { iFile } from '@/components/general/file/FileDrop.vue';
+import { useToastStore } from '@/stores/toasts';
 
 const ServiceModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/services/ServiceModal.vue'),
 );
+const FilePreviewModal = defineAsyncComponent(
+  async () => await import('@/components/general/modal/FilePreviewModal.vue'),
+);
 
 const vehiclesStore = useVehiclesStore();
 const servicesStore = useServicesStore();
+const documentsStore = useDocumentsStore();
+
+const { addToast } = useToastStore();
 
 const { currentVehicle } = storeToRefs(vehiclesStore);
 
 const { services, loading } = storeToRefs(servicesStore);
 const { getServices, deleteService } = servicesStore;
 
-const serviceModalRef = ref();
+const { documents } = storeToRefs(documentsStore);
+const { deleteDocumentFile } = documentsStore;
+
+const serviceModalRef = ref<InstanceType<typeof ServiceModal>>();
+const filePreviewRef = ref<InstanceType<typeof FilePreviewModal>>();
 
 const route = useRoute();
 
@@ -37,6 +51,23 @@ const service = computed(() => {
   return services.value.filter(({ id }) => id === serviceId)[0];
 });
 
+watch(
+  () => route.params.id,
+  () => getServices({ id: serviceId }),
+  {
+    immediate: true,
+  },
+);
+
+const serviceFiles = computed(() =>
+  documents.value
+    .filter(({ service_log_id }) => service_log_id === service.value.id)
+    .map(({ name, file_path, file_size }) => ({
+      file: { name: name || '', size: file_size || 0 },
+      path: file_path,
+    })),
+);
+
 const handleServiceDelete = async () => {
   const result = await useConfirm({
     title: 'Delete Service?',
@@ -51,13 +82,13 @@ const handleServiceDelete = async () => {
   deleteService(service.value.id);
 };
 
-watch(
-  () => route.params.id,
-  () => getServices({ id: serviceId }),
-  {
-    immediate: true,
-  },
-);
+const handleFileDelete = async (file: Partial<iFile>) => {
+  if (!file.path) return;
+
+  await deleteDocumentFile([file.path]);
+
+  addToast(`Successfully deleted file`, 'success', 2000);
+};
 
 onBeforeMount(async () => {
   await getServices({ id: serviceId });
@@ -66,6 +97,7 @@ onBeforeMount(async () => {
 
 <template>
   <ServiceModal ref="serviceModalRef" />
+  <FilePreviewModal bucket="VehicleDocuments" ref="filePreviewRef" />
 
   <RouterLink
     v-if="currentVehicle"
@@ -171,6 +203,56 @@ onBeforeMount(async () => {
       <div class="divider my-0"></div>
 
       <p class="capitalize text-sm">{{ service.notes }}</p>
+
+      <div class="divider my-0"></div>
+
+      <span class="font-semibold text-sm">Attachments:</span>
+
+      <FileGrid :files="serviceFiles">
+        <template #actions="{ file }">
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-sm btn-ghost m-1">
+              <svg
+                class="w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 448 512"
+                fill="currentColor"
+              >
+                <path
+                  d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"
+                />
+              </svg>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
+            >
+              <li>
+                <button
+                  type="button"
+                  @click="filePreviewRef?.open({ path: file.path })"
+                >
+                  Preview
+                </button>
+              </li>
+              <li>
+                <button type="button" @click="handleFileDelete(file)">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 448 512"
+                    class="w-3 fill-current"
+                  >
+                    <path
+                      d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                    />
+                  </svg>
+                  Delete
+                </button>
+              </li>
+            </ul>
+          </div>
+        </template>
+      </FileGrid>
     </div>
   </div>
 </template>

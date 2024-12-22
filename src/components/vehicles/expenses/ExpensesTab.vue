@@ -1,13 +1,14 @@
 <script async setup lang="ts">
-import { defineAsyncComponent, ref, toRefs } from 'vue';
-import { formatDate } from '@/utils/date';
+import { computed, defineAsyncComponent, ref, toRefs } from 'vue';
 import { useExpensesStore } from '@/stores/expenses';
-import MenuItem from '@/components/general/menu/MenuItem.vue';
-import ListGroup from '@/components/general/list/ListGroup.vue';
-import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import { parseRowsToTable, type ArrayElement } from '@/utils/utils';
+import { groupBy, parseRowsToTable, type ArrayElement } from '@/utils/utils';
 import { downloadBlob, exportToCSV, exportToTxt } from '@/utils/export';
 import { formatNumber } from '@/utils/format';
+import { formatDate } from '@/utils/date';
+import MenuItem from '@/components/general/menu/MenuItem.vue';
+import ListGroup from '@/components/general/list/ListGroup.vue';
+import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
+import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -18,7 +19,7 @@ const expenseStore = useExpensesStore();
 
 const { expenses, loading } = toRefs(expenseStore);
 
-const expenseModal = ref();
+const expenseModal = ref<InstanceType<typeof ExpenseModal>>();
 
 // const {
 //   visibleItems,
@@ -54,6 +55,21 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
 
   downloadBlob(blob, `expenses.${type}`);
 };
+
+const groupedExpenses = computed(() => {
+  const expensesWithMonth = expenses.value.map(expense => {
+    const month = formatDate(expense.date, { year: 'numeric', month: 'long' });
+
+    return {
+      ...expense,
+      month,
+    };
+  });
+
+  const grouped = groupBy(expensesWithMonth, 'month');
+
+  return grouped;
+});
 </script>
 
 <template>
@@ -63,7 +79,7 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
     <button
       type="button"
       class="btn btn-accent btn-block md:w-auto"
-      @click="expenseModal.open()"
+      @click="expenseModal?.open()"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -131,79 +147,94 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
     </div>
   </div>
 
-  <ListGroup class="h-max divide-y divide-neutral">
-    <ListGroupItem
-      v-for="(expense, index) in expenses"
-      :key="index"
-      :title="expense.type"
-      as="RouterLink"
-      class="hover:bg-base-content/5 transition-colors"
-      :to="{
-        name: 'expense',
-        params: {
-          id: expense.id,
-        },
-      }"
+  <ListGroup class="h-max">
+    <ListSubGroup
+      v-for="(expenses, month) in groupedExpenses"
+      :key="month"
+      :title="month.toString()"
     >
-      <template #icon="{ sizeClass }">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 512 512"
-          class="fill-current p-2"
-          :class="sizeClass"
-        >
-          <path
-            d="M32 64C32 28.7 60.7 0 96 0L256 0c35.3 0 64 28.7 64 64l0 192 8 0c48.6 0 88 39.4 88 88l0 32c0 13.3 10.7 24 24 24s24-10.7 24-24l0-154c-27.6-7.1-48-32.2-48-62l0-64L384 64c-8.8-8.8-8.8-23.2 0-32s23.2-8.8 32 0l77.3 77.3c12 12 18.7 28.3 18.7 45.3l0 13.5 0 24 0 32 0 152c0 39.8-32.2 72-72 72s-72-32.2-72-72l0-32c0-22.1-17.9-40-40-40l-8 0 0 144c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32L32 64zM96 80l0 96c0 8.8 7.2 16 16 16l128 0c8.8 0 16-7.2 16-16l0-96c0-8.8-7.2-16-16-16L112 64c-8.8 0-16 7.2-16 16z"
-          />
-        </svg>
-      </template>
+      <ListGroupItem
+        v-for="(expense, index) in expenses"
+        :key="index"
+        :title="expense.type"
+        as="RouterLink"
+        :to="{
+          name: 'expense',
+          params: {
+            id: expense.id,
+          },
+        }"
+      >
+        <template #icon="{ sizeClass }">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="fill-current p-2"
+            :class="sizeClass"
+          >
+            <path
+              d="M32 64C32 28.7 60.7 0 96 0L256 0c35.3 0 64 28.7 64 64l0 192 8 0c48.6 0 88 39.4 88 88l0 32c0 13.3 10.7 24 24 24s24-10.7 24-24l0-154c-27.6-7.1-48-32.2-48-62l0-64L384 64c-8.8-8.8-8.8-23.2 0-32s23.2-8.8 32 0l77.3 77.3c12 12 18.7 28.3 18.7 45.3l0 13.5 0 24 0 32 0 152c0 39.8-32.2 72-72 72s-72-32.2-72-72l0-32c0-22.1-17.9-40-40-40l-8 0 0 144c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32L32 64zM96 80l0 96c0 8.8 7.2 16 16 16l128 0c8.8 0 16-7.2 16-16l0-96c0-8.8-7.2-16-16-16L112 64c-8.8 0-16 7.2-16 16z"
+            />
+          </svg>
+        </template>
 
-      <template #subtitle>
-        <dl class="flex items-center flex-nowrap space-x-1">
-          <dt>
+        <template #subtitle>
+          <dl class="flex items-center flex-nowrap space-x-1">
+            <dt>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                class="w-4 fill-current"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </dt>
+            <dd class="md:pr-2">
+              <time :datetime="expense.date">
+                {{ formatDate(expense.date, { dateStyle: 'medium' }) }}
+              </time>
+            </dd>
+
+            <dd
+              class="md:border-l xl:border-neutral md:ml-2 md:pl-2 capitalize"
+            >
+              {{
+                formatNumber(expense.amount || 0, {
+                  style: 'unit',
+                  unit: expense.unit || 'liter',
+                })
+              }}
+            </dd>
+          </dl>
+        </template>
+
+        <template #endIcon>
+          <RouterLink
+            class="btn btn-sm btn-ghost mr-3"
+            :to="{
+              name: 'expense',
+              params: {
+                id: expense.id,
+              },
+            }"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              class="w-4 fill-current"
+              viewBox="0 0 320 512"
+              class="w-3 fill-current"
             >
               <path
-                fill-rule="evenodd"
-                d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
-                clip-rule="evenodd"
+                d="M113.333 47.409L297.314 239.407C301.783 244.032 304.001 250.032 304.001 256.001S301.783 267.969 297.314 272.594L113.333 464.592C104.181 474.186 88.994 474.499 79.431 465.311C69.806 456.186 69.494 440.936 78.712 431.405L246.759 256.001L78.712 80.596C69.494 71.096 69.806 55.815 79.431 46.69C88.994 37.503 104.181 37.815 113.333 47.409Z"
               />
             </svg>
-          </dt>
-          <dd class="md:pr-2">
-            <time :datetime="expense.date">
-              {{ formatDate(expense.date, { dateStyle: 'medium' }) }}
-            </time>
-          </dd>
-
-          <dd class="md:border-l xl:border-neutral md:ml-2 md:pl-2 capitalize">
-            {{
-              formatNumber(expense.amount || 0, {
-                style: 'unit',
-                unit: expense.unit || 'liter',
-              })
-            }}
-          </dd>
-        </dl>
-      </template>
-
-      <template #endIcon>
-        <RouterLink
-          class="btn btn-sm mr-3"
-          :to="{
-            name: 'expense',
-            params: {
-              id: expense.id,
-            },
-          }"
-        >
-          Details
-        </RouterLink>
-      </template>
-    </ListGroupItem>
+          </RouterLink>
+        </template>
+      </ListGroupItem>
+    </ListSubGroup>
 
     <ListGroupItem v-if="loading" title="Loading..." />
   </ListGroup>

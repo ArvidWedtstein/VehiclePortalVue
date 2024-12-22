@@ -53,7 +53,7 @@ const onFormSubmit = () => {
 };
 
 const handleOpen = async (
-  expense_id: TablesUpdate<'VehicleExpenses'>['id'],
+  expense_id?: TablesUpdate<'VehicleExpenses'>['id'],
 ) => {
   if (!currentVehicle.value) return;
 

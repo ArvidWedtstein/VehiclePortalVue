@@ -86,19 +86,17 @@ export const adjustCalendarDate = (
   return result;
 };
 
-interface options {
-  dateStyle?: 'long' | 'short' | 'full' | 'medium';
-  timeStyle?: 'long' | 'short' | 'full' | 'medium' | 'none';
-}
-
 export const formatDate = (
   dateTime: string | Date,
-  { dateStyle, timeStyle }: options = {},
+  options: Intl.DateTimeFormatOptions = {
+    dateStyle: 'long',
+    timeStyle: undefined,
+  },
 ) => {
-  const formattedDateTime = new Date(dateTime).toLocaleString(getLanguage(), {
-    timeStyle: timeStyle == 'none' ? undefined : timeStyle || 'short',
-    dateStyle: dateStyle || 'long',
-  });
+  const formattedDateTime = new Date(dateTime).toLocaleString(
+    getLanguage(),
+    options,
+  );
 
   return formattedDateTime;
 };

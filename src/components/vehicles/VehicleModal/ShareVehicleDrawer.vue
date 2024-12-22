@@ -138,6 +138,7 @@ defineExpose({
         v-for="(people, group) in groupedPersons"
         :key="group"
         :title="group.toString()"
+        sticky
       >
         <ListGroupItem
           as="button"

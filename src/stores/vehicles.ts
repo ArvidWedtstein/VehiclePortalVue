@@ -65,8 +65,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       }
 
       currentVehicleId.value = vehicle_id;
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -94,8 +94,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       data?.forEach(vehicle => {
         vehiclesCache.set(vehicle.id, vehicle);
       });
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }
@@ -116,8 +116,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       data?.forEach(vehicle => {
         vehiclesCache.set(vehicle.id, vehicle);
       });
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -181,8 +181,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       });
 
       return data;
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -219,8 +219,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       vehiclesSharesCache.set(vehicle_id, vehicleShareCache);
 
       return data;
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     }
   };
 

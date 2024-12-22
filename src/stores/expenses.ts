@@ -118,8 +118,8 @@ export const useExpensesStore = defineStore('expenses', () => {
       }
 
       expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }

@@ -73,8 +73,8 @@ export const useServicesStore = defineStore('services', () => {
       }
 
       servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }
@@ -110,8 +110,8 @@ export const useServicesStore = defineStore('services', () => {
       });
 
       servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }

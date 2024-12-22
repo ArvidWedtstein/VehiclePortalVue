@@ -6,8 +6,13 @@ import {
 } from '@/utils/format';
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
-import { onMounted, ref, watch } from 'vue';
+import { defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toasts';
+import MenuItem from '../menu/MenuItem.vue';
+
+const FilePreviewModal = defineAsyncComponent(
+  async () => await import('@/components/general/modal/FilePreviewModal.vue'),
+);
 
 // TODO: Exclude filegrid from filedrop
 type FileUploadProps = {
@@ -79,6 +84,8 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   },
   initialFiles: () => [],
 });
+
+const filePreviewRef = ref<InstanceType<typeof FilePreviewModal> | null>(null);
 
 const files = ref<Partial<iFile>[]>([]);
 
@@ -226,35 +233,11 @@ const handleUpload = () => {
   });
 };
 
-const fetchFiles = async () => {
-  try {
-    if (!props.initialFiles.length) return;
-
-    console.log('Fetching files...');
-
-    const { data, error } = await supabase.storage
-      .from(props.bucket)
-      .createSignedUrls(
-        props.initialFiles.map(({ path }) => path || ''),
-        7200,
-      );
-
-    if (error) {
-      throw error;
-    }
-
-    files.value = props.initialFiles.map(file => {
-      const storageFile = data.find(({ path }) => path === file.path);
-
-      return {
-        ...file,
-        url: storageFile?.signedUrl ?? '',
-        error: undefined,
-      };
-    });
-  } catch (error) {
-    console.error(error);
-  }
+const handleFilePreview = (file: Partial<iFile>) => {
+  filePreviewRef.value?.open({
+    src: file.url,
+    path: file.path,
+  });
 };
 
 const handleFileDelete = async (file: Partial<iFile>) => {
@@ -264,7 +247,7 @@ const handleFileDelete = async (file: Partial<iFile>) => {
     if (!file.path) return;
 
     // TODO: move into Documents store?
-    // Implement some way to delete file, regardless of store
+    // emit delete event instead
 
     const { error } = await supabase.storage
       .from(props.bucket)
@@ -287,12 +270,24 @@ const onDragOver = (event: DragEvent) => {
 watch(
   () => props.initialFiles,
   () => {
-    fetchFiles();
+    files.value = props.initialFiles.map(file => {
+      return {
+        ...file,
+        error: undefined,
+      };
+    });
+
+    console.log('filkes', files.value);
   },
 );
 
 onMounted(() => {
-  fetchFiles();
+  files.value = props.initialFiles.map(file => {
+    return {
+      ...file,
+      error: undefined,
+    };
+  });
 });
 </script>
 
@@ -302,6 +297,7 @@ onMounted(() => {
     @dragover="onDragOver"
     @drop="handleDrop"
   >
+    <FilePreviewModal ref="filePreviewRef" :bucket="bucket" />
     <div class="flex w-full items-center justify-center" v-if="!hideDropArea">
       <label
         for="dropzone-files"
@@ -371,54 +367,43 @@ onMounted(() => {
     </div>
 
     <slot :files="files">
-      <FileGrid
-        v-if="!hideFilesGrid"
-        :files="files"
-        @previewFile="
-          file => {
-            files = files.map(f => ({
-              ...f,
-              preview: f.file?.name === file?.file?.name,
-            }));
-          }
-        "
-        @deleteFile="handleFileDelete"
-      />
+      <FileGrid :files="files">
+        <template #actions="{ file }">
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-sm btn-ghost m-1">
+              <svg
+                class="w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 448 512"
+                fill="currentColor"
+              >
+                <path
+                  d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"
+                />
+              </svg>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
+            >
+              <MenuItem @click="handleFilePreview(file)">Preview</MenuItem>
+              <MenuItem @click="handleFileDelete(file)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512"
+                  class="w-3 fill-current"
+                >
+                  <path
+                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                  />
+                </svg>
+                Delete
+              </MenuItem>
+            </ul>
+          </div>
+        </template>
+      </FileGrid>
     </slot>
-
-    <div
-      v-if="files.some(p => p.preview)"
-      class="animate-fade-in relative rounded-lg border border-zinc-500 p-2"
-    >
-      <button
-        class="!absolute top-1 right-1 btn btn-sm btn-error btn-square btn-ghost"
-        @click="
-          $event => {
-            files = files.map(f => ({
-              ...f,
-              preview: false,
-            }));
-          }
-        "
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 320 512"
-          class="w-5"
-          fill="currentColor"
-        >
-          <path
-            d="M315.3 411.3c-6.253 6.253-16.37 6.253-22.63 0L160 278.6l-132.7 132.7c-6.253 6.253-16.37 6.253-22.63 0c-6.253-6.253-6.253-16.37 0-22.63L137.4 256L4.69 123.3c-6.253-6.253-6.253-16.37 0-22.63c6.253-6.253 16.37-6.253 22.63 0L160 233.4l132.7-132.7c6.253-6.253 16.37-6.253 22.63 0c6.253 6.253 6.253 16.37 0 22.63L182.6 256l132.7 132.7C321.6 394.9 321.6 405.1 315.3 411.3z"
-          />
-        </svg>
-        <span class="sr-only">Close</span>
-      </button>
-
-      <img
-        :src="files.find(f => f.preview)?.url"
-        class="aspect-square w-max max-w-full object-cover rounded"
-      />
-    </div>
 
     <button
       class="btn w-full btn-primary"

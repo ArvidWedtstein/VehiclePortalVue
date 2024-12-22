@@ -100,8 +100,8 @@ export const useDocumentsStore = defineStore('documents', () => {
       }
 
       documentsCache.set(currentVehicle.value.id, vehicleDocumentsCache);
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }
@@ -131,21 +131,60 @@ export const useDocumentsStore = defineStore('documents', () => {
       const currentVehicleDocumentsCache =
         documentsCache.get(currentVehicle.value.id) || new Map();
 
-      if (data) {
-        data.forEach(item => {
-          currentVehicleDocumentsCache.set(item.id, item);
-        });
-      }
+      data?.forEach(item => {
+        currentVehicleDocumentsCache.set(item.id, item);
+      });
 
       documentsCache.set(currentVehicle.value.id, currentVehicleDocumentsCache);
 
       return data;
-    } catch (pErr) {
-      console.error(pErr);
+    } catch (err) {
+      console.error(err);
     } finally {
       loading.value = false;
     }
   };
 
-  return { documents, getDocuments, bindDocumentToService, loading };
+  const deleteDocumentFile = async (filePaths: Array<string>) => {
+    try {
+      if (!filePaths.length) return;
+
+      if (!currentVehicle.value || !currentVehicle.value.id) {
+        throw new Error('No Vehicle Selected!');
+      }
+
+      const { data, error } = await supabase.storage
+        .from('VehicleDocuments')
+        .remove(filePaths);
+
+      const currentVehicleDocumentsCache =
+        documentsCache.get(currentVehicle.value.id) ||
+        (new Map() as Map<
+          Tables<'VehicleDocuments'>['id'],
+          Tables<'VehicleDocuments'>
+        >);
+
+      data?.forEach(item => {
+        const cacheEntry = Array.from(
+          currentVehicleDocumentsCache.values(),
+        ).find(f => f.name === item.name);
+        if (!cacheEntry) return;
+        currentVehicleDocumentsCache.delete(cacheEntry.id);
+      });
+
+      documentsCache.set(currentVehicle.value.id, currentVehicleDocumentsCache);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return {
+    documents,
+    getDocuments,
+    bindDocumentToService,
+    deleteDocumentFile,
+    loading,
+  };
 });

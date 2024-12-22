@@ -75,7 +75,7 @@ const onFormSubmit = async () => {
 };
 
 const handleOpen = async (
-  service_id: TablesUpdate<'VehicleServiceLogs'>['id'],
+  service_id?: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
   if (service_id == null || service_id === undefined) {
     if (!currentVehicle.value) return;
