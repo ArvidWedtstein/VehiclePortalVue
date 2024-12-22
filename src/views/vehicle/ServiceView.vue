@@ -12,6 +12,9 @@ import FileGrid from '@/components/general/file/FileGrid.vue';
 import { useDocumentsStore } from '@/stores/documents';
 import type { iFile } from '@/components/general/file/FileDrop.vue';
 import { useToastStore } from '@/stores/toasts';
+import MenuItem from '@/components/general/menu/MenuItem.vue';
+import { supabase } from '@/lib/supabaseClient';
+import { downloadBlob } from '@/utils/export';
 
 const ServiceModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/services/ServiceModal.vue'),
@@ -80,6 +83,23 @@ const handleServiceDelete = async () => {
   if (!result) return;
 
   deleteService(service.value.id);
+};
+
+const downloadFile = async (file: Partial<iFile>) => {
+  try {
+    if (!file.path) return;
+
+    const { data, error } = await supabase.storage
+      .from('VehicleDocuments')
+      .download(file.path);
+
+    if (error) throw error;
+
+    downloadBlob(data, file.file?.name || 'file');
+  } catch (error) {
+    console.error(error);
+    addToast(`Failed to download file`, 'error', 2000);
+  }
 };
 
 const handleFileDelete = async (file: Partial<iFile>) => {
@@ -162,7 +182,12 @@ onBeforeMount(async () => {
         <li class="inline-flex gap-1 items-center">
           <span class="font-semibold">Date:</span>
           <span>
-            {{ formatDate(service.date) }}
+            {{
+              formatDate(service.date, {
+                dateStyle: 'long',
+                timeStyle: 'short',
+              })
+            }}
           </span>
         </li>
         <li class="inline-flex gap-1 items-center">
@@ -227,28 +252,42 @@ onBeforeMount(async () => {
               tabindex="0"
               class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
             >
-              <li>
-                <button
-                  type="button"
-                  @click="filePreviewRef?.open({ path: file.path })"
+              <MenuItem @click="filePreviewRef?.open({ path: file.path })">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 384 512"
+                  class="w-3 fill-current"
                 >
-                  Preview
-                </button>
-              </li>
-              <li>
-                <button type="button" @click="handleFileDelete(file)">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 448 512"
-                    class="w-3 fill-current"
-                  >
-                    <path
-                      d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
-                    />
-                  </svg>
-                  Delete
-                </button>
-              </li>
+                  <path
+                    d="M320 464c8.8 0 16-7.2 16-16l0-288-80 0c-17.7 0-32-14.3-32-32l0-80L64 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l256 0zM0 64C0 28.7 28.7 0 64 0L229.5 0c17 0 33.3 6.7 45.3 18.7l90.5 90.5c12 12 18.7 28.3 18.7 45.3L384 448c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64z"
+                  />
+                </svg>
+                Preview
+              </MenuItem>
+              <MenuItem @click="downloadFile(file)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  class="w-3 fill-current"
+                >
+                  <path
+                    d="M448 304H394.5L346.5 352H448C456.822 352 464 359.178 464 368V448C464 456.822 456.822 464 448 464H64C55.178 464 48 456.822 48 448V368C48 359.178 55.178 352 64 352H165.5L117.5 304H64C28.654 304 0 332.654 0 368V448C0 483.346 28.654 512 64 512H448C483.348 512 512 483.346 512 448V368C512 332.654 483.348 304 448 304ZM432 408C432 394.744 421.254 384 408 384S384 394.744 384 408C384 421.254 394.746 432 408 432S432 421.254 432 408ZM239.031 368.969C243.719 373.656 249.844 376 256 376S268.281 373.656 272.969 368.969L408.969 232.969C418.344 223.594 418.344 208.406 408.969 199.031S384.406 189.656 375.031 199.031L280 294.062V24C280 10.75 269.25 0 256 0S232 10.75 232 24V294.062L136.969 199.031C127.594 189.656 112.406 189.656 103.031 199.031S93.656 223.594 103.031 232.969L239.031 368.969Z"
+                  />
+                </svg>
+                Download
+              </MenuItem>
+              <MenuItem @click="handleFileDelete(file)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512"
+                  class="w-3 fill-current"
+                >
+                  <path
+                    d="M424 80H349.625L315.625 23.25C306.875 8.875 291.25 0 274.375 0H173.625C156.75 0 141.125 8.875 132.375 23.25L98.375 80H24C10.745 80 0 90.745 0 104V104C0 117.255 10.745 128 24 128H32L53.25 467C54.75 492.25 75.75 512 101.125 512H346.875C372.25 512 393.25 492.25 394.75 467L416 128H424C437.255 128 448 117.255 448 104V104C448 90.745 437.255 80 424 80ZM173.625 48H274.375L293.625 80H154.375L173.625 48ZM346.875 464H101.125L80.125 128H367.875L346.875 464Z"
+                  />
+                </svg>
+                Delete
+              </MenuItem>
             </ul>
           </div>
         </template>

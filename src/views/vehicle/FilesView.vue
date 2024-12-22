@@ -23,10 +23,11 @@ onMounted(async () => {
       :storagePath="`${currentVehicle.licenseplate_number}/`"
       multiple
       :initialFiles="
-        documents.map(({ name, file_path, file_size }) => ({
+        documents.map(({ name, file_path, file_size, service_log_id }) => ({
           file: { name: name || '', size: file_size || 0 },
           path: file_path,
           state: 'uploaded',
+          service_log_id,
         }))
       "
     />

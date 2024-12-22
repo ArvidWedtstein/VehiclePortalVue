@@ -9,6 +9,7 @@ import FileGrid from '../file/FileGrid.vue';
 import { defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toasts';
 import MenuItem from '../menu/MenuItem.vue';
+import { downloadBlob } from '@/utils/export';
 
 const FilePreviewModal = defineAsyncComponent(
   async () => await import('@/components/general/modal/FilePreviewModal.vue'),
@@ -263,6 +264,23 @@ const handleFileDelete = async (file: Partial<iFile>) => {
   }
 };
 
+const downloadFile = async (file: Partial<iFile>) => {
+  try {
+    if (!file.path) return;
+
+    const { data, error } = await supabase.storage
+      .from('VehicleDocuments')
+      .download(file.path);
+
+    if (error) throw error;
+
+    downloadBlob(data, file.file?.name || 'file');
+  } catch (error) {
+    console.error(error);
+    addToast(`Failed to download file`, 'error', 2000);
+  }
+};
+
 const onDragOver = (event: DragEvent) => {
   event.preventDefault();
 };
@@ -276,8 +294,6 @@ watch(
         error: undefined,
       };
     });
-
-    console.log('filkes', files.value);
   },
 );
 
@@ -368,6 +384,26 @@ onMounted(() => {
 
     <slot :files="files">
       <FileGrid :files="files">
+        <template #fileIcon="{ file }">
+          <svg
+            v-if="
+              Object.entries(file).filter(
+                ([key, value]) =>
+                  key === 'service_log_id' &&
+                  value !== null &&
+                  value !== undefined,
+              ).length
+            "
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+            class="inline-block w-3 fill-current"
+          >
+            <path
+              d="M507.496 117.119C504.496 104.994 495.121 95.369 482.996 91.994C470.871 88.743 457.871 92.119 448.997 100.994L390.372 159.62L357.872 154.244L352.497 121.869L411.247 63.118C419.997 54.243 423.497 41.243 420.122 29.243C416.747 17.117 406.997 7.742 394.872 4.617C341.747 -8.508 286.873 6.742 248.248 45.368C210.623 82.993 195.623 136.744 207.498 188.62L24 371.998C8.5 387.498 0 408.123 0 429.999S8.5 472.499 24 488S60.125 512 81.999 512C103.874 512 124.499 503.5 139.999 488L323.372 304.747C375.122 316.622 428.997 301.622 466.871 263.746C504.871 225.746 520.496 169.495 507.496 117.119ZM432.872 229.871C404.372 258.371 362.622 267.996 323.872 255.121L309.748 250.371L105.999 453.999C93.249 466.874 70.749 466.874 57.999 453.999C51.5 447.624 48 439.124 48 429.999C48 420.999 51.5 412.373 57.999 405.998L261.873 202.245L257.248 188.12C244.373 149.244 253.997 107.494 282.248 79.243C302.623 58.993 329.372 47.993 357.247 47.993H358.372L301.123 105.369L316.247 195.87L406.747 210.995L464.121 153.744C464.496 181.995 453.496 209.245 432.872 229.871ZM87.999 407.998C79.124 407.998 71.999 415.124 71.999 423.999C71.999 432.874 79.124 439.999 87.999 439.999S103.999 432.874 103.999 423.999C103.999 415.124 96.874 407.998 87.999 407.998Z"
+            />
+          </svg>
+          <span v-else>{{ file.file?.name.split('.').pop() }}</span>
+        </template>
         <template #actions="{ file }">
           <div class="dropdown dropdown-end">
             <div tabindex="0" role="button" class="btn btn-sm btn-ghost m-1">
@@ -386,7 +422,30 @@ onMounted(() => {
               tabindex="0"
               class="dropdown-content menu menu-sm bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
             >
-              <MenuItem @click="handleFilePreview(file)">Preview</MenuItem>
+              <MenuItem @click="handleFilePreview(file)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 384 512"
+                  class="w-3 fill-current"
+                >
+                  <path
+                    d="M320 464c8.8 0 16-7.2 16-16l0-288-80 0c-17.7 0-32-14.3-32-32l0-80L64 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l256 0zM0 64C0 28.7 28.7 0 64 0L229.5 0c17 0 33.3 6.7 45.3 18.7l90.5 90.5c12 12 18.7 28.3 18.7 45.3L384 448c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64z"
+                  />
+                </svg>
+                Preview
+              </MenuItem>
+              <MenuItem @click="downloadFile(file)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 512 512"
+                  class="w-3 fill-current"
+                >
+                  <path
+                    d="M448 304H394.5L346.5 352H448C456.822 352 464 359.178 464 368V448C464 456.822 456.822 464 448 464H64C55.178 464 48 456.822 48 448V368C48 359.178 55.178 352 64 352H165.5L117.5 304H64C28.654 304 0 332.654 0 368V448C0 483.346 28.654 512 64 512H448C483.348 512 512 483.346 512 448V368C512 332.654 483.348 304 448 304ZM432 408C432 394.744 421.254 384 408 384S384 394.744 384 408C384 421.254 394.746 432 408 432S432 421.254 432 408ZM239.031 368.969C243.719 373.656 249.844 376 256 376S268.281 373.656 272.969 368.969L408.969 232.969C418.344 223.594 418.344 208.406 408.969 199.031S384.406 189.656 375.031 199.031L280 294.062V24C280 10.75 269.25 0 256 0S232 10.75 232 24V294.062L136.969 199.031C127.594 189.656 112.406 189.656 103.031 199.031S93.656 223.594 103.031 232.969L239.031 368.969Z"
+                  />
+                </svg>
+                Download
+              </MenuItem>
               <MenuItem @click="handleFileDelete(file)">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -394,7 +453,7 @@ onMounted(() => {
                   class="w-3 fill-current"
                 >
                   <path
-                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                    d="M424 80H349.625L315.625 23.25C306.875 8.875 291.25 0 274.375 0H173.625C156.75 0 141.125 8.875 132.375 23.25L98.375 80H24C10.745 80 0 90.745 0 104V104C0 117.255 10.745 128 24 128H32L53.25 467C54.75 492.25 75.75 512 101.125 512H346.875C372.25 512 393.25 492.25 394.75 467L416 128H424C437.255 128 448 117.255 448 104V104C448 90.745 437.255 80 424 80ZM173.625 48H274.375L293.625 80H154.375L173.625 48ZM346.875 464H101.125L80.125 128H367.875L346.875 464Z"
                   />
                 </svg>
                 Delete
