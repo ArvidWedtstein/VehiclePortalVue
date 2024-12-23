@@ -161,9 +161,9 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
           </FormInput>
 
           <FormInput
-            wrapperClass="sm:col-span-2"
             label="Make"
             type="text"
+            wrapperClass="sm:col-span-2"
             v-model="vehicle.make"
             list="vehicle_makes"
             autocapitalize="words"
