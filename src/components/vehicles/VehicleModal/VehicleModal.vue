@@ -14,6 +14,8 @@ import InputHelperTip from '@/components/general/form/InputHelperTip.vue';
 import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
 import { useToastStore } from '@/stores/toasts';
+import { useVehicleManufacturersStore } from '@/stores/vehicleManufacturers';
+import DataList from '@/components/general/form/DataList.vue';
 
 const modalRef = ref();
 
@@ -42,9 +44,15 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
 };
 
 const vehiclesStore = useVehiclesStore();
+const vehicleManufacturersStore = useVehicleManufacturersStore();
 
 const vehicles = toRef(vehiclesStore, 'vehicles');
 const { upsertVehicle } = vehiclesStore;
+
+const vehicleManufacturers = toRef(
+  vehicleManufacturersStore,
+  'vehicleManufacturers',
+);
 
 const vehicle = ref<TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>>({
   ...defaultValues,
@@ -157,7 +165,14 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             label="Make"
             type="text"
             v-model="vehicle.make"
+            list="vehicle_makes"
+            autocapitalize="words"
           />
+
+          <DataList
+            id="vehicle_makes"
+            :options="vehicleManufacturers.map(({ name }) => name)"
+          ></DataList>
 
           <FormInput
             wrapperClass="sm:col-span-2"

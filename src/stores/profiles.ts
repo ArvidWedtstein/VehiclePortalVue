@@ -20,9 +20,9 @@ export const useProfilesStore = defineStore('profiles', () => {
     return Array.from(profilesCache.values());
   });
 
-  const getProfiles = async () => {
+  const getProfiles = async (profile_id?: Tables<'Profiles'>['id']) => {
     try {
-      if (profilesCache.size > 0) {
+      if (profilesCache.size > 0 && !profile_id) {
         return Array.from(profilesCache.values());
       }
 
@@ -37,6 +37,7 @@ export const useProfilesStore = defineStore('profiles', () => {
           profile_image_url
         `,
         )
+        .match(profile_id ? { id: profile_id } : {})
         .returns<Tables<'Profiles'>[]>();
 
       if (error && status !== 406) throw error;

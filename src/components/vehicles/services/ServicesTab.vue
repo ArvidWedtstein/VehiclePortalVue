@@ -283,7 +283,7 @@ onBeforeMount(() => {
 
         <template #endIcon>
           <RouterLink
-            class="btn btn-sm btn-ghost mr-3"
+            class="btn btn-sm btn-ghost"
             :to="{
               name: 'service',
               params: {

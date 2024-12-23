@@ -9,11 +9,14 @@ import MenuItem from '@/components/general/menu/MenuItem.vue';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
+import { useBreakpoints } from '@/lib/composables/useBreakpoints';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/expenses/ExpenseModal.vue'),
 );
+
+const { isMd } = useBreakpoints();
 
 const expenseStore = useExpensesStore();
 
@@ -78,7 +81,7 @@ const groupedExpenses = computed(() => {
   <div class="flex justify-between">
     <button
       type="button"
-      class="btn btn-accent btn-block md:w-auto"
+      class="btn btn-accent w-auto"
       @click="expenseModal?.open()"
     >
       <svg
@@ -94,7 +97,7 @@ const groupedExpenses = computed(() => {
     </button>
 
     <div class="dropdown dropdown-end">
-      <div tabindex="0" role="button" class="btn btn-ghost btn-accent">
+      <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
@@ -179,7 +182,7 @@ const groupedExpenses = computed(() => {
         </template>
 
         <template #subtitle>
-          <dl class="flex items-center flex-nowrap space-x-1">
+          <dl class="flex items-center flex-nowrap gap-1">
             <dt>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -193,15 +196,18 @@ const groupedExpenses = computed(() => {
                 />
               </svg>
             </dt>
-            <dd class="md:pr-2">
+            <dd>
               <time :datetime="expense.date">
-                {{ formatDate(expense.date, { dateStyle: 'medium' }) }}
+                {{
+                  formatDate(expense.date, {
+                    dateStyle: isMd ? 'medium' : undefined,
+                    day: isMd ? undefined : 'numeric',
+                  })
+                }}
               </time>
             </dd>
 
-            <dd
-              class="md:border-l xl:border-neutral md:ml-2 md:pl-2 capitalize"
-            >
+            <dd class="border-l border-neutral ml-2 pl-2">
               {{
                 formatNumber(expense.amount || 0, {
                   style: 'unit',
@@ -213,8 +219,20 @@ const groupedExpenses = computed(() => {
         </template>
 
         <template #endIcon>
+          <span class="text-success font-bold">
+            {{
+              formatNumber(expense.cost || 0, {
+                style: 'currency',
+                currency: expense.currency || 'EUR',
+                currencyDisplay: 'narrowSymbol',
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 0,
+              })
+            }}
+          </span>
+
           <RouterLink
-            class="btn btn-sm btn-ghost mr-3"
+            class="btn btn-sm btn-ghost"
             :to="{
               name: 'expense',
               params: {

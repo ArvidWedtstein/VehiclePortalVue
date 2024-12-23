@@ -49,6 +49,7 @@ const handleSubmit = (event: Event) => {
 };
 
 const handleClose = (event: Event) => {
+  modalRef.value?.close('cancel');
   emit('close', event);
 };
 
@@ -89,6 +90,7 @@ defineExpose({ modalRef: modalRef });
           class="btn btn-circle btn-sm btn-ghost absolute right-2 top-2"
           formmethod="dialog"
           value="cancel"
+          @click="handleClose"
         >
           ✕
         </button>

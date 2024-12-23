@@ -94,4 +94,13 @@ const router = createRouter({
   ],
 });
 
+// TODO: add auth check?
+router.beforeEach((to, from, next) => {
+  if (to.name === 'profile' && !to.params.id) {
+    next({ name: 'home' });
+  } else {
+    next();
+  }
+});
+
 export default router;

@@ -35,7 +35,7 @@ const handleClick = (event: MouseEvent) => {
       class="flex items-center"
       :class="{
         'px-2 py-3 gap-x-2': size === 'sm',
-        'px-3 py-5 gap-x-4': size === 'md',
+        'px-3 py-5 gap-x-2 md:gap-x-4': size === 'md',
       }"
       v-bind="
         as === 'button'
