@@ -10,6 +10,8 @@ export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
 };
 
 export const useVehiclesStore = defineStore('vehicles', () => {
+  // TODO: Replace registered_date with only year?
+  // TODO: remove size columns?
   const vehiclesCache = reactive(
     new Map<Tables<'Vehicles'>['id'], Tables<'Vehicles'>>(),
   );
@@ -33,13 +35,13 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     if (!id) return null;
 
     const vehicle = vehiclesCache.get(id);
-    if (vehicle) {
-      return vehicle;
+
+    if (!vehicle) {
+      getVehicles({ id: id });
+      return null;
     }
 
-    getVehicles({ id: id });
-
-    return null;
+    return vehicle;
   });
 
   const setCurrentVehicle = async (vehicle_id?: Tables<'Vehicles'>['id']) => {
@@ -77,8 +79,6 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
-      console.info('Get Vehicles');
-
       loading.value = true;
 
       const { data, error, status } = await supabase
@@ -90,7 +90,6 @@ export const useVehiclesStore = defineStore('vehicles', () => {
 
       if (error && status !== 406) throw error;
 
-      vehiclesCache.clear();
       data?.forEach(vehicle => {
         vehiclesCache.set(vehicle.id, vehicle);
       });

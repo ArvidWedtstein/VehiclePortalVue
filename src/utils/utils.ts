@@ -1,3 +1,5 @@
+import { vehicleManufacturersCodes } from './vehicleManufacturerCodes';
+
 /**
  * Returns a pluralized string based on the count and noun provided.
  *
@@ -174,55 +176,122 @@ export const getInitials = (name: string, maxInitials: number = 2): string => {
   return initials.join('');
 };
 
-export const parseRowsToTable = <T extends Record<string, unknown>>(
-  rows: T[],
-  columns: Array<keyof T>,
-) => {
-  const divider = '|';
-  const headerRowDivider = '-';
+type VINData = {
+  country: string;
+  manufacturer: string;
+  vehicleType: string;
+  modelYear: number;
+  plantCode: string;
+  sequentialNumber: string;
+};
 
-  const formattedRows = rows.map(row => {
-    return columns.reduce((acc, column) => {
-      if (column in row) {
-        acc[column] = row[column];
-      }
-      return acc;
-    }, {} as Partial<T>);
-  });
+export const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
 
-  const columnsLength = columns.map(col => {
-    const maxColumnLength = Math.max(
-      ...formattedRows.map(
-        row => String(row[col]).replace(/(?:\r\n|\r|\n)/g, '').length,
-      ),
-      String(col).length,
-    );
+/**
+ * Decodes a Vehicle Identification Number (VIN) and returns the data.
+ * @param vin The VIN to decode.
+ * @returns The decoded VIN data.
+ */
+export const decodeVIN = (vin: string): VINData | null => {
+  if (!vinRegex.test(vin)) {
+    console.error('Invalid VIN format.');
+    return null;
+  }
 
-    return {
-      column: col,
-      length: maxColumnLength + 1,
-    };
-  });
+  const worldManufacturerCode = vin.slice(0, 3);
+  const vehicleDescriptorSection = vin.slice(3, 9);
+  // const vehicleIdentifierSection = vin.slice(9, 17);
 
-  const headerRow = columnsLength
-    .map(({ column, length }) => {
-      return `${String(column)}${' '.repeat(length - String(column).length)}`;
-    })
-    .join(divider);
+  const countryCode = vin[0];
+  const yearCode = vin[9];
+  const plantCode = vin[10];
+  const sequentialNumber = vin.slice(11);
 
-  const dividerRow = columnsLength
-    .map(({ length }) => headerRowDivider.repeat(length))
-    .join(divider);
+  const countries: Record<string, string> = {
+    '1': 'USA',
+    '2': 'Canada',
+    '3': 'Mexico',
+    '4': 'USA',
+    '5': 'USA',
+    '6': 'Australia',
+    '7': 'New Zealand',
+    '8': 'Argentina',
+    '9': 'Brazil',
+    A: 'South Africa',
+    B: 'Angola',
+    C: 'Benin',
+    D: 'Egypt',
+    E: 'Ethiopia',
+    F: 'Ghana',
+    G: 'Nigeria',
+    H: 'Kenya',
+    J: 'Japan',
+    K: 'South Korea',
+    L: 'China',
+    M: 'India',
+    N: 'Turkey',
+    P: 'Philippines',
+    R: 'Russia',
+    S: 'United Kingdom',
+    T: 'Switzerland',
+    U: 'Denmark',
+    V: 'France',
+    W: 'Germany',
+    X: 'Bulgaria',
+    Y: 'Sweden',
+    Z: 'Italy',
+  };
 
-  const rowsString = formattedRows
-    .map(row => {
-      return columnsLength
-        .map(({ column, length }) => {
-          return `${String(row[column])}${' '.repeat(length - String(row[column]).length)}`;
-        })
-        .join(divider);
-    })
-    .join('\n');
+  const vehicleManufacturer = vehicleManufacturersCodes
+    .get(worldManufacturerCode)
+    ?.split(' ')[0];
 
-  return `${headerRow}\n${dividerRow}\n${rowsString}`;
+  const years: Record<string, number> = {
+    A: 1980,
+    B: 1981,
+    C: 1982,
+    D: 1983,
+    E: 1984,
+    F: 1985,
+    G: 1986,
+    H: 1987,
+    J: 1988,
+    K: 1989,
+    L: 1990,
+    M: 1991,
+    N: 1992,
+    P: 1993,
+    R: 1994,
+    S: 1995,
+    T: 1996,
+    V: 1997,
+    W: 1998,
+    X: 1999,
+    Y: 2000,
+    1: 2001,
+    2: 2002,
+    3: 2003,
+    4: 2004,
+    5: 2005,
+    6: 2006,
+    7: 2007,
+    8: 2008,
+    9: 2009,
+    0: 1980,
+  };
+
+  const adjustedYears: Record<string, number> = Object.fromEntries(
+    Object.entries(years).filter(
+      ([key], index, arr) => arr.findIndex(([k]) => k === key) === index,
+    ),
+  );
+
+  return {
+    country: countries[countryCode] || 'Unknown',
+    manufacturer: vehicleManufacturer || worldManufacturerCode,
+    vehicleType: vehicleDescriptorSection,
+    modelYear: adjustedYears[yearCode] || 0,
+    plantCode: plantCode,
+    sequentialNumber: sequentialNumber,
+  };
 };

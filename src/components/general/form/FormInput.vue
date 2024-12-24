@@ -38,7 +38,7 @@ type Props = {
 const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   size: 'md',
-  wrapperClass: ' w-full',
+  wrapperClass: 'w-full',
   join: false,
   required: false,
 });
@@ -55,9 +55,15 @@ const computedType = computed(() => {
 
 const computedClass = computed(() => {
   const baseClasses = {
-    input: 'input input-bordered invalid:input-error',
-    textarea: 'textarea textarea-bordered invalid:textarea-error',
-    select: 'select select-bordered invalid:select-error',
+    input: 'input input-bordered',
+    textarea: 'textarea textarea-bordered',
+    select: 'select select-bordered',
+  };
+
+  const invalidClasses = {
+    input: 'invalid:input-error',
+    textarea: 'invalid:textarea-error',
+    select: 'invalid:select-error',
   };
 
   // Color classes based on the component type
@@ -79,14 +85,16 @@ const computedClass = computed(() => {
     lg: `${computedType.value}-lg`,
   };
 
-  const colorClass = props.color ? colorClasses[props.color] : '';
-
   return [
     baseClasses[computedType.value],
-    colorClass,
+    props.color && colorClasses[props.color],
     sizeClasses[props.size],
     props.join && 'join-item',
-    slots.icon && 'pl-10',
+    !!slots.icon && 'pl-10',
+    invalidClasses[computedType.value],
+    // model.value &&
+    //   model.value.toString().length > 0 &&
+    //   invalidClasses[computedType.value],
     'grow',
     props.class,
   ];

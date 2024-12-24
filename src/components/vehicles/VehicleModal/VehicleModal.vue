@@ -16,6 +16,7 @@ import FormStepper from '@/components/general/form/FormStepper.vue';
 import { useToastStore } from '@/stores/general/toasts';
 import { useVehicleManufacturersStore } from '@/stores/vehicleManufacturers';
 import DataList from '@/components/general/form/DataList.vue';
+import { decodeVIN } from '@/utils/utils';
 
 const modalRef = ref();
 
@@ -37,6 +38,7 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
   height: '',
   length: '',
   width: '',
+  transmission_gears: undefined,
   fuel_capacity: 0,
   fuel_capacity_unit: 'liter',
   mileage_unit: 'kilometer',
@@ -115,6 +117,22 @@ const handleOpen = (vehicle_id?: Tables<'Vehicles'>['id']) => {
   modalRef.value.modalRef.showModal();
 };
 
+const handleVIN = () => {
+  const vin = vehicle.value.vehicle_identification_number;
+
+  if (!vin) {
+    return;
+  }
+
+  const decodedVIN = decodeVIN(vin);
+
+  if (!decodedVIN) {
+    return;
+  }
+
+  console.log('decodedVIN', decodedVIN);
+};
+
 defineExpose({ modalRef: modalRef, open: handleOpen });
 </script>
 
@@ -141,6 +159,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             v-model="vehicle.licenseplate_number"
             placeholder="AB 123456"
             required
+            autofocus
           />
 
           <FormInput
@@ -148,6 +167,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             label="VIN (Vehicle Identification Number)"
             type="text"
             v-model="vehicle.vehicle_identification_number"
+            @blur="handleVIN"
           >
             <template #label="{ label }">
               <div class="label">
@@ -308,7 +328,10 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             label="Type"
             type="select"
             v-model="vehicle.transmission_type"
-            :options="[{ value: 'Manual' }, { value: 'Automatic' }]"
+            :options="[
+              { value: 'manual', label: 'Manual' },
+              { value: 'automatic', label: 'Automatic' },
+            ]"
           />
 
           <FormInput

@@ -1,8 +1,13 @@
 <script async setup lang="ts">
 import { computed, defineAsyncComponent, ref, toRefs } from 'vue';
 import { useExpensesStore } from '@/stores/expenses';
-import { groupBy, parseRowsToTable, type ArrayElement } from '@/utils/utils';
-import { downloadBlob, exportToCSV, exportToTxt } from '@/utils/export';
+import { groupBy, type ArrayElement } from '@/utils/utils';
+import {
+  downloadBlob,
+  exportToCSV,
+  exportToTxt,
+  parseRowsToTable,
+} from '@/utils/export';
 import { formatNumber } from '@/utils/format';
 import { formatDate } from '@/utils/date';
 import MenuItem from '@/components/general/menu/MenuItem.vue';

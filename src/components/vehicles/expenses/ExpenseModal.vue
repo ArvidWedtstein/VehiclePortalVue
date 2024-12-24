@@ -72,8 +72,8 @@ const handleOpen = async (
       date: getLocalDateISO().split('.')[0].slice(0, -3),
       mileage,
     };
-    modalRef.value?.modalRef?.showModal();
 
+    modalRef.value?.modalRef?.showModal();
     return;
   }
 

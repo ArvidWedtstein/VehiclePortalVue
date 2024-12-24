@@ -11,8 +11,13 @@ import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import { groupBy, parseRowsToTable, type ArrayElement } from '@/utils/utils';
-import { downloadBlob, exportToCSV, exportToTxt } from '@/utils/export';
+import { groupBy, type ArrayElement } from '@/utils/utils';
+import {
+  downloadBlob,
+  exportToCSV,
+  parseRowsToTable,
+  exportToTxt,
+} from '@/utils/export';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 
