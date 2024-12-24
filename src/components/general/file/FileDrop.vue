@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import FileGrid from '../file/FileGrid.vue';
 import { defineAsyncComponent, onMounted, ref, watch } from 'vue';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import MenuItem from '../menu/MenuItem.vue';
 import { downloadBlob } from '@/utils/export';
 

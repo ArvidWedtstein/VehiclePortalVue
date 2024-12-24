@@ -2,7 +2,7 @@
 import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import PageNavbar from './components/layout/PageNavbar.vue';
-import { useSessionStore } from './stores/userSession';
+import { useSessionStore } from './stores/general/userSession';
 import MobileNavigation from './components/layout/MobileNavigation.vue';
 import ToastManager from './components/general/utils/ToastManager.vue';
 import ConfirmManager from './components/general/utils/ConfirmManager.vue';

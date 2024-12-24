@@ -13,7 +13,7 @@ import {
 import InputHelperTip from '@/components/general/form/InputHelperTip.vue';
 import DrivetrainIcon from '@/assets/icons/DrivetrainIcon.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import { useVehicleManufacturersStore } from '@/stores/vehicleManufacturers';
 import DataList from '@/components/general/form/DataList.vue';
 

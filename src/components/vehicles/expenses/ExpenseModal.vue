@@ -9,7 +9,7 @@ import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
 import { formatNumber } from '@/utils/format';
 import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 
 const modalRef = ref();
 

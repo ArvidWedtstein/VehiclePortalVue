@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { supabase } from '@/lib/supabaseClient';
 import { useProfilesStore } from '@/stores/profiles';
-import { useSessionStore } from '@/stores/userSession';
+import { useSessionStore } from '@/stores/general/userSession';
 import { computed, onBeforeMount, toRefs } from 'vue';
 import { useRouter } from 'vue-router';
 

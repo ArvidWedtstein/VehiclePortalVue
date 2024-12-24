@@ -44,7 +44,7 @@
  * TODO: make this work with custom components and confirm
  * - Add support for "groups?" so that confirms can be in center, while toasts / notifications can be elsewhere
  */
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import { toRef, watch } from 'vue';
 
 const toastStore = useToastStore();

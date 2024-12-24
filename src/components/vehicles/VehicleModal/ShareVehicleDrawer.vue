@@ -4,7 +4,7 @@ import { computed, onMounted, ref, toRefs } from 'vue';
 import { groupBy } from '@/utils/utils';
 import type { Tables } from '@/database.types';
 import { useProfilesStore } from '@/stores/profiles';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';

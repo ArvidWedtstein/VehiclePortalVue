@@ -8,7 +8,7 @@ import { useServicesStore } from '@/stores/services';
 import { supabase } from '@/lib/supabaseClient';
 import { formatNumber } from '@/utils/format';
 import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import DataList from '@/components/general/form/DataList.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
 import FileDrop from '@/components/general/file/FileDrop.vue';

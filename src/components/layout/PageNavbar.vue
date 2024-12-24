@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter, RouterLink } from 'vue-router';
 import { computed } from 'vue';
-import { useSessionStore } from '@/stores/userSession';
+import { useSessionStore } from '@/stores/general/userSession';
 import { storeToRefs } from 'pinia';
 import { getInitials } from '@/utils/utils';
 import LoginModal from '../auth/LoginModal.vue';

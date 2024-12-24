@@ -11,7 +11,7 @@ import { useConfirm } from '@/lib/composables/useConfirm';
 import FileGrid from '@/components/general/file/FileGrid.vue';
 import { useDocumentsStore } from '@/stores/documents';
 import type { iFile } from '@/components/general/file/FileDrop.vue';
-import { useToastStore } from '@/stores/toasts';
+import { useToastStore } from '@/stores/general/toasts';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 import { supabase } from '@/lib/supabaseClient';
 import { downloadBlob } from '@/utils/export';

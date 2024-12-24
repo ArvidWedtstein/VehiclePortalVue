@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import FormInput from '@/components/general/form/FormInput.vue';
 import FormDialog from '@/components/general/modal/FormDialog.vue';
-import { useSessionStore } from '@/stores/userSession';
+import { useSessionStore } from '@/stores/general/userSession';
 
 const modalRef = ref<InstanceType<typeof HTMLDialogElement> | null>(null);
 const { login } = useSessionStore();
