@@ -22,7 +22,7 @@ const navbarRoutes = computed(() => {
 <template>
   <LoginModal />
 
-  <div class="navbar bg-base-300 sticky top-0 z-[100]">
+  <div class="navbar fixed top-0 bg-base-300 z-[100]">
     <div class="navbar-start">
       <a class="btn btn-ghost text-xl space-x-0 gap-1"
         >Vehicle

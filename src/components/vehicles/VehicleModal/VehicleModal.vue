@@ -23,9 +23,8 @@ const modalRef = ref();
 const { addToast } = useToastStore();
 
 const defaultValues: TablesUpdate<'Vehicles'> = {
-  name: '',
-  make: '',
-  model: '',
+  make: undefined,
+  model: undefined,
   model_year: undefined,
   type: 'Car',
   body_type: '',
@@ -131,8 +130,34 @@ const handleVIN = () => {
     return;
   }
 
-  vehicle.value.make ??= decodedVIN.manufacturer;
-  vehicle.value.model_year ??= decodedVIN.modelYear;
+  vehicle.value.make = decodedVIN.manufacturer;
+  vehicle.value.model_year = decodedVIN.modelYear;
+
+  getModels();
+};
+
+const availableModels = ref<Array<string>>([]);
+
+const getModels = async () => {
+  try {
+    if (!vehicle.value.make) return;
+
+    const res = await fetch(
+      `https://vpic.nhtsa.dot.gov/api/vehicles/getmodelsformake/${vehicle.value.make.replace('Š', 'S')}?format=json`,
+    );
+
+    if (!res.ok || res.status !== 200) return;
+
+    const json = await res.json();
+
+    const { Results } = json as {
+      Results: { Model_Name: string }[];
+    };
+
+    availableModels.value = Results.map(p => p.Model_Name);
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 defineExpose({ modalRef: modalRef, open: handleOpen });
@@ -167,7 +192,8 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             wrapperClass="sm:col-span-2"
             label="VIN (Vehicle Identification Number)"
             type="text"
-            v-model="vehicle.vehicle_identification_number"
+            v-model.trim="vehicle.vehicle_identification_number"
+            maxlength="17"
             @blur="handleVIN"
           >
             <template #label="{ label }">
@@ -204,6 +230,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             v-model="vehicle.make"
             list="vehicle_makes"
             autocapitalize="words"
+            @blur="getModels"
           />
 
           <DataList
@@ -215,14 +242,18 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             wrapperClass="sm:col-span-2"
             label="Model"
             type="text"
+            list="vehicle_models"
             v-model="vehicle.model"
           />
+
+          <DataList id="vehicle_models" :options="availableModels"></DataList>
 
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Model Year"
             type="number"
             inputmode="decimal"
+            step="1"
             :min="1885"
             v-model="vehicle.model_year"
           />

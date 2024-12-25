@@ -15,7 +15,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="bg-base-100 flex flex-col flex-grow">
+  <main
+    class="relative bg-base-100 flex flex-col flex-grow overflow-y-hidden pt-16"
+  >
     <PageNavbar />
 
     <div

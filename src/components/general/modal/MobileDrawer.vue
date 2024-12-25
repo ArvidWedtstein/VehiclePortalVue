@@ -50,7 +50,7 @@ const drawerClasses = computed(() => {
     case 'top':
       return 'top-0 left-0 w-full transform rounded-b-box';
     case 'bottom':
-      return 'bottom-0 left-0 w-full transform rounded-t-box';
+      return 'bottom-0 left-0 w-full max-h-full transform rounded-t-box';
     case 'left':
       return 'top-0 left-0 h-screen max-h-screen transform rounded-r-box pt-16';
     case 'right':
@@ -113,6 +113,7 @@ const onTouchEnd = () => {
 };
 
 defineExpose({
+  isOpen: isDrawerOpen,
   open: () => toggleDrawer(true),
   close: () => toggleDrawer(false),
 });
@@ -143,6 +144,10 @@ defineExpose({
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"
       >
+        <div
+          v-if="props.direction === 'bottom'"
+          class="w-10 h-1 bg-neutral mx-auto my-2 rounded-badge"
+        ></div>
         <h2 v-if="title" class="shrink-0 text-lg font-bold p-4">{{ title }}</h2>
         <div class="flex-grow overflow-auto">
           <slot></slot>

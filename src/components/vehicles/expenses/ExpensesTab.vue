@@ -15,6 +15,7 @@ import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 import { useBreakpoints } from '@/lib/composables/useBreakpoints';
+import DrawerOrDropdownButton from '@/components/general/utils/DrawerOrDropdownButton.vue';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -101,6 +102,8 @@ const groupedExpenses = computed(() => {
       Add Expense
     </button>
 
+    <!-- <DrawerOrDropdownButton /> -->
+
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">
         <svg
@@ -154,6 +157,8 @@ const groupedExpenses = computed(() => {
       </ul>
     </div>
   </div>
+
+  <!-- TODO: add sorting & filtering options -->
 
   <ListGroup class="h-max">
     <ListSubGroup

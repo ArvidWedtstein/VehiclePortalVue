@@ -1,4 +1,5 @@
 import { vehicleManufacturersCodes } from './vehicleManufacturerCodes';
+import { vinCountryCodes } from './vinCountryCodes';
 
 /**
  * Returns a pluralized string based on the count and noun provided.
@@ -213,45 +214,10 @@ export const decodeVIN = (vin: string): VINData | null => {
   const vehicleDescriptorSection = vin.slice(3, 9);
   // const vehicleIdentifierSection = vin.slice(9, 17);
 
-  const countryCode = vin[0];
+  const countryCode = vin.slice(0, 2);
   const yearCode = vin[9];
   const plantCode = vin[10];
   const sequentialNumber = vin.slice(11);
-
-  const countries: Record<string, string> = {
-    '1': 'USA',
-    '2': 'Canada',
-    '3': 'Mexico',
-    '4': 'USA',
-    '5': 'USA',
-    '6': 'Australia',
-    '7': 'New Zealand',
-    '8': 'Argentina',
-    '9': 'Brazil',
-    A: 'South Africa',
-    B: 'Angola',
-    C: 'Benin',
-    D: 'Egypt',
-    E: 'Ethiopia',
-    F: 'Ghana',
-    G: 'Nigeria',
-    H: 'Kenya',
-    J: 'Japan',
-    K: 'South Korea',
-    L: 'China',
-    M: 'India',
-    N: 'Turkey',
-    P: 'Philippines',
-    R: 'Russia',
-    S: 'United Kingdom',
-    T: 'Switzerland',
-    U: 'Denmark',
-    V: 'France',
-    W: 'Germany',
-    X: 'Bulgaria',
-    Y: 'Sweden',
-    Z: 'Italy',
-  };
 
   const vehicleManufacturer = vehicleManufacturersCodes
     .get(worldManufacturerCode)
@@ -321,12 +287,53 @@ export const decodeVIN = (vin: string): VINData | null => {
     ),
   );
 
+  const [country] = getCountryFromCode(countryCode);
+
   return {
-    country: countries[countryCode] || 'Unknown',
+    country: country || 'Unknown',
     manufacturer: vehicleManufacturer || worldManufacturerCode,
     vehicleType: vehicleDescriptorSection,
     modelYear: alternativeYears[yearCode] || adjustedYears[yearCode] || 0,
     plantCode: plantCode,
     sequentialNumber: sequentialNumber,
   };
+};
+
+const isInRange = (range: string, code: string): boolean => {
+  const sequence = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+
+  const [start, end = ''] = range.split('-');
+
+  if (start.length !== 2 || end.length !== 2 || code.length !== 2) {
+    return false;
+  }
+
+  const getIndices = (indCode: string): [number, number] => {
+    return [sequence.indexOf(indCode[0]), sequence.indexOf(indCode[1])];
+  };
+
+  const [startFirst, startSecond] = getIndices(start);
+  const [endFirst, endSecond] = getIndices(end);
+  const [codeFirst, codeSecond] = getIndices(code);
+
+  if (codeFirst < startFirst || codeFirst > endFirst) {
+    return false;
+  }
+
+  if (codeFirst === startFirst && codeSecond < startSecond) {
+    return false;
+  }
+  if (codeFirst === endFirst && codeSecond > endSecond) {
+    return false;
+  }
+
+  return true;
+};
+
+const getCountryFromCode = (code: string) => {
+  const matches = Array.from(vinCountryCodes.entries()).filter(([range]) =>
+    isInRange(range, code),
+  );
+
+  return matches.map(([, country]) => country);
 };

@@ -1,5 +1,4 @@
 export const vehicleManufacturersCodes = new Map<string, string>([
-  ['WMI', 'Manufacturer'],
   ['AAA', 'Audi South Africa made by Volkswagen of South Africa'],
   ['AAK', 'FAW Vehicle Manufacturers SA (PTY) Ltd.'],
   ['AAM', 'MAN Automotive (South Africa) (Pty) Ltd. (includes VW Truck & Bus)'],
@@ -85,7 +84,10 @@ export const vehicleManufacturersCodes = new Map<string, string>([
   ['JHD', 'Hino'],
   ['JHF', 'Hino'],
   ['JHH', 'Hino incomplete vehicle'],
-  ['JHF-JHG, JHL-JHN, JHZ,\nJH1-JH5', 'Honda'],
+  ['JHF-JHG', 'Honda'],
+  ['JHL-JHN', 'Honda'],
+  ['JHZ', 'Honda'],
+  ['JH1-JH5', 'Honda'],
   ['JHL', 'Honda MPV/SUV'],
   ['JHM', 'Honda car'],
   ['JH1', 'Honda truck'],

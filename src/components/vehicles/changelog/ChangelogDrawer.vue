@@ -160,7 +160,7 @@ defineExpose({
     :direction="isMd ? 'left' : 'bottom'"
     title="Changelog"
   >
-    <ChangelogList class="max-w-96">
+    <ChangelogList class="md:max-w-96">
       <template v-if="loading">
         <ChangeLogListItemPlaceholder v-for="i in 10" :key="i" />
       </template>
