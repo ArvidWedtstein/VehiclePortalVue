@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent, ref, toRef, toRefs } from 'vue';
 import ShareVehicleDrawer from '../VehicleModal/ShareVehicleDrawer.vue';
 import { useProfilesStore } from '@/stores/profiles';
 import ChangelogDrawer from '../changelog/ChangelogDrawer.vue';
+import { formatNumber } from '@/utils/format';
 
 const VehicleModal = defineAsyncComponent(
   async () =>
@@ -59,9 +60,7 @@ const currentVehicleOwner = computed(() => {
           {{
             [
               `${currentVehicle.make} ${currentVehicle.model}`,
-              currentVehicle.registered_date
-                ? new Date(currentVehicle.registered_date).getFullYear()
-                : null,
+              currentVehicle.model_year,
             ]
               .filter(Boolean)
               .join(', ')
@@ -141,7 +140,15 @@ const currentVehicleOwner = computed(() => {
       </div>
 
       <div class="-mt-2 text-gray-500 flex gap-1 items-center">
-        <small>{{ currentVehicle.engine_size }}</small>
+        <small v-if="currentVehicle.engine_displacement">
+          {{
+            formatNumber(currentVehicle.engine_displacement, {
+              style: 'unit',
+              unit: currentVehicle.engine_displacement_unit || 'liter',
+              unitDisplay: 'short',
+            })
+          }}
+        </small>
         <small>{{ currentVehicle.body_type }}</small>
         <div
           class="w-1 h-1 bg-gray-500 rounded-full inline-block leading-none mx-1"

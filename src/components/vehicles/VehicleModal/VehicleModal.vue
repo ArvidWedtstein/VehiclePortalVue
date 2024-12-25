@@ -26,19 +26,20 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
   name: '',
   make: '',
   model: '',
-  type: '',
+  model_year: undefined,
+  type: 'Car',
   body_type: '',
   color: '',
+  engine_displacement: undefined,
+  engine_displacement_unit: 'liter',
+  engine_cylinders: undefined,
   drivetrain: 'FWD',
-  eu_control_date: '',
-  registered_date: '',
+  eu_control_date: undefined,
   licenseplate_number: '',
   vehicle_identification_number: '',
   weight: 0,
-  height: '',
-  length: '',
-  width: '',
   transmission_gears: undefined,
+  fuel_type: undefined,
   fuel_capacity: 0,
   fuel_capacity_unit: 'liter',
   mileage_unit: 'kilometer',
@@ -130,7 +131,8 @@ const handleVIN = () => {
     return;
   }
 
-  console.log('decodedVIN', decodedVIN);
+  vehicle.value.make ??= decodedVIN.manufacturer;
+  vehicle.value.model_year ??= decodedVIN.modelYear;
 };
 
 defineExpose({ modalRef: modalRef, open: handleOpen });
@@ -158,12 +160,11 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             type="text"
             v-model="vehicle.licenseplate_number"
             placeholder="AB 123456"
-            required
             autofocus
           />
 
           <FormInput
-            wrapperClass="sm:col-span-4"
+            wrapperClass="sm:col-span-2"
             label="VIN (Vehicle Identification Number)"
             type="text"
             v-model="vehicle.vehicle_identification_number"
@@ -179,6 +180,22 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
               </div>
             </template>
           </FormInput>
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Type"
+            type="select"
+            v-model="vehicle.type"
+            :options="[
+              { value: 'Car' },
+              { value: 'Tractor' },
+              { value: 'Motorcycle' },
+              { value: 'Trailer' },
+              { value: 'Truck' },
+              { value: 'Bus' },
+              { value: 'Other' },
+            ]"
+          />
 
           <FormInput
             label="Make"
@@ -203,9 +220,11 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
           <FormInput
             wrapperClass="sm:col-span-2"
-            label="Registered Date"
-            type="date"
-            v-model="vehicle.registered_date"
+            label="Model Year"
+            type="number"
+            inputmode="decimal"
+            :min="1885"
+            v-model="vehicle.model_year"
           />
         </div>
       </template>
@@ -282,15 +301,14 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             join
           >
             <template #addon>
-              <!-- TODO: make dynamic. Depending on what fuel type is selected, adjust available units-->
               <FormInput
                 wrapperClass="max-w-28"
-                class="join-item"
+                class="join-item max-w-full"
                 type="select"
                 v-model="vehicle.fuel_capacity_unit"
                 :options="[
                   { value: 'liter', label: 'Liter' },
-                  { value: 'us_gallon', label: 'US Gallon' },
+                  { value: 'gallon', label: 'US Gallon' },
                   { value: 'imp_gallon', label: 'Imperial Gallon' },
                 ]"
               />
@@ -299,9 +317,33 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
 
           <FormInput
             wrapperClass="sm:col-span-2"
-            label="Engine Size"
+            class="sm:max-w-32"
+            label="Engine Displacement"
             type="text"
-            v-model="vehicle.engine_size"
+            inputmode="decimal"
+            v-model="vehicle.engine_displacement"
+            join
+          >
+            <template #addon>
+              <FormInput
+                class="join-item max-w-fit"
+                type="select"
+                v-model="vehicle.engine_displacement_unit"
+                :options="[
+                  { value: 'liter', label: 'Liter' },
+                  { value: 'cubic-centimeter', label: 'Cubic Centimeter' },
+                  { value: 'cubic-inch', label: 'Cubic Inch' },
+                ]"
+              />
+            </template>
+          </FormInput>
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Cylinders"
+            type="number"
+            :min="0"
+            v-model="vehicle.engine_cylinders"
           />
 
           <FormInput

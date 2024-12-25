@@ -48,8 +48,10 @@ const slots = useSlots();
 const model = defineModel<string | number | null>();
 
 const computedType = computed(() => {
-  return props.type === 'select' || props.type === 'textarea'
-    ? (props.type as 'select' | 'textarea')
+  return props.type === 'select' ||
+    props.type === 'textarea' ||
+    props.type === 'range'
+    ? (props.type as 'select' | 'textarea' | 'range')
     : 'input';
 });
 
@@ -58,12 +60,14 @@ const computedClass = computed(() => {
     input: 'input input-bordered',
     textarea: 'textarea textarea-bordered',
     select: 'select select-bordered',
+    range: 'range',
   };
 
   const invalidClasses = {
     input: 'invalid:input-error',
     textarea: 'invalid:textarea-error',
     select: 'invalid:select-error',
+    range: 'invalid:range-error',
   };
 
   // Color classes based on the component type
@@ -81,7 +85,7 @@ const computedClass = computed(() => {
   const sizeClasses = {
     xs: `${computedType.value}-xs`,
     sm: `${computedType.value}-sm`,
-    md: '',
+    md: `${computedType.value}-md`,
     lg: `${computedType.value}-lg`,
   };
 
@@ -132,7 +136,7 @@ const onInput = (event: Event) => {
 
     <label
       class="relative"
-      :class="[join ? `join` : 'flex items-center gap-2']"
+      :class="[join ? `join max-w-full` : 'flex items-center gap-2']"
     >
       <div
         v-if="$slots.icon"

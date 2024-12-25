@@ -189,6 +189,17 @@ export const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 /**
  * Decodes a Vehicle Identification Number (VIN) and returns the data.
+ *
+ * | name     | WMI     |  Desc |
+ * | :------- | :---------- | :------------------ |
+ * | Position1| 	1    | Shows where the vehicle was built (1 - means United States) |
+ * | 2-3      | FT     | Designated the vehicle manufacturer (F - means Ford Inc.)
+ * | 4-8      | GHDLZ  | Denotes the vehicle's brand, engine size, and type
+ * | 9        | B      | Vehicle Security Code
+ * | 10       | G      | Shows Vehicle Year
+ * | 11       | K      | Indicates which plant assembled the vehicle
+ * | 12-17    | 456923 | Displays the serial number of the vehicle
+ *
  * @param vin The VIN to decode.
  * @returns The decoded VIN data.
  */
@@ -280,6 +291,30 @@ export const decodeVIN = (vin: string): VINData | null => {
     0: 1980,
   };
 
+  const alternativeYears: Record<string, number> = {
+    A: 2010,
+    B: 2011,
+    C: 2012,
+    D: 2013,
+    E: 2014,
+    F: 2015,
+    G: 2016,
+    H: 2017,
+    J: 2018,
+    K: 2019,
+    L: 2020,
+    M: 2021,
+    N: 2022,
+    P: 2023,
+    R: 2024,
+    S: 2025,
+    T: 2026,
+    V: 2027,
+    W: 2028,
+    X: 2029,
+    Y: 2030,
+  };
+
   const adjustedYears: Record<string, number> = Object.fromEntries(
     Object.entries(years).filter(
       ([key], index, arr) => arr.findIndex(([k]) => k === key) === index,
@@ -290,7 +325,7 @@ export const decodeVIN = (vin: string): VINData | null => {
     country: countries[countryCode] || 'Unknown',
     manufacturer: vehicleManufacturer || worldManufacturerCode,
     vehicleType: vehicleDescriptorSection,
-    modelYear: adjustedYears[yearCode] || 0,
+    modelYear: alternativeYears[yearCode] || adjustedYears[yearCode] || 0,
     plantCode: plantCode,
     sequentialNumber: sequentialNumber,
   };

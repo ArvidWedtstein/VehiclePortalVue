@@ -32,9 +32,66 @@ export const formatNumber = (
   options: Intl.NumberFormatOptions = { style: 'decimal' },
 ) => {
   const language = getLanguage();
-  const formatter = new Intl.NumberFormat(language, options);
+  try {
+    const formatter = new Intl.NumberFormat(language, options);
 
-  return formatter.format(num);
+    return formatter.format(num);
+  } catch (error) {
+    if (!error) return '';
+
+    // Add all the extra units Intl doesn't support (yet)
+    const extraUnits = {
+      // Volume
+      'cubic-millimeter': 'mm³',
+      'cubic-centimeter': 'cm³',
+      'cubic-meter': 'm³',
+      'cubic-kilometer': 'km³',
+      'cubic-inch': 'in³',
+      'cubic-foot': 'ft³',
+      'cubic-yard': 'yd³',
+      'meter-per-square-second': 'm/s²',
+      knot: 'kn',
+      pint: 'pt',
+      quart: 'qt',
+      tablespoon: 'tbsp',
+      teaspoon: 'tsp',
+      barrel: 'bbl',
+      karat: 'kt',
+      // Power & Energy
+      milliampere: 'mA',
+      ampere: 'A',
+      watt: 'W',
+      milliwatt: 'mW',
+      gigawatt: 'gW',
+      volt: 'V',
+      kilovolt: 'kV',
+      megavolt: 'MV',
+      gigavolt: 'GV',
+      teravolt: 'TV',
+      ohm: 'Ω',
+      milliohm: 'mΩ',
+      kilohm: 'kΩ',
+      megohm: 'MΩ',
+      gigohm: 'GΩ',
+      joule: 'J',
+      hertz: 'Hz',
+      kilohertz: 'kHz',
+      megahertz: 'MHz',
+      gigahertz: 'GHz',
+      terahertz: 'THz',
+      horsepower: 'hp',
+    };
+
+    const extraUnit = (options.unit || '') as keyof typeof extraUnits;
+
+    const unit = extraUnit in extraUnits ? extraUnits[extraUnit] : 'N/A';
+
+    delete options.style;
+    delete options.unit;
+
+    const formatter = new Intl.NumberFormat(language, options);
+    return `${formatter.format(num)} ${unit}`;
+  }
 };
 
 type Bytes = 'bytes' | 'kilobytes' | 'megabytes' | 'gigabytes' | 'terabytes';

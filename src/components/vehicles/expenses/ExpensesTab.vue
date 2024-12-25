@@ -224,7 +224,7 @@ const groupedExpenses = computed(() => {
         </template>
 
         <template #endIcon>
-          <span class="text-success font-bold">
+          <span class="font-bold">
             {{
               formatNumber(expense.cost || 0, {
                 style: 'currency',

@@ -10,8 +10,8 @@ export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
 };
 
 export const useVehiclesStore = defineStore('vehicles', () => {
-  // TODO: Replace registered_date with only year?
-  // TODO: remove size columns?
+  // TODO: remove eu_control_date column?
+  // Replace with system for registering own custom service_dates?
   const vehiclesCache = reactive(
     new Map<Tables<'Vehicles'>['id'], Tables<'Vehicles'>>(),
   );
