@@ -250,18 +250,21 @@ export type Database = {
       }
       VehicleManufacturers: {
         Row: {
+          codes: string[] | null
           created_at: string
           id: number
           name: string
           sort_order: number | null
         }
         Insert: {
+          codes?: string[] | null
           created_at?: string
           id?: number
           name: string
           sort_order?: number | null
         }
         Update: {
+          codes?: string[] | null
           created_at?: string
           id?: number
           name?: string
@@ -289,7 +292,6 @@ export type Database = {
           mileage_unit: string | null
           model: string | null
           model_year: number | null
-          name: string | null
           owner_user_id: string | null
           thumbnail: string | null
           transmission_gears: number | null
@@ -317,7 +319,6 @@ export type Database = {
           mileage_unit?: string | null
           model?: string | null
           model_year?: number | null
-          name?: string | null
           owner_user_id?: string | null
           thumbnail?: string | null
           transmission_gears?: number | null
@@ -345,7 +346,6 @@ export type Database = {
           mileage_unit?: string | null
           model?: string | null
           model_year?: number | null
-          name?: string | null
           owner_user_id?: string | null
           thumbnail?: string | null
           transmission_gears?: number | null
