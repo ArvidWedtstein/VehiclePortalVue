@@ -1,15 +1,19 @@
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, toRef } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { groupBy, type FilterKeys } from '@/utils/utils';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables, TablesInsert, TablesUpdate } from '@/database.types';
 import { useRoute } from 'vue-router';
+import { useSessionStore } from './general/userSession';
 
 export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
   Profiles: Pick<Tables<'Profiles'>, 'profile_image_url' | 'name'>;
 };
 
 export const useVehiclesStore = defineStore('vehicles', () => {
+  const sessionStore = useSessionStore();
+  const isAuthenticated = toRef(sessionStore, 'isAuthenticated');
+
   // TODO: remove eu_control_date column?
   // Replace with system for registering own custom service_dates?
   const vehiclesCache = reactive(
@@ -21,7 +25,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   const loading = ref(false);
 
   const vehicles = computed(() => {
-    if (vehiclesCache.size < 2 && !loading.value) {
+    if (vehiclesCache.size < 2 && !loading.value && isAuthenticated.value) {
       getVehicles();
 
       return [];
@@ -79,6 +83,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     columns: Columns = ['*'] as Columns,
   ) => {
     try {
+      if (!isAuthenticated.value) return;
+
       loading.value = true;
 
       const { data, error, status } = await supabase

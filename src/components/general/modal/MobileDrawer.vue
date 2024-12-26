@@ -50,7 +50,7 @@ const drawerClasses = computed(() => {
     case 'top':
       return 'top-0 left-0 w-full transform rounded-b-box';
     case 'bottom':
-      return 'bottom-0 left-0 w-full max-h-full transform rounded-t-box';
+      return 'bottom-0 left-0 w-full transform rounded-t-box max-h-[calc(100%-4.25rem)]';
     case 'left':
       return 'top-0 left-0 h-screen max-h-screen transform rounded-r-box pt-16';
     case 'right':
@@ -80,6 +80,7 @@ const onTouchStart = (event: TouchEvent) => {
     props.direction === 'left' || props.direction === 'right'
       ? event.touches[0].clientX
       : event.touches[0].clientY;
+
   isSwiping.value = true;
 };
 
@@ -96,6 +97,8 @@ const onTouchEnd = () => {
 
   const delta = currentPoint.value - startPoint.value;
   const threshold = 50;
+
+  console.log('swipe end', delta);
 
   if (props.direction === 'bottom' && delta > threshold) toggleDrawer(false);
   if (props.direction === 'top' && delta < -threshold) toggleDrawer(false);
@@ -146,14 +149,14 @@ defineExpose({
       >
         <div
           v-if="props.direction === 'bottom'"
-          class="w-10 h-1 bg-neutral mx-auto my-2 rounded-badge"
+          class="w-10 h-1 bg-neutral mx-auto my-2 rounded-badge shrink-0"
         ></div>
         <h2 v-if="title" class="shrink-0 text-lg font-bold p-4">{{ title }}</h2>
         <div class="flex-grow overflow-auto">
           <slot></slot>
         </div>
 
-        <div class="flex gap-1 justify-end p-4 shrink-0">
+        <div class="hidden md:flex gap-1 justify-end p-4 shrink-0">
           <slot name="actions" :toggleDrawer="toggleDrawer">
             <button @click="toggleDrawer()" class="btn btn-sm btn-outline">
               Close

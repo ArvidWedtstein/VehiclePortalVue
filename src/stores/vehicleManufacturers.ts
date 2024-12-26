@@ -1,12 +1,16 @@
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, toRef } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import type { Tables } from '@/database.types';
 import type { FilterKeys } from '@/utils/utils';
+import { useSessionStore } from './general/userSession';
 
 export const useVehicleManufacturersStore = defineStore(
   'vehicleManufacturers',
   () => {
+    const sessionStore = useSessionStore();
+    const isAuthenticated = toRef(sessionStore, 'isAuthenticated');
+
     const loading = ref(false);
 
     const vehicleManufacturersCache = reactive(
@@ -17,7 +21,11 @@ export const useVehicleManufacturersStore = defineStore(
     );
 
     const vehicleManufacturers = computed(() => {
-      if (!vehicleManufacturersCache.size && !loading.value) {
+      if (
+        !vehicleManufacturersCache.size &&
+        !loading.value &&
+        isAuthenticated.value
+      ) {
         getVehicleManufacturers();
       }
 
@@ -31,6 +39,7 @@ export const useVehicleManufacturersStore = defineStore(
       columns: Columns = ['*'] as Columns,
     ) => {
       try {
+        if (!isAuthenticated.value) return;
         loading.value = true;
 
         const { data, error, status } = await supabase

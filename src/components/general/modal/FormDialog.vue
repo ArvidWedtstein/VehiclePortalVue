@@ -74,6 +74,7 @@ defineExpose({ modalRef: modalRef });
       :id="id"
       ref="modalRef"
       class="modal modal-top md:modal-middle modal-scroll"
+      :class="{ 'modal-middle': size !== 'lg' }"
       @close="handleClose"
     >
       <form

@@ -25,8 +25,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="card card-bordered md:card-normal card-compact bg-base-100 shadow-xl h-full"
+  <RouterLink
+    :to="{ name: 'vehicle', params: { vehicle_id: vehicle.id } }"
+    class="card card-bordered md:card-normal card-compact bg-base-100 shadow-xl h-full transition-shadow hover:shadow-sm"
   >
     <div class="card-body">
       <div class="flex flex-row items-center gap-3">
@@ -137,5 +138,5 @@ onMounted(async () => {
         </RouterLink>
       </div>
     </div>
-  </div>
+  </RouterLink>
 </template>

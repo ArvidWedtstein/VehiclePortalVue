@@ -1,12 +1,18 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import { supabase } from '@/lib/supabaseClient';
 import { type Session } from '@supabase/supabase-js';
 import type { Tables } from '@/database.types';
+import type { RouteLocationNormalizedGeneric } from 'vue-router';
+import router from '@/router';
 
 export const useSessionStore = defineStore('session', () => {
   const session = ref<Session | null>(null);
   const profile = ref<Tables<'Profiles'> | null>(null);
+
+  const isAuthenticated = computed(() => {
+    return !!session.value;
+  });
 
   const getProfile = async () => {
     try {
@@ -40,6 +46,25 @@ export const useSessionStore = defineStore('session', () => {
     }
   };
 
+  const googleLogin = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    }
+  };
+
   const login = async (email: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithOtp({
@@ -61,23 +86,28 @@ export const useSessionStore = defineStore('session', () => {
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
+
+      session.value = null;
+      profile.value = null;
+
       if (error) throw error;
     } catch (error) {
       alert(error);
     }
   };
 
-  const initialize = async () => {
+  const setSession = async () => {
     const { data, error } = await supabase.auth.getSession();
 
     if (error) {
       alert(error);
+      return;
     }
 
     session.value = data.session;
+  };
 
-    await getProfile();
-
+  const initialize = async () => {
     supabase.auth.onAuthStateChange(async (event, _session) => {
       if (session.value?.refresh_token !== _session?.refresh_token) {
         console.info('Auth State Changed', event);
@@ -87,8 +117,56 @@ export const useSessionStore = defineStore('session', () => {
       if (!profile.value) {
         getProfile();
       }
+
+      if (event === 'SIGNED_IN') {
+        const route = loadRedirectRoute();
+
+        if (!route) return;
+
+        router.replace(route);
+      }
     });
+
+    await setSession();
+
+    await getProfile();
   };
 
-  return { session, profile, initialize, logout, login };
+  const saveRedirectRoute = (
+    route: Partial<RouteLocationNormalizedGeneric>,
+  ) => {
+    const { name, params, query, hash } = route;
+
+    localStorage.setItem(
+      'redirectRoute',
+      JSON.stringify({
+        name,
+        params,
+        query,
+        hash,
+      }),
+    );
+  };
+
+  const loadRedirectRoute = () => {
+    const route = JSON.parse(
+      localStorage.getItem('redirectRoute') || 'null',
+    ) as Partial<RouteLocationNormalizedGeneric> | null;
+
+    localStorage.removeItem('redirectRoute');
+
+    return route;
+  };
+
+  return {
+    session,
+    profile,
+    isAuthenticated,
+    initialize,
+    logout,
+    login,
+    googleLogin,
+    saveRedirectRoute,
+    loadRedirectRoute,
+  };
 });

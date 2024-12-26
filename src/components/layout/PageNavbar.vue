@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useRouter, RouterLink } from 'vue-router';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useSessionStore } from '@/stores/general/userSession';
 import { storeToRefs } from 'pinia';
-import { getInitials } from '@/utils/utils';
 import LoginModal from '../auth/LoginModal.vue';
+import MenuItem from '../general/menu/MenuItem.vue';
 
 const router = useRouter();
+
+const loginModalRef = ref<InstanceType<typeof LoginModal>>();
 
 const sessionStore = useSessionStore();
 
@@ -20,12 +22,12 @@ const navbarRoutes = computed(() => {
 </script>
 
 <template>
-  <LoginModal />
+  <LoginModal ref="loginModalRef" />
 
   <div class="navbar fixed top-0 bg-base-300 z-[100]">
     <div class="navbar-start">
-      <a class="btn btn-ghost text-xl space-x-0 gap-1"
-        >Vehicle
+      <a class="btn btn-ghost text-xl space-x-0 gap-1">
+        Vehicle
         <div class="badge badge-warning badge-outline">Hub</div>
       </a>
     </div>
@@ -72,39 +74,33 @@ const navbarRoutes = computed(() => {
         </svg>
       </label>
       <div class="dropdown dropdown-end">
-        <div
-          tabindex="0"
-          role="button"
-          class="btn btn-ghost btn-circle avatar online"
-        >
-          <div class="w-10 rounded-full">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center">
             <img
-              v-if="profile?.profile_image_url"
-              :src="profile?.profile_image_url"
+              :src="
+                profile?.profile_image_url ||
+                `https://ui-avatars.com/api/?name=${profile?.name || 'Unknown User'}`
+              "
             />
-            <span v-else class="text-xl">{{
-              getInitials(profile?.name || '')
-            }}</span>
           </div>
         </div>
         <ul
           tabindex="0"
-          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+          class="menu menu-sm dropdown-content bg-base-200 rounded-box z-[1] mt-3 w-52 p-2 shadow"
         >
-          <template v-if="profile">
+          <template v-if="profile?.id">
             <li>
               <RouterLink
                 :to="{ name: 'profile', params: { id: profile.id } }"
                 class="justify-between"
               >
                 Profile
-                <span class="badge">Comming Soon</span>
               </RouterLink>
             </li>
             <li><button @click="sessionStore.logout">Logout</button></li>
           </template>
 
-          <li v-else><a onclick="loginModal.showModal()">Login</a></li>
+          <MenuItem v-else @click="loginModalRef?.open()">Login</MenuItem>
         </ul>
       </div>
     </div>

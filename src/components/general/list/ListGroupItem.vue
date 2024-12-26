@@ -70,7 +70,7 @@ const handleClick = (event: MouseEvent) => {
 
       <div class="min-w-0 grow">
         <slot name="title">
-          <p class="text-base leading-6 font-semibold text-neutral-content">
+          <p class="text-base leading-6 font-semibold text-base-content">
             {{ title }}
           </p>
         </slot>

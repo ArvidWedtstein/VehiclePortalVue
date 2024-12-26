@@ -82,6 +82,7 @@ const groupedExpenses = computed(() => {
 </script>
 
 <template>
+  <!-- TODO: add sorting & filtering options -->
   <ExpenseModal ref="expenseModal" />
 
   <div class="flex justify-between">
@@ -102,7 +103,7 @@ const groupedExpenses = computed(() => {
       Add Expense
     </button>
 
-    <!-- <DrawerOrDropdownButton /> -->
+    <DrawerOrDropdownButton />
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">
@@ -157,8 +158,6 @@ const groupedExpenses = computed(() => {
       </ul>
     </div>
   </div>
-
-  <!-- TODO: add sorting & filtering options -->
 
   <ListGroup class="h-max">
     <ListSubGroup
