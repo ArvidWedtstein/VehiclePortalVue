@@ -15,6 +15,8 @@ import { useToastStore } from '@/stores/general/toasts';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 import { supabase } from '@/lib/supabaseClient';
 import { downloadBlob } from '@/utils/export';
+import EditIcon from '@/assets/icons/EditIcon.vue';
+import TrashIcon from '@/assets/icons/TrashIcon.vue';
 
 const ServiceModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/services/ServiceModal.vue'),
@@ -136,7 +138,10 @@ onBeforeMount(async () => {
     Back to services
   </RouterLink>
 
-  <div v-if="!loading" class="card card-side bg-base-100 shadow-xl">
+  <div
+    v-if="!loading"
+    class="card card-compact md:card-side bg-base-100 shadow-xl"
+  >
     <div class="card-body">
       <div class="flex justify-between w-full">
         <h2 class="card-title">{{ service.type }}</h2>
@@ -147,15 +152,7 @@ onBeforeMount(async () => {
             class="btn btn-sm btn-outline btn-neutral"
             @click="serviceModalRef.open(service.id)"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 512 512"
-              class="w-3 fill-current"
-            >
-              <path
-                d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
-              />
-            </svg>
+            <EditIcon class="w-3" />
             Edit
           </button>
 
@@ -164,15 +161,7 @@ onBeforeMount(async () => {
             class="btn btn-sm btn-outline btn-error"
             @click="handleServiceDelete"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 448 512"
-              class="w-3 fill-current"
-            >
-              <path
-                d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
-              />
-            </svg>
+            <TrashIcon class="w-3" />
             Delete
           </button>
         </div>
@@ -277,15 +266,7 @@ onBeforeMount(async () => {
                 Download
               </MenuItem>
               <MenuItem @click="handleFileDelete(file)">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 448 512"
-                  class="w-3 fill-current"
-                >
-                  <path
-                    d="M424 80H349.625L315.625 23.25C306.875 8.875 291.25 0 274.375 0H173.625C156.75 0 141.125 8.875 132.375 23.25L98.375 80H24C10.745 80 0 90.745 0 104V104C0 117.255 10.745 128 24 128H32L53.25 467C54.75 492.25 75.75 512 101.125 512H346.875C372.25 512 393.25 492.25 394.75 467L416 128H424C437.255 128 448 117.255 448 104V104C448 90.745 437.255 80 424 80ZM173.625 48H274.375L293.625 80H154.375L173.625 48ZM346.875 464H101.125L80.125 128H367.875L346.875 464Z"
-                  />
-                </svg>
+                <TrashIcon class="w-3" />
                 Delete
               </MenuItem>
             </ul>

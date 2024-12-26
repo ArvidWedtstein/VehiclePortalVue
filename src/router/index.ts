@@ -16,7 +16,7 @@ const router = createRouter({
       },
     },
     {
-      path: '/profile/:id',
+      path: '/profile/:id(\\d+)',
       name: 'profile',
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route

@@ -50,7 +50,7 @@ const drawerClasses = computed(() => {
     case 'top':
       return 'top-0 left-0 w-full transform rounded-b-box';
     case 'bottom':
-      return 'bottom-0 left-0 w-full transform rounded-t-box max-h-[calc(100%-4.25rem)]';
+      return 'bottom-0 left-0 w-full transform rounded-t-box pb-4 max-h-[calc(100%-4.25rem)]';
     case 'left':
       return 'top-0 left-0 h-screen max-h-screen transform rounded-r-box pt-16';
     case 'right':

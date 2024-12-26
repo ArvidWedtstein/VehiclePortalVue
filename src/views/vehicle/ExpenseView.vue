@@ -9,6 +9,8 @@ import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import { useConfirm } from '@/lib/composables/useConfirm';
 import { useProfilesStore } from '@/stores/profiles';
+import EditIcon from '@/assets/icons/EditIcon.vue';
+import TrashIcon from '@/assets/icons/TrashIcon.vue';
 
 const vehiclesStore = useVehiclesStore();
 const expensesStore = useExpensesStore();
@@ -71,21 +73,24 @@ onBeforeMount(() => {
   <RouterLink
     v-if="currentVehicle"
     :to="{ name: 'expenses' }"
-    class="flex gap-2 mb-2"
+    class="flex items-center gap-2 mb-2 leading-none"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 512 512"
+      viewBox="0 0 320 512"
       class="w-3 fill-current"
     >
       <path
-        d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 288 480 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-370.7 0 73.4-73.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-128 128z"
+        d="M206.668 464.592L22.688 272.594C18.219 267.969 16 261.969 16 256.001S18.219 244.032 22.688 239.407L206.668 47.409C215.82 37.815 231.008 37.503 240.57 46.69C250.195 55.815 250.508 71.065 241.289 80.596L73.242 256.001L241.289 431.405C250.508 440.905 250.195 456.186 240.57 465.311C231.008 474.499 215.82 474.186 206.668 464.592Z"
       />
     </svg>
     Back to expenses
   </RouterLink>
 
-  <div v-if="!loading" class="card bg-base-100 md:w-96 shadow-xl">
+  <div
+    v-if="!loading"
+    class="card card-compact md:card-normal bg-base-100 md:w-96 shadow-xl"
+  >
     <div class="card-body">
       <h2 class="card-title">{{ expense.type }}</h2>
 
@@ -101,7 +106,12 @@ onBeforeMount(() => {
             />
           </svg>
 
-          <span>{{ createdBy?.name }}</span>
+          <RouterLink
+            class="link link-hover"
+            :to="{ name: 'profile', params: { id: createdBy?.id } }"
+          >
+            {{ createdBy?.name }}
+          </RouterLink>
         </li>
         <li class="inline-flex gap-2 items-center">
           <!-- <svg
@@ -180,15 +190,7 @@ onBeforeMount(() => {
 
       <div class="card-actions justify-between">
         <button type="button" class="btn btn-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 512 512"
-            class="w-3 fill-current"
-          >
-            <path
-              d="M455.703 18.748C443.209 6.252 426.829 0 410.452 0C394.07 0 377.695 6.25 365.196 18.75L45.11 338.885C36.542 347.451 30.584 358.275 27.926 370.094L0.319 492.854C-1.701 502.967 6.158 512 15.946 512C16.993 512 18.061 511.896 19.143 511.68C19.143 511.68 103.751 493.73 141.894 484.748C153.432 482.031 163.759 476.225 172.139 467.844C221.264 418.719 406.649 233.33 493.302 146.676C518.294 121.684 518.202 81.256 493.212 56.262L455.703 18.748ZM138.201 433.902C136.086 436.018 133.697 437.365 130.893 438.025C112.719 442.307 83.432 448.738 58.204 454.203L74.751 380.627C75.417 377.668 76.902 374.973 79.048 372.824L320.936 130.902L381.064 191.035L138.201 433.902Z"
-            />
-          </svg>
+          <EditIcon class="w-3" />
           Edit
         </button>
 
@@ -197,15 +199,7 @@ onBeforeMount(() => {
           class="btn btn-sm btn-outline btn-error"
           @click="handleExpenseDelete"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 448 512"
-            class="w-3 fill-current"
-          >
-            <path
-              d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
-            />
-          </svg>
+          <TrashIcon class="w-3" />
           Delete
         </button>
       </div>
