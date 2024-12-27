@@ -62,34 +62,6 @@ export const useDocumentsStore = defineStore('documents', () => {
 
       if (error && status !== 406) throw error;
 
-      // TODO: remove this.
-      // const { data: bucketData, error: bucketError } = await supabase.storage
-      //   .from('VehicleDocuments')
-      //   .createSignedUrls(
-      //     files.map(
-      //       ({ name }) => `${currentVehicle.licenseplate_number}/${name || ''}`,
-      //     ),
-      //     5000,
-      //   );
-
-      // if (bucketError) throw bucketError;
-
-      // if (bucketData) {
-      //   console.log(bucketData);
-      // }
-
-      // const filesWithBucketData = files.map(file => {
-      //   const bFile = bucketData.find(({ path }) =>
-      //     path?.includes(file.name || ''),
-      //   );
-
-      //   return {
-      //     ...file,
-      //     path: bFile?.path || '',
-      //     signedUrl: bFile?.signedUrl || '',
-      //   };
-      // });
-
       const vehicleDocumentsCache =
         documentsCache.get(currentVehicle.value.id) || new Map();
 

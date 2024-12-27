@@ -3,7 +3,7 @@ import { useBreakpoints } from '@/lib/composables/useBreakpoints';
 import { ref, toRef } from 'vue';
 import MobileDrawer from '../modal/MobileDrawer.vue';
 
-// TODO: remove. This is a bad idea. Make seperate views for mobile and desktop instead?
+// TODO: remove. This is a bad idea. Make seperate views/components for mobile and desktop instead?
 const isMd = toRef(useBreakpoints(), 'isMd');
 
 const drawerRef = ref<InstanceType<typeof MobileDrawer>>();

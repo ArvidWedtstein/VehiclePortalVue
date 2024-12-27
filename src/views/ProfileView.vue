@@ -26,8 +26,7 @@ const profile = computed(() => {
 const handleUserTermination = () => {
   if (!profile.value) return;
   console.log('User termination');
-  // TODO: Implement user termination
-  // Add a confirmation dialog
+  // TODO: Add a confirmation dialog
 
   confirm('Are you sure you want to delete all your data?');
   supabase.rpc('terminate_user', { profile_user_id: profile.value.user_id });
