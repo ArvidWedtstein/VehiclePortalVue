@@ -11,6 +11,7 @@ import { useConfirm } from '@/lib/composables/useConfirm';
 import { useProfilesStore } from '@/stores/profiles';
 import EditIcon from '@/assets/icons/EditIcon.vue';
 import TrashIcon from '@/assets/icons/TrashIcon.vue';
+import ChevronRight from '@/assets/icons/ChevronRight.vue';
 
 const vehiclesStore = useVehiclesStore();
 const expensesStore = useExpensesStore();
@@ -75,15 +76,7 @@ onBeforeMount(() => {
     :to="{ name: 'expenses' }"
     class="flex items-center gap-2 mb-2 leading-none"
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 320 512"
-      class="w-3 fill-current"
-    >
-      <path
-        d="M206.668 464.592L22.688 272.594C18.219 267.969 16 261.969 16 256.001S18.219 244.032 22.688 239.407L206.668 47.409C215.82 37.815 231.008 37.503 240.57 46.69C250.195 55.815 250.508 71.065 241.289 80.596L73.242 256.001L241.289 431.405C250.508 440.905 250.195 456.186 240.57 465.311C231.008 474.499 215.82 474.186 206.668 464.592Z"
-      />
-    </svg>
+    <ChevronRight class="w-3" />
     Back to expenses
   </RouterLink>
 
