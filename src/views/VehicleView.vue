@@ -29,7 +29,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <RouterLink to="/vehicles" class="flex gap-2 mb-2">
+  <RouterLink to="/vehicles" class="inline-flex items-center gap-2 mb-2">
     <ChevronRight class="w-3" />
     Back to vehicles
   </RouterLink>

@@ -10,7 +10,7 @@ type Props = {
   subtitle?: string;
   size?: 'sm' | 'md' | 'lg';
   as?: 'a' | 'button' | 'RouterLink';
-
+  noHoverEffect?: boolean;
   to?: string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric;
 };
 
@@ -18,6 +18,7 @@ withDefaults(defineProps<Props>(), {
   title: '',
   size: 'md',
   as: 'a',
+  noHoverEffect: false,
 });
 
 const emit = defineEmits<{
@@ -34,8 +35,9 @@ const handleClick = (event: MouseEvent) => {
     <component
       class="flex items-center"
       :class="{
-        'px-2 py-3 gap-x-2': size === 'sm',
-        'px-3 py-5 gap-x-2 md:gap-x-4': size === 'md',
+        'hover:bg-transparent': noHoverEffect,
+        'p-3 gap-x-2': size === 'sm',
+        'px-4 py-5 gap-x-2 md:gap-x-4': size === 'md',
       }"
       v-bind="
         as === 'button'
@@ -69,11 +71,13 @@ const handleClick = (event: MouseEvent) => {
       </slot>
 
       <div class="min-w-0 grow">
-        <slot name="title">
-          <p class="text-base leading-6 font-semibold text-base-content">
+        <p
+          class="text-base leading-6 font-semibold text-base-content flex items-center gap-1"
+        >
+          <slot name="title">
             {{ title }}
-          </p>
-        </slot>
+          </slot>
+        </p>
 
         <div class="text-gray-400 leading-5 text-sm flex gap-1 items-center">
           <slot name="subtitle">

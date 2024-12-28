@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ListGroup from './ListGroup.vue';
+
 type Props = {
   title: string;
   sticky?: boolean;
@@ -18,11 +20,8 @@ withDefaults(defineProps<Props>(), {
     >
       <h3>{{ title }}</h3>
     </div>
-    <ul
-      role="list"
-      class="menu p-0 [&_li>*]:rounded-none divide-y divide-neutral divide-opacity-75"
-    >
+    <ListGroup>
       <slot></slot>
-    </ul>
+    </ListGroup>
   </div>
 </template>

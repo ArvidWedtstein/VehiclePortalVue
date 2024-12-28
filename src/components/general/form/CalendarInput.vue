@@ -9,10 +9,13 @@ import {
 import { getLanguage } from '@/utils/utils';
 import { computed, reactive } from 'vue';
 
+// TODO: add max and min option.
+// TODO: add range?
 const selectedDate = defineModel<Date>({
   required: false,
   default: new Date(),
 });
+
 const settings = reactive<{
   view: 'none' | 'year' | 'month' | 'week';
   selectedPeriod: string;

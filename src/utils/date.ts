@@ -102,6 +102,30 @@ export const formatDate = (
 };
 
 /**
+ * Formats date range
+ * @param fromDate
+ * @param toDate
+ * @param options
+ * @returns
+ */
+export const formatDateRange = (
+  fromDate: string | Date,
+  toDate: string | Date,
+  options: Intl.DateTimeFormatOptions = {
+    dateStyle: 'long',
+    timeStyle: undefined,
+  },
+) => {
+  const formatter = new Intl.DateTimeFormat(getLanguage(), options);
+
+  const formattedDates = [fromDate, toDate].map(date =>
+    formatter.format(new Date(date)),
+  );
+
+  return formattedDates.join(' - ');
+};
+
+/**
  * Get the year, month, day, or week for the last n time periods.
  *
  * @param n - The number of time periods to go back.

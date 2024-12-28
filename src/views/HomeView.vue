@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import FilterMenu from '@/components/general/filter/FilterMenu.vue';
+import RangeInput from '@/components/general/form/RangeInput.vue';
+import { ref } from 'vue';
+
+const form = ref([30, 50]);
 </script>
 
 <template>
@@ -14,10 +18,14 @@ import FilterMenu from '@/components/general/filter/FilterMenu.vue';
           type: 'checkbox',
           subOptions: ['Gasoline', 'Diesel', 'LPG'],
         },
-        { title: 'By me' },
+        { title: 'By me', type: 'text' },
+        { title: 'Memememee', type: 'radio', subOptions: ['1', '2', '3'] },
+        { title: 'Date', type: 'from-to-date' },
       ]"
     >
       <!-- <template #fuel> fuel options here </template> -->
     </FilterMenu>
+
+    <RangeInput :min="0" :max="100" v-model="form" />
   </main>
 </template>
