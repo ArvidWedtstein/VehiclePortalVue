@@ -17,8 +17,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'shown'): void;
-  (e: 'hidden'): void;
+  shown: [];
+  hidden: [];
 }>();
 
 const toggleDrawer = async (open: boolean = false) => {

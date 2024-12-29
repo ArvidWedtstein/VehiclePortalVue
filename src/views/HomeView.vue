@@ -1,9 +1,5 @@
 <script setup lang="ts">
 import FilterMenu from '@/components/general/filter/FilterMenu.vue';
-import RangeInput from '@/components/general/form/RangeInput.vue';
-import { ref } from 'vue';
-
-const form = ref([30, 50]);
 </script>
 
 <template>
@@ -25,7 +21,5 @@ const form = ref([30, 50]);
     >
       <!-- <template #fuel> fuel options here </template> -->
     </FilterMenu>
-
-    <RangeInput :min="0" :max="100" v-model="form" />
   </main>
 </template>

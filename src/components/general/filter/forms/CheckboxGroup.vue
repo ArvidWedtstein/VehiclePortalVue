@@ -9,7 +9,7 @@ withDefaults(defineProps<Props>(), {
 });
 
 defineEmits<{
-  (e: 'change', option: string): void;
+  change: [option: string];
 }>();
 </script>
 

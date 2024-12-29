@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'click', event: MouseEvent): void;
+  click: [event: MouseEvent];
 }>();
 
 const handleClick = (event: MouseEvent) => {

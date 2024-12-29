@@ -1,70 +1,36 @@
-<template>
-  <div class="range-slider" ref="sliderRef" @mousedown="handleTrackClick">
-    <!-- Slider Track -->
-    <div class="slider-track"></div>
-
-    <!-- Highlighted Range -->
-    <div
-      class="slider-range"
-      :style="{
-        left: Array.isArray(ranges) ? Math.min(...ranges) : ranges + '%',
-        width: rangeWidth + '%',
-      }"
-    ></div>
-
-    <!-- Handles -->
-    <!-- <div
-      class="slider-thumb"
-      :style="{ left: rangeLeft + '%' }"
-      @mousedown.prevent="startDrag('from', 0)"
-      @touchstart.prevent="startDrag('from', 0)"
-    ></div>
-    <div
-      class="slider-thumb"
-      :style="{ left: rangeRight + '%' }"
-      @mousedown.prevent="startDrag('to', 1)"
-      @touchstart.prevent="startDrag('to', 1)"
-    ></div> -->
-
-    <template v-if="Array.isArray(model) && Array.isArray(ranges)">
-      <div
-        v-for="(thumb, thumbIndex) in model"
-        :key="thumbIndex"
-        class="slider-thumb"
-        :style="{ left: ranges[thumbIndex] + '%' }"
-        @mousedown.prevent="startDrag('to', thumbIndex)"
-        @touchstart.prevent="startDrag('to', thumbIndex)"
-      ></div>
-    </template>
-
-    <div
-      v-else
-      class="slider-thumb"
-      :style="{ left: ranges + '%' }"
-      @mousedown.prevent="startDrag('from', 0)"
-      @touchstart.prevent="startDrag('from', 0)"
-    ></div>
-
-    <!-- Display Values -->
-    <div class="slider-values">
-      <span>From: {{ fromValue }}</span>
-      <span>To: {{ toValue }}</span>
-      <span>To: {{ model }}</span>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue';
-interface Props {
-  min: number;
-  max: number;
-}
+
+type Props = {
+  min?: number;
+  max?: number;
+
+  step?: number;
+
+  /** Toggle when label is visible. Default is auto */
+  valueLabelDisplay?: 'auto' | 'on' | 'off';
+
+  orientation?: 'horizontal' | 'vertical';
+  /** Prevents overlapping of handles */
+  disableSwap?: boolean;
+};
 
 const props = withDefaults(defineProps<Props>(), {
   min: 0,
   max: 100,
+  step: 1,
+  valueLabelDisplay: 'auto',
+  orientation: 'horizontal',
+  disableSwap: false,
 });
+
+const emit = defineEmits<{
+  change: [
+    event: MouseEvent | TouchEvent,
+    value: number,
+    activeHandleIndex: number,
+  ];
+}>();
 
 const model = defineModel<number | Array<number>>({
   default: 0,
@@ -72,39 +38,32 @@ const model = defineModel<number | Array<number>>({
 
 const sliderRef = ref<HTMLDivElement>();
 
-const fromValue = ref(props.min);
-const toValue = ref(props.max);
-
 const ranges = computed(() => {
-  return Array.isArray(model.value)
-    ? model.value.map(val => {
-        return ((val - props.min) / (props.max - props.min)) * 100;
-      })
-    : ((model.value - props.min) / (props.max - props.min)) * 100;
+  return (Array.isArray(model.value) ? model.value : [model.value]).map(val => {
+    return ((val - props.min) / (props.max - props.min)) * 100;
+  });
 });
 
 const rangeWidth = computed(() =>
-  Array.isArray(ranges.value)
+  ranges.value.length > 1
     ? Math.max(...ranges.value) - Math.min(...ranges.value)
-    : ranges.value - 0,
+    : ranges.value[0] - 0,
 );
 
-let activeHandleIndex: number | null = null;
-let activeHandle: 'from' | 'to' | null = null;
+const activeHandleIndex = ref<number | null>(null);
 
-const calculateValueFromPosition = (
-  clientX: number,
-  container: HTMLElement,
-) => {
-  const rect = container.getBoundingClientRect();
+const calculateValueFromPosition = (clientX: number) => {
+  const slider = sliderRef.value;
+  if (!slider) return 0;
+
+  const rect = slider.getBoundingClientRect();
   const position = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)); // Clamp between 0 and 1
   return Math.round(props.min + position * (props.max - props.min));
 };
 
 // Event handlers
-const startDrag = (handle: 'from' | 'to', handleIndex: number) => {
-  activeHandle = handle;
-  activeHandleIndex = handleIndex;
+const startDrag = (handleIndex: number) => {
+  activeHandleIndex.value = handleIndex;
 
   window.addEventListener('mousemove', onDrag);
   window.addEventListener('mouseup', endDrag);
@@ -113,62 +72,66 @@ const startDrag = (handle: 'from' | 'to', handleIndex: number) => {
 };
 
 const onDrag = (event: MouseEvent | TouchEvent) => {
-  if (activeHandleIndex === null) return;
-  if (!activeHandle) return;
+  const activeIndex = activeHandleIndex.value;
+
+  if (activeIndex === null) return;
 
   const clientX =
     event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
 
-  const slider = sliderRef.value;
-  if (!slider) return;
+  const newValue = Math.min(
+    Math.max(calculateValueFromPosition(clientX), props.min),
+    props.max,
+  );
 
-  const newValue = calculateValueFromPosition(clientX, slider);
+  if (!Array.isArray(model.value)) {
+    model.value = newValue;
+    emit('change', event, newValue, activeIndex);
 
-  if (Array.isArray(model.value) && activeHandleIndex in model.value) {
-    const currentValue = model.value[activeHandleIndex];
-    const sortedArray = [...model.value].sort((a, b) => a - b);
-
-    // Find the index of the current value in the sorted array
-    const index = sortedArray.indexOf(currentValue);
-
-    let nextClosest = props.max;
-    let prevClosest = props.min;
-
-    // Determine the next closest and previous closest values
-    if (index > 0) {
-      prevClosest = sortedArray[index - 1];
-    }
-    if (index < sortedArray.length - 1) {
-      nextClosest = sortedArray[index + 1];
-    }
-
-    console.log(
-      'prevClosest:',
-      prevClosest,
-      'nextClosest:',
-      nextClosest,
-      'currentValue:',
-      currentValue,
-    );
-
-    model.value[activeHandleIndex] = Math.max(
-      prevClosest + 1,
-      Math.min(newValue, nextClosest - 1),
-    );
-  } else {
-    model.value = Math.min(Math.max(newValue, props.min), props.max);
+    return;
   }
 
-  // if (activeHandle === 'from') {
-  //   fromValue.value = Math.min(newValue, toValue.value - 1);
-  // } else if (activeHandle === 'to') {
-  //   toValue.value = Math.max(newValue, fromValue.value + 1);
-  // }
+  if (props.disableSwap) {
+    const prevValue = model.value[activeIndex - 1] ?? props.min;
+    const nextValue = model.value[activeIndex + 1] ?? props.max;
+
+    const clampedValue = Math.min(Math.max(newValue, prevValue), nextValue);
+
+    model.value[activeIndex] = clampedValue;
+
+    emit('change', event, clampedValue, activeIndex);
+    return;
+  }
+
+  model.value[activeIndex] = newValue;
+
+  if (
+    activeIndex > 0 &&
+    model.value[activeIndex] < model.value[activeIndex - 1]
+  ) {
+    // Swap with prev handle
+    [model.value[activeIndex - 1], model.value[activeIndex]] = [
+      model.value[activeIndex],
+      model.value[activeIndex - 1],
+    ];
+    activeHandleIndex.value = activeIndex - 1;
+  } else if (
+    activeIndex < model.value.length - 1 &&
+    model.value[activeIndex] > model.value[activeIndex + 1]
+  ) {
+    // Swap with next handle
+    [model.value[activeIndex], model.value[activeIndex + 1]] = [
+      model.value[activeIndex + 1],
+      model.value[activeIndex],
+    ];
+    activeHandleIndex.value = activeIndex + 1;
+  }
+
+  emit('change', event, newValue, activeHandleIndex.value ?? activeIndex);
 };
 
 const endDrag = () => {
-  activeHandle = null;
-  activeHandleIndex = null;
+  activeHandleIndex.value = null;
 
   window.removeEventListener('mousemove', onDrag);
   window.removeEventListener('mouseup', endDrag);
@@ -177,27 +140,87 @@ const endDrag = () => {
 };
 
 const handleTrackClick = (event: MouseEvent) => {
-  const slider = sliderRef.value;
-  if (!slider) return;
+  let clickValue = calculateValueFromPosition(event.clientX);
 
-  const clickValue = calculateValueFromPosition(event.clientX, slider);
+  let closestIndex = 0;
+  let minDistance = Infinity;
 
-  // Determine which handle is closer
-  const distanceToFrom = Math.abs(clickValue - fromValue.value);
-  const distanceToTo = Math.abs(clickValue - toValue.value);
+  if (!Array.isArray(model.value)) {
+    model.value = Math.min(Math.max(clickValue, props.min), props.max);
+    emit('change', event, clickValue, closestIndex);
 
-  if (distanceToFrom < distanceToTo) {
-    fromValue.value = Math.min(clickValue, toValue.value - 1); // Move "from" handle
-  } else {
-    toValue.value = Math.max(clickValue, fromValue.value + 1); // Move "to" handle
+    return;
   }
+
+  model.value.forEach((thumbValue, index) => {
+    const distance = Math.abs(clickValue - thumbValue);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestIndex = index;
+    }
+  });
+
+  if (closestIndex > 0) {
+    clickValue = Math.max(clickValue, model.value[closestIndex - 1] + 1);
+  }
+  if (closestIndex < model.value.length - 1) {
+    clickValue = Math.min(clickValue, model.value[closestIndex + 1] - 1);
+  }
+
+  model.value[closestIndex] = clickValue;
+
+  emit('change', event, clickValue, closestIndex);
 };
 
-// Cleanup
 onUnmounted(() => {
   endDrag();
 });
 </script>
+
+<template>
+  <span class="range-slider" ref="sliderRef" @mousedown="handleTrackClick">
+    <span class="slider-track"></span>
+
+    <span
+      class="slider-range"
+      :style="{
+        left: (Array.isArray(model) ? Math.min(...ranges) : 0) + '%',
+        width: rangeWidth + '%',
+      }"
+    ></span>
+
+    <span
+      v-for="(thumb, thumbIndex) in Array.isArray(model) ? model : [model]"
+      :key="thumbIndex"
+      class="slider-thumb tooltip tooltip-top"
+      :class="{
+        'tooltip-open':
+          (activeHandleIndex === thumbIndex && valueLabelDisplay === 'auto') ||
+          valueLabelDisplay === 'on',
+      }"
+      :style="{
+        left: ranges[thumbIndex] + '%',
+      }"
+      @mousedown.prevent="startDrag(thumbIndex)"
+      @touchstart.prevent="startDrag(thumbIndex)"
+      :data-tip="thumb"
+    >
+      <input
+        type="range"
+        class="border-0 overflow-hidden -m-px p-0 whitespace-nowrap absolute w-full h-full"
+        style="clip: rect(0px, 0px, 0px, 0px)"
+        v-bind="$attrs"
+        :value="thumb"
+        :min="min"
+        :max="max"
+        :aria-valuemin="min"
+        :aria-valuemax="max"
+        :aria-valuenow="thumb"
+        :aria-orientation="orientation"
+      />
+    </span>
+  </span>
+</template>
 
 <style scoped>
 .range-slider {
@@ -239,12 +262,5 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px var(--fallback-bc, oklch(var(--bc) / 1)) inset;
   z-index: 2;
   cursor: pointer;
-}
-
-.slider-values {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
 }
 </style>

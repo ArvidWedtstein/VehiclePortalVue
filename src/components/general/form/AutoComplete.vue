@@ -122,8 +122,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: 'select', option: Value): void;
-  (e: 'update:modelValue', value: Value): void;
+  select: [option: Value];
+  'update:modelValue': [value: Value];
 }>();
 
 const inputValue = defineModel<string>('search', {

@@ -23,9 +23,9 @@ withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'submit', event: Event): void;
-  (e: 'open'): void;
-  (e: 'close', event: Event): void;
+  submit: [event: Event];
+  open: [];
+  close: [event: Event];
 }>();
 
 const handleSubmit = (event: Event) => {

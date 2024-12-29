@@ -22,7 +22,7 @@ const handleOpen = async (imageSrc: string) => {
 };
 
 const emit = defineEmits<{
-  (e: 'submit', img: HTMLImageElement): void;
+  submit: [img: HTMLImageElement];
 }>();
 
 defineExpose({ modalRef: modalRef, open: handleOpen });

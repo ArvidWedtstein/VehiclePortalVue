@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'onTabChange', tab: string): void;
+  onTabChange: [tab: string];
 }>();
 
 const router = useRouter();
