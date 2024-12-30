@@ -11,6 +11,7 @@ type Props = {
   title?: string;
   /** Default left */
   direction?: 'bottom' | 'top' | 'left' | 'right';
+  drawerClass?: string;
 };
 const props = withDefaults(defineProps<Props>(), {
   direction: 'left',
@@ -142,7 +143,7 @@ defineExpose({
       <div
         v-if="isDrawerOpenAfter"
         class="fixed z-50 bg-base-200 text-base-content shadow-lg flex flex-col"
-        :class="[drawerClasses, drawerTransform]"
+        :class="[drawerClasses, drawerTransform, drawerClass]"
         @touchstart="onTouchStart"
         @touchmove="onTouchMove"
         @touchend="onTouchEnd"

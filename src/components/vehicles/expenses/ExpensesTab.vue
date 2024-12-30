@@ -15,13 +15,15 @@ import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 import { useBreakpoints } from '@/lib/composables/useBreakpoints';
-import DrawerOrDropdownButton from '@/components/general/utils/DrawerOrDropdownButton.vue';
+import MobileDrawer from '@/components/general/modal/MobileDrawer.vue';
+import FilterMenu from '@/components/general/filter/FilterMenu.vue';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/expenses/ExpenseModal.vue'),
 );
 
+const drawerRef = ref<InstanceType<typeof MobileDrawer>>();
 const { isMd } = useBreakpoints();
 
 const expenseStore = useExpensesStore();
@@ -103,7 +105,34 @@ const groupedExpenses = computed(() => {
       Add Expense
     </button>
 
-    <DrawerOrDropdownButton />
+    <button
+      type="button"
+      class="btn btn-accent w-auto"
+      @click="drawerRef?.open()"
+    >
+      Filter
+    </button>
+
+    <MobileDrawer ref="drawerRef" direction="bottom" drawerClass="h-1/2">
+      <FilterMenu
+        class="p-2"
+        :options="[
+          {
+            title: 'Fuel',
+            type: 'checkbox',
+            subOptions: ['Gasoline', 'Diesel', 'LPG'],
+          },
+          { title: 'By me', type: 'text' },
+          { title: 'Memememee', type: 'radio', subOptions: ['1', '2', '3'] },
+          { title: 'Date', type: 'from-to-date' },
+          { title: '1', type: 'boolean' },
+          { title: '2', type: 'boolean' },
+          { title: '3', type: 'boolean' },
+        ]"
+      >
+        <!-- <template #fuel> fuel options here </template> -->
+      </FilterMenu>
+    </MobileDrawer>
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">

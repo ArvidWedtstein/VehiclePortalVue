@@ -17,6 +17,9 @@ import FilterMenu from '@/components/general/filter/FilterMenu.vue';
         { title: 'By me', type: 'text' },
         { title: 'Memememee', type: 'radio', subOptions: ['1', '2', '3'] },
         { title: 'Date', type: 'from-to-date' },
+        { title: '1', type: 'boolean' },
+        { title: '2', type: 'boolean' },
+        { title: '3', type: 'boolean' },
       ]"
     >
       <!-- <template #fuel> fuel options here </template> -->
