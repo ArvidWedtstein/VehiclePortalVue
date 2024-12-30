@@ -18,17 +18,24 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  shown: [];
-  hidden: [];
+  shown: [reason?: string];
+  hidden: [reason?: string];
 }>();
 
-const toggleDrawer = async (open: boolean = false) => {
+const toggleDrawer = async (open: boolean = false, reason?: string) => {
   if (isDrawerOpenAfter.value) {
     isDrawerOpenAfter.value = open;
 
     await nextTick();
 
     isDrawerOpen.value = open;
+
+    if (open) {
+      emit('shown', reason);
+      return;
+    }
+
+    emit('hidden', reason);
     return;
   }
 
@@ -39,11 +46,11 @@ const toggleDrawer = async (open: boolean = false) => {
   isDrawerOpenAfter.value = open;
 
   if (open) {
-    emit('shown');
+    emit('shown', reason);
     return;
   }
 
-  emit('hidden');
+  emit('hidden', reason);
 };
 
 const drawerClasses = computed(() => {
@@ -118,8 +125,8 @@ const onTouchEnd = () => {
 
 defineExpose({
   isOpen: isDrawerOpen,
-  open: () => toggleDrawer(true),
-  close: () => toggleDrawer(false),
+  open: (reason?: string) => toggleDrawer(true, reason),
+  close: (reason?: string) => toggleDrawer(false, reason),
 });
 </script>
 
@@ -129,7 +136,7 @@ defineExpose({
       <div
         v-if="isDrawerOpen"
         class="fixed inset-0 bg-black bg-opacity-50 z-50"
-        @click="toggleDrawer()"
+        @click="toggleDrawer(false, 'clickOutside')"
       ></div>
     </Transition>
 
@@ -159,7 +166,10 @@ defineExpose({
 
         <div class="hidden md:flex gap-1 justify-end p-4 shrink-0">
           <slot name="actions" :toggleDrawer="toggleDrawer">
-            <button @click="toggleDrawer()" class="btn btn-sm btn-outline">
+            <button
+              @click="toggleDrawer(false, 'clickOutside')"
+              class="btn btn-sm btn-outline"
+            >
               Close
             </button>
           </slot>

@@ -23,7 +23,6 @@ const ExpenseModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/expenses/ExpenseModal.vue'),
 );
 
-const drawerRef = ref<InstanceType<typeof MobileDrawer>>();
 const { isMd } = useBreakpoints();
 
 const expenseStore = useExpensesStore();
@@ -31,6 +30,9 @@ const expenseStore = useExpensesStore();
 const { expenses, loading } = toRefs(expenseStore);
 
 const expenseModal = ref<InstanceType<typeof ExpenseModal>>();
+
+const drawerRef = ref<InstanceType<typeof MobileDrawer>>();
+const filterMenuRef = ref<InstanceType<typeof FilterMenu>>();
 
 // const {
 //   visibleItems,
@@ -81,6 +83,10 @@ const groupedExpenses = computed(() => {
 
   return grouped;
 });
+
+const handleFilterApply = async () => {
+  console.log(filterMenuRef.value?.filterOptions);
+};
 </script>
 
 <template>
@@ -115,7 +121,8 @@ const groupedExpenses = computed(() => {
 
     <MobileDrawer ref="drawerRef" direction="bottom" drawerClass="h-1/2">
       <FilterMenu
-        class="p-2"
+        ref="filterMenuRef"
+        class="px-4 py-2"
         :options="[
           {
             title: 'Fuel',
@@ -132,6 +139,16 @@ const groupedExpenses = computed(() => {
       >
         <!-- <template #fuel> fuel options here </template> -->
       </FilterMenu>
+
+      <template #actions>
+        <button
+          type="button"
+          class="btn btn-primary btn-block"
+          @click="handleFilterApply"
+        >
+          Apply
+        </button>
+      </template>
     </MobileDrawer>
 
     <div class="dropdown dropdown-end">

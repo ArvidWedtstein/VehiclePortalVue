@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import ListGroup from '../list/ListGroup.vue';
 import ListGroupItem from '../list/ListGroupItem.vue';
 import ChevronRight from '@/assets/icons/ChevronRight.vue';
@@ -22,6 +22,7 @@ type Option = {
   title: string;
   type: OptionType;
   subOptions?: Array<string>;
+  value?: string | number | Array<string> | FromToDateType | boolean;
 };
 
 type Props = {
@@ -50,91 +51,117 @@ const defaultValues: Record<
   boolean: false,
 };
 
-const selectedOptions = reactive<
-  Record<string, string[] | string | number | FromToDateType | boolean>
->(
-  props.options.reduce(
-    (acc, opt) => {
-      acc[opt.title] = defaultValues[opt.type || 'checkbox'];
-      if (opt.type === 'from-to-date') {
-        console.log('def', acc);
-      }
-      return acc;
-    },
-    {} as Record<string, string[] | string | number | FromToDateType | boolean>,
-  ),
+const filterOptions = ref<Array<Option>>(
+  props.options.map(opt => ({
+    ...opt,
+    value: defaultValues[opt.type],
+  })),
 );
 
-const currentPage = ref<Option | null>(null);
+const currentPage = ref<Option['title'] | null>(null);
 
 const setPage = (option: Option | null) => {
-  currentPage.value = option;
+  currentPage.value = option?.title || null;
 };
 
 const resetFilters = () => {
-  props.options.forEach(opt => {
-    selectedOptions[opt.title] = defaultValues[opt.type || 'checkbox'];
-  });
+  filterOptions.value = filterOptions.value.map(opt => ({
+    ...opt,
+    value: defaultValues[opt.type],
+  }));
 };
 
 const updateCheckbox = (filterTitle: string, value: string) => {
-  const currentSelections = selectedOptions[filterTitle] as string[];
-  if (currentSelections.includes(value)) {
-    selectedOptions[filterTitle] = currentSelections.filter(
-      item => item !== value,
-    );
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1 || !Array.isArray(filterOptions.value[optionIdx].value))
+    return;
+
+  if (filterOptions.value[optionIdx].value.includes(value)) {
+    filterOptions.value[optionIdx].value = filterOptions.value[
+      optionIdx
+    ].value.filter(item => item !== value);
   } else {
-    currentSelections.push(value);
+    filterOptions.value[optionIdx].value.push(value);
   }
 };
 
 const updateRadio = (filterTitle: string, value: string) => {
-  selectedOptions[filterTitle] = value;
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1) return;
+
+  filterOptions.value[optionIdx].value = value;
 };
 
 const updateRange = (filterTitle: string, value: number) => {
-  selectedOptions[filterTitle] = value;
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1) return;
+
+  filterOptions.value[optionIdx].value = value;
 };
 
 const updateText = (filterTitle: string, value: string) => {
-  selectedOptions[filterTitle] = value;
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1) return;
+
+  filterOptions.value[optionIdx].value = value;
 };
 
 const updateBoolean = (filterTitle: string) => {
-  selectedOptions[filterTitle] = !selectedOptions[filterTitle];
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1) return;
+
+  filterOptions.value[optionIdx].value = !filterOptions.value[optionIdx].value;
 };
 
 const updateFromToDate = (filterTitle: string, from: string, to: string) => {
-  selectedOptions[filterTitle] = { from, to };
+  const optionIdx = filterOptions.value.findIndex(
+    opt => opt.title === filterTitle,
+  );
+  if (optionIdx === -1) return;
+
+  filterOptions.value[optionIdx].value = { from, to };
 };
 
-const currentSubOptions = computed(() => currentPage.value?.subOptions || []);
+const currentOption = computed(() => {
+  const option = filterOptions.value.find(
+    opt => opt.title === currentPage.value || '',
+  );
 
-const currentFilterValue = computed(() => {
-  return selectedOptions[currentPage.value?.title || ''];
+  return option;
 });
 
 const formattedBadgeValues = computed(() => {
   const result: Record<string, Array<string>> = {};
 
-  for (const [optionTitle, values] of Object.entries(selectedOptions)) {
-    const type = props.options.find(opt => opt.title === optionTitle)?.type;
+  for (const option of filterOptions.value) {
+    const { title, type, value } = option;
 
     if (type === 'from-to-date') {
-      const fromToDates = values as FromToDateType;
+      const fromToDates = value as FromToDateType;
 
       if (fromToDates.from && fromToDates.to) {
-        result[optionTitle] = [
+        result[title] = [
           formatDateRange(fromToDates.from, fromToDates.to, {
             dateStyle: 'short',
           }),
         ];
       }
     } else if (type === 'checkbox') {
-      result[optionTitle] = values as Array<string>;
+      result[title] = value as Array<string>;
     } else {
-      result[optionTitle] = [];
+      result[title] = [];
     }
+    // TODO: finish
   }
 
   return result;
@@ -143,11 +170,11 @@ const formattedBadgeValues = computed(() => {
 const removeFilter = (event: MouseEvent, option: Option, index: number) => {
   event.stopPropagation();
 
-  const options = selectedOptions[option.title];
+  const options = filterOptions.value.find(opt => opt.title === option.title);
 
   switch (option.type) {
     case 'checkbox':
-      updateCheckbox(option.title, (options as Array<string>)[index]);
+      updateCheckbox(option.title, (options?.value as Array<string>)[index]);
       break;
     case 'from-to-date':
       updateFromToDate(option.title, '', '');
@@ -159,6 +186,12 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
       updateRange(option.title, 0);
   }
 };
+
+defineExpose({
+  filterOptions,
+  setPage,
+  resetFilters,
+});
 </script>
 
 <template>
@@ -167,14 +200,14 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
       <button
         type="button"
         class="btn btn-sm btn-ghost"
-        :class="{ invisible: !currentPage }"
+        :class="{ invisible: !currentOption }"
         @click="setPage(null)"
       >
         <ChevronRight class="w-3" />
       </button>
 
       <div class="divider divider-neutral text-lg font-semibold grow">
-        {{ currentPage?.title || 'Filter' }}
+        {{ currentOption?.title || 'Filter' }}
       </div>
 
       <button type="button" class="btn btn-sm btn-ghost" @click="resetFilters">
@@ -183,15 +216,15 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
     </div>
 
     <TransitionGroup name="list">
-      <template v-if="!currentPage">
+      <template v-if="!currentOption">
         <div class="flex items-center gap-2 overflow-x-auto">
           <div
-            v-for="(option, optionIndex) in options.filter(
+            v-for="(option, optionIndex) in filterOptions.filter(
               ({ type }) => type === 'boolean',
             )"
             :key="optionIndex"
             class="badge badge-lg gap-2"
-            :class="{ 'badge-accent': selectedOptions[option.title] }"
+            :class="{ 'badge-accent': option.value }"
             @click="updateBoolean(option.title)"
           >
             {{ option.title }}
@@ -199,7 +232,7 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
         </div>
         <ListGroup>
           <ListGroupItem
-            v-for="(option, optionIndex) in options.filter(
+            v-for="(option, optionIndex) in filterOptions.filter(
               ({ type }) => type !== 'boolean',
             )"
             :key="optionIndex"
@@ -249,55 +282,57 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
 
       <template v-else>
         <div class="flex flex-col items-center gap-4">
-          <slot :name="currentPage.title.replace(/\s/g, '_').toLowerCase()">
+          <slot :name="currentOption.title.replace(/\s/g, '_').toLowerCase()">
             <div
-              v-if="currentPage.type === 'checkbox'"
+              v-if="currentOption.type === 'checkbox'"
               class="flex flex-col items-start divide-y divide-neutral w-full"
             >
               <CheckboxGroup
-                :options="currentSubOptions"
+                :options="currentOption.subOptions || []"
                 @change="
-                  value => updateCheckbox(currentPage?.title || '', value)
+                  value => updateCheckbox(currentOption?.title || '', value)
                 "
-                :selected="currentFilterValue as Array<string>"
+                :selected="currentOption.value as Array<string>"
               />
             </div>
 
             <div
-              v-else-if="currentPage.type === 'radio'"
+              v-else-if="currentOption.type === 'radio'"
               class="flex flex-col items-start divide-y divide-neutral w-full"
             >
               <RadioGroup
-                :options="currentSubOptions"
-                @change="value => updateRadio(currentPage?.title || '', value)"
-                :selected="currentFilterValue as string"
+                :options="currentOption.subOptions || []"
+                @change="
+                  value => updateRadio(currentOption?.title || '', value)
+                "
+                :selected="currentOption.value as string"
               />
             </div>
 
-            <div v-else-if="currentPage.type === 'range'" class="w-full">
+            <div v-else-if="currentOption.type === 'range'" class="w-full">
               <input
                 type="range"
-                :value="currentFilterValue"
+                :value="currentOption.value"
                 @input="
                   $event =>
                     updateRange(
-                      currentPage?.title || '',
+                      currentOption?.title || '',
                       parseInt(($event.target as HTMLInputElement)?.value),
                     )
                 "
                 class="range"
               />
-              <span>Value: {{ currentFilterValue }}</span>
+              <span>Value: {{ currentOption.value }}</span>
             </div>
 
-            <div v-else-if="currentPage.type === 'text'" class="w-full">
+            <div v-else-if="currentOption.type === 'text'" class="w-full">
               <input
                 type="text"
-                :value="currentFilterValue"
+                :value="currentOption.value"
                 @input="
                   $event =>
                     updateText(
-                      currentPage?.title || '',
+                      currentOption?.title || '',
                       ($event.target as HTMLInputElement)?.value,
                     )
                 "
@@ -305,20 +340,23 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
               />
             </div>
 
-            <div v-else-if="currentPage.type === 'from-to-date'" class="w-full">
+            <div
+              v-else-if="currentOption.type === 'from-to-date'"
+              class="w-full"
+            >
               <div class="flex flex-col gap-2">
                 <label class="flex flex-col">
                   From:
                   <input
                     type="date"
-                    :value="(currentFilterValue as FromToDateType).from"
-                    :max="(currentFilterValue as FromToDateType).to"
+                    :value="(currentOption.value as FromToDateType).from"
+                    :max="(currentOption.value as FromToDateType).to"
                     @input="
                       $event =>
                         updateFromToDate(
-                          currentPage?.title || '',
+                          currentOption?.title || '',
                           ($event.target as HTMLInputElement)?.value,
-                          (currentFilterValue as FromToDateType).to,
+                          (currentOption?.value as FromToDateType).to,
                         )
                     "
                     class="input input-bordered"
@@ -329,13 +367,13 @@ const removeFilter = (event: MouseEvent, option: Option, index: number) => {
                   To:
                   <input
                     type="date"
-                    :value="(currentFilterValue as FromToDateType).to"
-                    :min="(currentFilterValue as FromToDateType).from"
+                    :value="(currentOption.value as FromToDateType).to"
+                    :min="(currentOption.value as FromToDateType).from"
                     @input="
                       $event =>
                         updateFromToDate(
-                          currentPage?.title || '',
-                          (currentFilterValue as FromToDateType).from,
+                          currentOption?.title || '',
+                          (currentOption?.value as FromToDateType).from,
                           ($event.target as HTMLInputElement)?.value,
                         )
                     "
