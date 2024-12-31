@@ -19,7 +19,7 @@ onMounted(() => {
     <PageNavbar />
 
     <div
-      class="flex flex-col px-4 py-3 sm:px-6 lg:px-8 mt-16 md:mb-0 mb-16 flex-1 max-w-full"
+      class="flex flex-col px-4 py-3 sm:px-6 lg:px-8 mt-16 md:mb-0 mb-16 flex-1 max-w-full overflow-hidden"
     >
       <RouterView />
     </div>

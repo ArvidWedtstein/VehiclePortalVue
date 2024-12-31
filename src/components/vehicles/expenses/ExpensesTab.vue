@@ -15,11 +15,9 @@ import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 import { useBreakpoints } from '@/lib/composables/useBreakpoints';
-import MobileDrawer from '@/components/general/modal/MobileDrawer.vue';
-import FilterMenu, {
-  type FilterOption,
-} from '@/components/general/filter/FilterMenu.vue';
+import { type FilterOption } from '@/components/general/filter/FilterMenu.vue';
 import { useSessionStore } from '@/stores/general/userSession';
+import ExpensesFilter from './ExpensesFilter.vue';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -35,9 +33,6 @@ const sessionStore = useSessionStore();
 const session = toRef(sessionStore, 'session');
 
 const expenseModal = ref<InstanceType<typeof ExpenseModal>>();
-
-const drawerRef = ref<InstanceType<typeof MobileDrawer>>();
-const filterMenuRef = ref<InstanceType<typeof FilterMenu>>();
 
 // const {
 //   visibleItems,
@@ -75,25 +70,9 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
 };
 
 const filters = ref<Array<FilterOption>>([]);
-const filterOptions: Array<FilterOption> = [
-  {
-    title: 'Fuel',
-    type: 'checkbox',
-    subOptions: ['Gasoline', 'Diesel', 'LPG'],
-  },
-  { title: 'Created by me', type: 'boolean' },
-  {
-    title: 'Currency',
-    type: 'checkbox',
-    subOptions: ['NOK', 'EUR', 'GBP', 'USD', 'SEK', 'DDK'],
-  },
-  { title: 'Date', type: 'from-to-date' },
-] as const;
-
-type FilterOptionTitles = (typeof filterOptions)[number]['title'];
 
 const filterMappings: Record<
-  Extract<FilterOptionTitles, string>,
+  string,
   keyof ArrayElement<typeof expenses.value>
 > = { Date: 'date', Currency: 'currency', 'Created by me': 'createdby_id' };
 
@@ -165,12 +144,12 @@ const groupedExpenses = computed(() => {
   return grouped;
 });
 
-const handleFilterApply = async () => {
-  if (!filterMenuRef.value) return;
+const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
+  filters.value = filterOptions;
+};
 
-  console.log('apply filters');
-
-  filters.value = JSON.parse(JSON.stringify(filterMenuRef.value.filterOptions));
+const handleFiltersReset = () => {
+  filters.value = [];
 };
 </script>
 
@@ -196,33 +175,7 @@ const handleFilterApply = async () => {
     </button>
 
     <!-- TODO: add sorting & filtering options -->
-    <button
-      type="button"
-      class="btn btn-accent w-auto"
-      @click="drawerRef?.open()"
-    >
-      Filter
-    </button>
-
-    <MobileDrawer ref="drawerRef" direction="bottom" drawerClass="h-1/2">
-      <FilterMenu
-        ref="filterMenuRef"
-        class="px-4 py-2"
-        :options="filterOptions"
-        @resetFilters="filters = []"
-      >
-      </FilterMenu>
-
-      <template #actions>
-        <button
-          type="button"
-          class="btn btn-primary btn-block"
-          @click="handleFilterApply"
-        >
-          Apply
-        </button>
-      </template>
-    </MobileDrawer>
+    <ExpensesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">
