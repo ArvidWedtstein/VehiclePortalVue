@@ -174,7 +174,7 @@ const handleFiltersReset = () => {
       Add Expense
     </button>
 
-    <!-- TODO: add sorting & filtering options -->
+    <!-- TODO: add sorting options -->
     <ExpensesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
 
     <div class="dropdown dropdown-end">

@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { useServicesStore } from '@/stores/services';
-import {
-  computed,
-  defineAsyncComponent,
-  onBeforeMount,
-  ref,
-  toRefs,
-} from 'vue';
+import { computed, defineAsyncComponent, ref, toRef, toRefs } from 'vue';
 import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import ListGroup from '@/components/general/list/ListGroup.vue';
@@ -20,15 +14,19 @@ import {
 } from '@/utils/export';
 import MenuItem from '@/components/general/menu/MenuItem.vue';
 import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
+import type { FilterOption } from '@/components/general/filter/FilterMenu.vue';
+import ServicesFilter from './ServicesFilter.vue';
+import { useSessionStore } from '@/stores/general/userSession';
 
 const ServiceModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/services/ServiceModal.vue'),
 );
 
 const servicesStore = useServicesStore();
-
 const { services, loading } = toRefs(servicesStore);
-const { getServices } = servicesStore;
+
+const sessionStore = useSessionStore();
+const session = toRef(sessionStore, 'session');
 
 const serviceModal = ref<InstanceType<typeof ServiceModal>>();
 
@@ -59,8 +57,68 @@ const handleServicesExport = (type: 'txt' | 'csv') => {
   downloadBlob(blob, `services.${type}`);
 };
 
+const filters = ref<Array<FilterOption>>([]);
+
+const filterMappings: Record<
+  string,
+  keyof ArrayElement<typeof services.value>
+> = { Date: 'date', Currency: 'currency', 'Created by me': 'createdby_id' };
+
 const groupedServices = computed(() => {
-  const servicesWithMonth = services.value.map(service => {
+  const filteredServices = services.value.filter(service => {
+    return filters.value.every(filter => {
+      const field = filterMappings[filter.title];
+      if (!field) return true;
+
+      const fieldValue = service[field];
+
+      if (filter.type === 'from-to-date') {
+        const { from, to } = filter.value as { from: string; to: string };
+        const itemDate = new Date(fieldValue || '');
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+
+        if (from && to) {
+          return itemDate >= fromDate && itemDate <= toDate;
+        } else if (from) {
+          return itemDate >= fromDate;
+        } else if (to) {
+          return itemDate <= toDate;
+        }
+
+        return true;
+      }
+
+      if (filter.type === 'radio') {
+        return fieldValue === filter.value;
+      }
+
+      if (filter.type === 'text') {
+        return fieldValue?.toString().includes(filter.value?.toString() || '');
+      }
+
+      if (filter.type === 'checkbox') {
+        const filterValues = filter.value as string[];
+
+        return (
+          filterValues.includes(fieldValue?.toString() || '') ||
+          !filterValues.length
+        );
+      }
+
+      if (filter.type === 'boolean' && filter.value) {
+        if (filter.title === 'Created by me') {
+          return fieldValue?.toString() === session.value?.user.id;
+        }
+
+        return true;
+      }
+
+      return true;
+    });
+  });
+
+  const servicesWithMonth = filteredServices.map(service => {
     const month = formatDate(service.date, { year: 'numeric', month: 'long' });
 
     return {
@@ -74,9 +132,13 @@ const groupedServices = computed(() => {
   return grouped;
 });
 
-onBeforeMount(() => {
-  getServices();
-});
+const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
+  filters.value = filterOptions;
+};
+
+const handleFiltersReset = () => {
+  filters.value = [];
+};
 </script>
 
 <template>
@@ -99,6 +161,8 @@ onBeforeMount(() => {
       </svg>
       Add Service
     </button>
+
+    <ServicesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost btn-accent">
