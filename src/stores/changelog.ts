@@ -9,6 +9,7 @@ import { useProfilesStore } from './profiles';
 export const useChangelogStore = defineStore('Changelog', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+  const { setCurrentVehicle } = vehiclesStore;
 
   const profilesStore = useProfilesStore();
   const profiles = toRef(profilesStore, 'profiles');
@@ -25,7 +26,9 @@ export const useChangelogStore = defineStore('Changelog', () => {
 
   const changelog = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
-      throw new Error('No Vehicle Selected, Changelog');
+      setCurrentVehicle();
+
+      return [];
     }
 
     if (!changelogCache.has(currentVehicle.value.id) && !loading.value) {
@@ -45,7 +48,7 @@ export const useChangelogStore = defineStore('Changelog', () => {
   ) => {
     try {
       if (!currentVehicle.value || !currentVehicle.value.id) {
-        throw new Error('No Vehicle Selected!');
+        return;
       }
 
       loading.value = true;

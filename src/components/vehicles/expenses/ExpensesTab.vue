@@ -1,5 +1,5 @@
 <script async setup lang="ts">
-import { computed, defineAsyncComponent, ref, toRefs } from 'vue';
+import { computed, defineAsyncComponent, ref, toRef, toRefs } from 'vue';
 import { useExpensesStore } from '@/stores/expenses';
 import { groupBy, type ArrayElement } from '@/utils/utils';
 import {
@@ -16,7 +16,10 @@ import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
 import { useBreakpoints } from '@/lib/composables/useBreakpoints';
 import MobileDrawer from '@/components/general/modal/MobileDrawer.vue';
-import FilterMenu from '@/components/general/filter/FilterMenu.vue';
+import FilterMenu, {
+  type FilterOption,
+} from '@/components/general/filter/FilterMenu.vue';
+import { useSessionStore } from '@/stores/general/userSession';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -26,8 +29,10 @@ const ExpenseModal = defineAsyncComponent(
 const { isMd } = useBreakpoints();
 
 const expenseStore = useExpensesStore();
-
 const { expenses, loading } = toRefs(expenseStore);
+
+const sessionStore = useSessionStore();
+const session = toRef(sessionStore, 'session');
 
 const expenseModal = ref<InstanceType<typeof ExpenseModal>>();
 
@@ -69,8 +74,84 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
   downloadBlob(blob, `expenses.${type}`);
 };
 
+const filters = ref<Array<FilterOption>>([]);
+const filterOptions: Array<FilterOption> = [
+  {
+    title: 'Fuel',
+    type: 'checkbox',
+    subOptions: ['Gasoline', 'Diesel', 'LPG'],
+  },
+  { title: 'Created by me', type: 'boolean' },
+  {
+    title: 'Currency',
+    type: 'checkbox',
+    subOptions: ['NOK', 'EUR', 'GBP', 'USD', 'SEK', 'DDK'],
+  },
+  { title: 'Date', type: 'from-to-date' },
+] as const;
+
+type FilterOptionTitles = (typeof filterOptions)[number]['title'];
+
+const filterMappings: Record<
+  Extract<FilterOptionTitles, string>,
+  keyof ArrayElement<typeof expenses.value>
+> = { Date: 'date', Currency: 'currency', 'Created by me': 'createdby_id' };
+
 const groupedExpenses = computed(() => {
-  const expensesWithMonth = expenses.value.map(expense => {
+  const filteredExpenses = expenses.value.filter(expense => {
+    return filters.value.every(filter => {
+      const field = filterMappings[filter.title];
+      if (!field) return true;
+
+      const fieldValue = expense[field];
+
+      if (filter.type === 'from-to-date') {
+        const { from, to } = filter.value as { from: string; to: string };
+        const itemDate = new Date(fieldValue || '');
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+
+        if (from && to) {
+          return itemDate >= fromDate && itemDate <= toDate;
+        } else if (from) {
+          return itemDate >= fromDate;
+        } else if (to) {
+          return itemDate <= toDate;
+        }
+
+        return true;
+      }
+
+      if (filter.type === 'radio') {
+        return fieldValue === filter.value;
+      }
+
+      if (filter.type === 'text') {
+        return fieldValue?.toString().includes(filter.value?.toString() || '');
+      }
+
+      if (filter.type === 'checkbox') {
+        const filterValues = filter.value as string[];
+
+        return (
+          filterValues.includes(fieldValue?.toString() || '') ||
+          !filterValues.length
+        );
+      }
+
+      if (filter.type === 'boolean' && filter.value) {
+        if (filter.title === 'Created by me') {
+          return fieldValue?.toString() === session.value?.user.id;
+        }
+
+        return true;
+      }
+
+      return true;
+    });
+  });
+
+  const expensesWithMonth = filteredExpenses.map(expense => {
     const month = formatDate(expense.date, { year: 'numeric', month: 'long' });
 
     return {
@@ -85,12 +166,15 @@ const groupedExpenses = computed(() => {
 });
 
 const handleFilterApply = async () => {
-  console.log(filterMenuRef.value?.filterOptions);
+  if (!filterMenuRef.value) return;
+
+  console.log('apply filters');
+
+  filters.value = JSON.parse(JSON.stringify(filterMenuRef.value.filterOptions));
 };
 </script>
 
 <template>
-  <!-- TODO: add sorting & filtering options -->
   <ExpenseModal ref="expenseModal" />
 
   <div class="flex justify-between">
@@ -111,6 +195,7 @@ const handleFilterApply = async () => {
       Add Expense
     </button>
 
+    <!-- TODO: add sorting & filtering options -->
     <button
       type="button"
       class="btn btn-accent w-auto"
@@ -123,21 +208,9 @@ const handleFilterApply = async () => {
       <FilterMenu
         ref="filterMenuRef"
         class="px-4 py-2"
-        :options="[
-          {
-            title: 'Fuel',
-            type: 'checkbox',
-            subOptions: ['Gasoline', 'Diesel', 'LPG'],
-          },
-          { title: 'By me', type: 'text' },
-          { title: 'Memememee', type: 'radio', subOptions: ['1', '2', '3'] },
-          { title: 'Date', type: 'from-to-date' },
-          { title: '1', type: 'boolean' },
-          { title: '2', type: 'boolean' },
-          { title: '3', type: 'boolean' },
-        ]"
+        :options="filterOptions"
+        @resetFilters="filters = []"
       >
-        <!-- <template #fuel> fuel options here </template> -->
       </FilterMenu>
 
       <template #actions>
@@ -205,7 +278,8 @@ const handleFilterApply = async () => {
     </div>
   </div>
 
-  <ListGroup class="h-max">
+  <!-- TODO: fix -->
+  <ListGroup class="flex-1 max-h-[calc(100vh-30rem)]" ignoreListClass>
     <ListSubGroup
       v-for="(expenses, month) in groupedExpenses"
       :key="month"

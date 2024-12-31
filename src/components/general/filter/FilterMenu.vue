@@ -18,7 +18,7 @@ type OptionType =
 type FromToDateType = { from: string; to: string };
 
 // TODO: adjust subOptions based on type
-type Option = {
+export type FilterOption = {
   title: string;
   type: OptionType;
   subOptions?: Array<string>;
@@ -29,12 +29,16 @@ type Props = {
   /**
    * Set up option by using slot with name of option
    */
-  options?: Array<Option>;
+  options?: Array<FilterOption>;
 };
 
 const props = withDefaults(defineProps<Props>(), {
   options: () => [],
 });
+
+const emit = defineEmits<{
+  resetFilters: [];
+}>();
 
 const defaultValues: Record<
   OptionType,
@@ -49,26 +53,28 @@ const defaultValues: Record<
   range: 0,
   text: '',
   boolean: false,
-};
+} as const;
 
-const filterOptions = ref<Array<Option>>(
+const filterOptions = ref<Array<FilterOption>>(
   props.options.map(opt => ({
     ...opt,
-    value: defaultValues[opt.type],
+    value: JSON.parse(JSON.stringify(defaultValues[opt.type])),
   })),
 );
 
-const currentPage = ref<Option['title'] | null>(null);
+const currentPage = ref<FilterOption['title'] | null>(null);
 
-const setPage = (option: Option | null) => {
+const setPage = (option: FilterOption | null) => {
   currentPage.value = option?.title || null;
 };
 
 const resetFilters = () => {
   filterOptions.value = filterOptions.value.map(opt => ({
     ...opt,
-    value: defaultValues[opt.type],
+    value: JSON.parse(JSON.stringify(defaultValues[opt.type])),
   }));
+
+  emit('resetFilters');
 };
 
 const updateCheckbox = (filterTitle: string, value: string) => {
@@ -167,7 +173,11 @@ const formattedBadgeValues = computed(() => {
   return result;
 });
 
-const removeFilter = (event: MouseEvent, option: Option, index: number) => {
+const removeFilter = (
+  event: MouseEvent,
+  option: FilterOption,
+  index: number,
+) => {
   event.stopPropagation();
 
   const options = filterOptions.value.find(opt => opt.title === option.title);
@@ -230,7 +240,7 @@ defineExpose({
             {{ option.title }}
           </div>
         </div>
-        <ListGroup>
+        <ListGroup divider>
           <ListGroupItem
             v-for="(option, optionIndex) in filterOptions.filter(
               ({ type }) => type !== 'boolean',

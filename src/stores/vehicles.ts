@@ -53,12 +53,12 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       const route = useRoute();
 
       if (!vehicle_id) {
-        const entryIndex = Object.entries(route.params).findIndex(
+        const entryIndex = Object.entries(route?.params || {}).findIndex(
           ([k]) => k === 'vehicle_id',
         );
         if (entryIndex < 0) return;
 
-        const value = Object.values(route.params)[entryIndex];
+        const value = Object.values(route?.params)[entryIndex];
         const urlVehicle_id = Array.isArray(value) ? value.pop() : value;
 
         if (!urlVehicle_id || Number.isNaN(urlVehicle_id)) return;

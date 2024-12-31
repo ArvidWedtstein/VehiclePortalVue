@@ -154,7 +154,7 @@ onBeforeMount(() => {
     </div>
   </div>
 
-  <ListGroup class="h-max">
+  <ListGroup class="flex-1 max-h-[calc(100vh-30rem)]" ignoreListClass>
     <ListSubGroup
       v-for="(services, month) in groupedServices"
       :key="month"

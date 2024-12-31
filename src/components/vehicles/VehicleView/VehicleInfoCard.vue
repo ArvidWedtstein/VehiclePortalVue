@@ -7,7 +7,6 @@ import ChangelogDrawer from '../changelog/ChangelogDrawer.vue';
 import { formatNumber } from '@/utils/format';
 import EditIcon from '@/assets/icons/EditIcon.vue';
 
-// TODO: add option to delete Vehicle?
 const VehicleModal = defineAsyncComponent(
   async () =>
     await import('@/components/vehicles/VehicleModal/VehicleModal.vue'),
@@ -17,6 +16,7 @@ const vehicleModalRef = ref<InstanceType<typeof VehicleModal> | null>(null);
 const shareVehicleDrawerRef = ref<InstanceType<
   typeof ShareVehicleDrawer
 > | null>(null);
+
 const changelogDrawerRef = ref<InstanceType<typeof ChangelogDrawer> | null>(
   null,
 );

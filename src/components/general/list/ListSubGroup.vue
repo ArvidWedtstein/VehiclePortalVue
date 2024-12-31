@@ -20,7 +20,7 @@ withDefaults(defineProps<Props>(), {
     >
       <h3>{{ title }}</h3>
     </div>
-    <ListGroup>
+    <ListGroup divider :overflow="false">
       <slot></slot>
     </ListGroup>
   </div>

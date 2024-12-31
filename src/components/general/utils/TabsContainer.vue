@@ -77,7 +77,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 w-full">
+  <div class="flex flex-col gap-3 w-full flex-1">
     <div
       class="tabs w-full"
       :class="{
