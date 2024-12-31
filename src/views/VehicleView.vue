@@ -34,7 +34,7 @@ onMounted(async () => {
     Back to vehicles
   </RouterLink>
 
-  <div class="flex flex-col gap-3 flex-1 w-full">
+  <div class="relative flex flex-col gap-3 flex-1 w-full">
     <VehicleInfoCard />
 
     <TabsContainer

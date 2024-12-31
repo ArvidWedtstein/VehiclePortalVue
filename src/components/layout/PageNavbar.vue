@@ -26,10 +26,10 @@ const navbarRoutes = computed(() => {
 
   <div class="navbar fixed top-0 bg-base-300 z-[100]">
     <div class="navbar-start">
-      <a class="btn btn-ghost text-xl space-x-0 gap-1">
+      <div class="inline-flex items-center text-xl space-x-0 gap-1">
         Vehicle
         <div class="badge badge-warning badge-outline">Hub</div>
-      </a>
+      </div>
     </div>
 
     <div class="navbar-center hidden md:flex">
