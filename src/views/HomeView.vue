@@ -29,7 +29,9 @@ import { RouterLink } from 'vue-router';
     <div class="divider"></div>
 
     <div class="flex-1 mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-      <h2 class="text-center text-base/7 font-semibold text-accent">Cost</h2>
+      <h2 class="text-center text-base/7 font-semibold text-accent">
+        Expense Tracking
+      </h2>
       <p
         class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-base-content sm:text-5xl"
       >
