@@ -1,7 +1,14 @@
 <script async setup lang="ts">
-import { computed, defineAsyncComponent, ref, toRef, toRefs } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  reactive,
+  ref,
+  toRef,
+  toRefs,
+} from 'vue';
 import { useExpensesStore } from '@/stores/expenses';
-import { groupBy, type ArrayElement } from '@/utils/utils';
+import { dynamicSort, groupBy, type ArrayElement } from '@/utils/utils';
 import {
   downloadBlob,
   exportToCSV,
@@ -70,6 +77,22 @@ const handleExpensesExport = (type: 'txt' | 'csv') => {
 };
 
 const filters = ref<Array<FilterOption>>([]);
+const sortControl = reactive<{
+  key: keyof ArrayElement<typeof expenses.value>;
+  direction: 'asc' | 'desc';
+  options: Array<{
+    label?: string;
+    value: keyof ArrayElement<typeof expenses.value>;
+  }>;
+}>({
+  key: 'date',
+  direction: 'desc',
+  options: [
+    { value: 'date', label: 'Date' },
+    { value: 'cost', label: 'Cost' },
+    { value: 'amount', label: 'Amount' },
+  ],
+});
 
 const filterMappings: Record<
   string,
@@ -130,7 +153,13 @@ const groupedExpenses = computed(() => {
     });
   });
 
-  const expensesWithMonth = filteredExpenses.map(expense => {
+  const sortedExpenses = dynamicSort(
+    filteredExpenses,
+    sortControl.key,
+    sortControl.direction,
+  );
+
+  const expensesWithMonth = sortedExpenses.map(expense => {
     const month = formatDate(expense.date, { year: 'numeric', month: 'long' });
 
     return {
@@ -141,7 +170,7 @@ const groupedExpenses = computed(() => {
 
   const grouped = groupBy(expensesWithMonth, 'month');
 
-  return grouped;
+  return sortControl.key === 'date' ? grouped : { '': sortedExpenses };
 });
 
 const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
@@ -150,6 +179,10 @@ const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
 
 const handleFiltersReset = () => {
   filters.value = [];
+};
+
+const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
+  sortControl.key = key;
 };
 </script>
 
@@ -176,6 +209,26 @@ const handleFiltersReset = () => {
 
     <!-- TODO: add sorting options -->
     <ExpensesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
+
+    <div class="dropdown dropdown-hover">
+      <div tabindex="0" role="button" class="btn btn-outline btn-accent m-1">
+        Sort:
+        {{ sortControl.options.find(o => o.value === sortControl.key)?.label }}
+      </div>
+      <ul
+        tabindex="0"
+        class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
+      >
+        <MenuItem
+          v-for="(option, optionIndex) in sortControl.options"
+          :key="`sortOption-${optionIndex}`"
+          :active="sortControl.key === option.value"
+          @click="setSortKey(option.value)"
+        >
+          {{ option.label ?? option.value }}
+        </MenuItem>
+      </ul>
+    </div>
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">

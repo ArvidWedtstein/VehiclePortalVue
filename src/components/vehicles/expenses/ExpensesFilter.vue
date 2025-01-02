@@ -37,7 +37,7 @@ const handleFilterApply = () => {
 <template>
   <button
     type="button"
-    class="btn btn-accent w-auto"
+    class="btn btn-outline btn-accent w-auto"
     @click="drawerRef?.open()"
   >
     Filter

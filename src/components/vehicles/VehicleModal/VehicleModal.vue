@@ -16,7 +16,7 @@ import FormStepper from '@/components/general/form/FormStepper.vue';
 import { useToastStore } from '@/stores/general/toasts';
 import { useVehicleManufacturersStore } from '@/stores/vehicleManufacturers';
 import DataList from '@/components/general/form/DataList.vue';
-import { decodeVIN } from '@/utils/utils';
+import { decodeVIN } from '@/utils/vinCountryCodes';
 
 const modalRef = ref();
 

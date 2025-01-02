@@ -1,6 +1,3 @@
-import { vehicleManufacturersCodes } from './vehicleManufacturerCodes';
-import { vinCountryCodes } from './vinCountryCodes';
-
 /**
  * Returns a pluralized string based on the count and noun provided.
  *
@@ -177,163 +174,49 @@ export const getInitials = (name: string, maxInitials: number = 2): string => {
   return initials.join('');
 };
 
-type VINData = {
-  country: string;
-  manufacturer: string;
-  vehicleType: string;
-  modelYear: number;
-  plantCode: string;
-  sequentialNumber: string;
-};
-
-export const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+type SortOrder = 'asc' | 'desc';
 
 /**
- * Decodes a Vehicle Identification Number (VIN) and returns the data.
- *
- * | name     | WMI     |  Desc |
- * | :------- | :---------- | :------------------ |
- * | Position1| 	1    | Shows where the vehicle was built (1 - means United States) |
- * | 2-3      | FT     | Designated the vehicle manufacturer (F - means Ford Inc.)
- * | 4-8      | GHDLZ  | Denotes the vehicle's brand, engine size, and type
- * | 9        | B      | Vehicle Security Code
- * | 10       | G      | Shows Vehicle Year
- * | 11       | K      | Indicates which plant assembled the vehicle
- * | 12-17    | 456923 | Displays the serial number of the vehicle
- *
- * @param vin The VIN to decode.
- * @returns The decoded VIN data.
+ * Dynamically sorts an array of objects based on a specified key or keys.
+ * @param array - The array to sort.
+ * @param key - The key (or keys) to sort by. For nested properties, use dot notation (e.g., "address.city").
+ * @param order - The order of sorting: 'asc' for ascending or 'desc' for descending.
+ * @returns A new sorted array.
  */
-export const decodeVIN = (vin: string): VINData | null => {
-  if (!vinRegex.test(vin)) {
-    console.error('Invalid VIN format.');
-    return null;
-  }
+export const dynamicSort = <T extends Record<string, unknown>>(
+  array: T[],
+  key: keyof T,
+  order: SortOrder = 'asc',
+): T[] => {
+  return array.slice().sort((a, b) => {
+    const getValue = (obj: T, path: string): unknown => {
+      return path.split('.').reduce((value, part) => {
+        if (value && typeof value === 'object' && part in value) {
+          return (value as Record<string, unknown>)[part];
+        }
+        return undefined;
+      }, obj as unknown);
+    };
 
-  const worldManufacturerCode = vin.slice(0, 3);
-  const vehicleDescriptorSection = vin.slice(3, 9);
-  // const vehicleIdentifierSection = vin.slice(9, 17);
+    const valueA = getValue(a, key.toString());
+    const valueB = getValue(b, key.toString());
 
-  const countryCode = vin.slice(0, 2);
-  const yearCode = vin[9];
-  const plantCode = vin[10];
-  const sequentialNumber = vin.slice(11);
+    if (valueA === valueB) {
+      return 0;
+    }
 
-  const vehicleManufacturer = vehicleManufacturersCodes
-    .get(worldManufacturerCode)
-    ?.split(' ')[0];
+    if (
+      valueA === undefined ||
+      valueA === null ||
+      valueB === undefined ||
+      valueB === null
+    ) {
+      throw new Error(
+        `Property "${key.toString()}" does not exist on some objects.`,
+      );
+    }
 
-  const years: Record<string, number> = {
-    A: 1980,
-    B: 1981,
-    C: 1982,
-    D: 1983,
-    E: 1984,
-    F: 1985,
-    G: 1986,
-    H: 1987,
-    J: 1988,
-    K: 1989,
-    L: 1990,
-    M: 1991,
-    N: 1992,
-    P: 1993,
-    R: 1994,
-    S: 1995,
-    T: 1996,
-    V: 1997,
-    W: 1998,
-    X: 1999,
-    Y: 2000,
-    1: 2001,
-    2: 2002,
-    3: 2003,
-    4: 2004,
-    5: 2005,
-    6: 2006,
-    7: 2007,
-    8: 2008,
-    9: 2009,
-    0: 1980,
-  };
-
-  const alternativeYears: Record<string, number> = {
-    A: 2010,
-    B: 2011,
-    C: 2012,
-    D: 2013,
-    E: 2014,
-    F: 2015,
-    G: 2016,
-    H: 2017,
-    J: 2018,
-    K: 2019,
-    L: 2020,
-    M: 2021,
-    N: 2022,
-    P: 2023,
-    R: 2024,
-    S: 2025,
-    T: 2026,
-    V: 2027,
-    W: 2028,
-    X: 2029,
-    Y: 2030,
-  };
-
-  const adjustedYears: Record<string, number> = Object.fromEntries(
-    Object.entries(years).filter(
-      ([key], index, arr) => arr.findIndex(([k]) => k === key) === index,
-    ),
-  );
-
-  const [country] = getCountryFromCode(countryCode);
-
-  return {
-    country: country || 'Unknown',
-    manufacturer: vehicleManufacturer || worldManufacturerCode,
-    vehicleType: vehicleDescriptorSection,
-    modelYear: alternativeYears[yearCode] || adjustedYears[yearCode] || 0,
-    plantCode: plantCode,
-    sequentialNumber: sequentialNumber,
-  };
-};
-
-const isInRange = (range: string, code: string): boolean => {
-  const sequence = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-
-  const [start, end = ''] = range.split('-');
-
-  if (start.length !== 2 || end.length !== 2 || code.length !== 2) {
-    return false;
-  }
-
-  const getIndices = (indCode: string): [number, number] => {
-    return [sequence.indexOf(indCode[0]), sequence.indexOf(indCode[1])];
-  };
-
-  const [startFirst, startSecond] = getIndices(start);
-  const [endFirst, endSecond] = getIndices(end);
-  const [codeFirst, codeSecond] = getIndices(code);
-
-  if (codeFirst < startFirst || codeFirst > endFirst) {
-    return false;
-  }
-
-  if (codeFirst === startFirst && codeSecond < startSecond) {
-    return false;
-  }
-  if (codeFirst === endFirst && codeSecond > endSecond) {
-    return false;
-  }
-
-  return true;
-};
-
-const getCountryFromCode = (code: string) => {
-  const matches = Array.from(vinCountryCodes.entries()).filter(([range]) =>
-    isInRange(range, code),
-  );
-
-  return matches.map(([, country]) => country);
+    const comparison = valueA > valueB ? 1 : -1;
+    return order === 'asc' ? comparison : -comparison;
+  });
 };
