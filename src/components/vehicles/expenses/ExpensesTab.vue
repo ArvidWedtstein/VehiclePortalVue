@@ -160,17 +160,22 @@ const groupedExpenses = computed(() => {
   );
 
   const expensesWithMonth = sortedExpenses.map(expense => {
-    const month = formatDate(expense.date, { year: 'numeric', month: 'long' });
+    const monthYear = formatDate(
+      expense.date,
+      sortControl.key === 'date'
+        ? { year: 'numeric', month: 'long' }
+        : { year: 'numeric' },
+    );
 
     return {
       ...expense,
-      month,
+      monthYear,
     };
   });
 
-  const grouped = groupBy(expensesWithMonth, 'month');
+  const grouped = groupBy(expensesWithMonth, 'monthYear');
 
-  return sortControl.key === 'date' ? grouped : { '': sortedExpenses };
+  return grouped;
 });
 
 const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
@@ -207,27 +212,45 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
       Add Expense
     </button>
 
-    <!-- TODO: add sorting options -->
-    <ExpensesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
+    <div class="join">
+      <ExpensesFilter
+        @reset="handleFiltersReset"
+        @apply="handleFilterApply"
+        class="join-item"
+      />
 
-    <div class="dropdown dropdown-hover">
-      <div tabindex="0" role="button" class="btn btn-outline btn-accent m-1">
-        Sort:
-        {{ sortControl.options.find(o => o.value === sortControl.key)?.label }}
-      </div>
-      <ul
-        tabindex="0"
-        class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
-      >
-        <MenuItem
-          v-for="(option, optionIndex) in sortControl.options"
-          :key="`sortOption-${optionIndex}`"
-          :active="sortControl.key === option.value"
-          @click="setSortKey(option.value)"
+      <div class="dropdown dropdown-hover">
+        <div tabindex="0" role="button" class="btn btn-outline join-item">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 320 512"
+            class="size-4 fill-current"
+          >
+            <path
+              d="M271.978 288.008H48.147C5.531 288.008 -16.09 339.772 14.279 369.905L126.132 481.934C144.753 500.689 175.247 500.689 193.993 481.934L305.971 369.905C335.965 339.772 314.719 288.008 271.978 288.008ZM160 448.05L48.022 336.021H271.978L160 448.05ZM48.022 223.992H271.853C314.469 223.992 336.09 172.228 305.721 142.095L193.868 30.066C175.247 11.311 144.753 11.311 126.007 30.066L14.029 142.095C-15.965 172.228 5.281 223.992 48.022 223.992ZM160 63.95L271.978 175.979H48.022L160 63.95Z"
+            />
+          </svg>
+          Sort:
+          <span class="badge badge-neutral">
+            {{
+              sortControl.options.find(o => o.value === sortControl.key)?.label
+            }}
+          </span>
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
         >
-          {{ option.label ?? option.value }}
-        </MenuItem>
-      </ul>
+          <MenuItem
+            v-for="(option, optionIndex) in sortControl.options"
+            :key="`sortOption-${optionIndex}`"
+            :active="sortControl.key === option.value"
+            @click="setSortKey(option.value)"
+          >
+            {{ option.label ?? option.value }}
+          </MenuItem>
+        </ul>
+      </div>
     </div>
 
     <div class="dropdown dropdown-end">
@@ -235,7 +258,7 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
-          class="w-4 fill-current"
+          class="size-4 fill-current"
         >
           <path
             d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"
