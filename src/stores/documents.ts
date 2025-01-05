@@ -5,14 +5,12 @@ import type { Tables } from '@/database.types';
 import type { FilterKeys } from '@/utils/utils';
 import { useVehiclesStore } from './vehicles';
 
-// type VehicleDocument = Tables<'VehicleDocuments'> & {
-//   path: string | null;
-//   signedUrl: string;
-// };
+// TODO: fix documents to be uploaded in folder by ID instead of license plate?
 
 export const useDocumentsStore = defineStore('documents', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
+  const { setCurrentVehicle } = vehiclesStore;
 
   const documentsCache = reactive(
     new Map<
@@ -25,7 +23,7 @@ export const useDocumentsStore = defineStore('documents', () => {
 
   const documents = computed(() => {
     if (!currentVehicle.value || !currentVehicle.value.id) {
-      alert('No Vehicle Selected');
+      setCurrentVehicle();
 
       return [];
     }

@@ -179,6 +179,7 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         <div
           class="my-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6 flex-1"
         >
+          <!-- Consider removing license plate? -->
           <FormInput
             wrapperClass="sm:col-span-2"
             label="Liscense Plate Number"
@@ -256,6 +257,33 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
             step="1"
             :min="1885"
             v-model="vehicle.model_year"
+          />
+
+          <FormInput
+            wrapperClass="sm:col-span-2"
+            label="Color"
+            type="select"
+            v-model="vehicle.color"
+            :options="[
+              { value: 'Black' },
+              { value: 'Silver' },
+              { value: 'Grey' },
+              { value: 'Brown' },
+              { value: 'Red' },
+              { value: 'Yellow' },
+              { value: 'Orange' },
+              { value: 'Purple' },
+              { value: 'Pink' },
+              { value: 'Blue' },
+              { value: 'Turquise' },
+              { value: 'Magenta' },
+              { value: 'White' },
+              { value: 'Beige' },
+              { value: 'Green' },
+              { value: 'Lime' },
+              { value: 'Aqua' },
+              { value: 'Olive' },
+            ]"
           />
         </div>
       </template>
