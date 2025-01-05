@@ -25,6 +25,7 @@ import { useBreakpoints } from '@/lib/composables/useBreakpoints';
 import { type FilterOption } from '@/components/general/filter/FilterMenu.vue';
 import { useSessionStore } from '@/stores/general/userSession';
 import ExpensesFilter from './ExpensesFilter.vue';
+import DropdownMenu from '@/components/general/menu/DropdownMenu.vue';
 // import { useVirtualScroll } from '@/lib/composables/useVirtualScroll';
 
 const ExpenseModal = defineAsyncComponent(
@@ -219,8 +220,8 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
         class="join-item"
       />
 
-      <div class="dropdown dropdown-hover">
-        <div tabindex="0" role="button" class="btn btn-outline join-item">
+      <DropdownMenu btnClass="btn btn-outline join-item">
+        <template #default>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 320 512"
@@ -236,11 +237,8 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
               sortControl.options.find(o => o.value === sortControl.key)?.label
             }}
           </span>
-        </div>
-        <ul
-          tabindex="0"
-          class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
-        >
+        </template>
+        <template #items>
           <MenuItem
             v-for="(option, optionIndex) in sortControl.options"
             :key="`sortOption-${optionIndex}`"
@@ -249,12 +247,12 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
           >
             {{ option.label ?? option.value }}
           </MenuItem>
-        </ul>
-      </div>
+        </template>
+      </DropdownMenu>
     </div>
 
-    <div class="dropdown dropdown-end">
-      <div tabindex="0" role="button" class="btn btn-ghost w-auto btn-accent">
+    <DropdownMenu btnClass="btn btn-outline join-item w-auto" alignMenu="end">
+      <template #default>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
@@ -274,11 +272,8 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
             d="M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"
           />
         </svg>
-      </div>
-      <ul
-        tabindex="0"
-        class="dropdown-content menu bg-base-300 rounded-box z-[1] w-52 p-2 shadow"
-      >
+      </template>
+      <template #items>
         <MenuItem @click="handleExpensesExport('txt')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -303,8 +298,8 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
           </svg>
           CSV
         </MenuItem>
-      </ul>
-    </div>
+      </template>
+    </DropdownMenu>
   </div>
 
   <!-- TODO: fix -->
@@ -413,5 +408,6 @@ const setSortKey = (key: keyof ArrayElement<typeof expenses.value>) => {
     </ListSubGroup>
 
     <ListGroupItem v-if="loading" title="Loading..." />
+    <ListGroupItem v-if="!expenses.length" title="No expenses added yet..." />
   </ListGroup>
 </template>

@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { useServicesStore } from '@/stores/services';
-import { computed, defineAsyncComponent, ref, toRef, toRefs } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  reactive,
+  ref,
+  toRef,
+  toRefs,
+} from 'vue';
 import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/format';
 import ListGroup from '@/components/general/list/ListGroup.vue';
 import ListGroupItem from '@/components/general/list/ListGroupItem.vue';
-import { groupBy, type ArrayElement } from '@/utils/utils';
+import { dynamicSort, groupBy, type ArrayElement } from '@/utils/utils';
 import {
   downloadBlob,
   exportToCSV,
@@ -17,6 +24,7 @@ import ListSubGroup from '@/components/general/list/ListSubGroup.vue';
 import type { FilterOption } from '@/components/general/filter/FilterMenu.vue';
 import ServicesFilter from './ServicesFilter.vue';
 import { useSessionStore } from '@/stores/general/userSession';
+import DropdownMenu from '@/components/general/menu/DropdownMenu.vue';
 
 const ServiceModal = defineAsyncComponent(
   async () => await import('@/components/vehicles/services/ServiceModal.vue'),
@@ -63,6 +71,22 @@ const filterMappings: Record<
   string,
   keyof ArrayElement<typeof services.value>
 > = { Date: 'date', Currency: 'currency', 'Created by me': 'createdby_id' };
+
+const sortControl = reactive<{
+  key: keyof ArrayElement<typeof services.value>;
+  direction: 'asc' | 'desc';
+  options: Array<{
+    label?: string;
+    value: keyof ArrayElement<typeof services.value>;
+  }>;
+}>({
+  key: 'date',
+  direction: 'desc',
+  options: [
+    { value: 'date', label: 'Date' },
+    { value: 'cost', label: 'Cost' },
+  ],
+});
 
 const groupedServices = computed(() => {
   const filteredServices = services.value.filter(service => {
@@ -118,8 +142,19 @@ const groupedServices = computed(() => {
     });
   });
 
-  const servicesWithMonth = filteredServices.map(service => {
-    const month = formatDate(service.date, { year: 'numeric', month: 'long' });
+  const sortedServices = dynamicSort(
+    filteredServices,
+    sortControl.key,
+    sortControl.direction,
+  );
+
+  const servicesWithMonth = sortedServices.map(service => {
+    const month = formatDate(
+      service.date,
+      sortControl.key === 'date'
+        ? { year: 'numeric', month: 'long' }
+        : { year: 'numeric' },
+    );
 
     return {
       ...service,
@@ -138,6 +173,10 @@ const handleFilterApply = async (filterOptions: Array<FilterOption>) => {
 
 const handleFiltersReset = () => {
   filters.value = [];
+};
+
+const setSortKey = (key: keyof ArrayElement<typeof services.value>) => {
+  sortControl.key = key;
 };
 </script>
 
@@ -162,7 +201,39 @@ const handleFiltersReset = () => {
       Add Service
     </button>
 
-    <ServicesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
+    <div class="join">
+      <ServicesFilter @reset="handleFiltersReset" @apply="handleFilterApply" />
+
+      <DropdownMenu btnClass="btn btn-outline join-item">
+        <template #default>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 320 512"
+            class="size-4 fill-current"
+          >
+            <path
+              d="M271.978 288.008H48.147C5.531 288.008 -16.09 339.772 14.279 369.905L126.132 481.934C144.753 500.689 175.247 500.689 193.993 481.934L305.971 369.905C335.965 339.772 314.719 288.008 271.978 288.008ZM160 448.05L48.022 336.021H271.978L160 448.05ZM48.022 223.992H271.853C314.469 223.992 336.09 172.228 305.721 142.095L193.868 30.066C175.247 11.311 144.753 11.311 126.007 30.066L14.029 142.095C-15.965 172.228 5.281 223.992 48.022 223.992ZM160 63.95L271.978 175.979H48.022L160 63.95Z"
+            />
+          </svg>
+          Sorted on:
+          <span class="badge badge-neutral">
+            {{
+              sortControl.options.find(o => o.value === sortControl.key)?.label
+            }}
+          </span>
+        </template>
+        <template #items>
+          <MenuItem
+            v-for="(option, optionIndex) in sortControl.options"
+            :key="`sortOption-${optionIndex}`"
+            :active="sortControl.key === option.value"
+            @click="setSortKey(option.value)"
+          >
+            {{ option.label ?? option.value }}
+          </MenuItem>
+        </template>
+      </DropdownMenu>
+    </div>
 
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost btn-accent">
