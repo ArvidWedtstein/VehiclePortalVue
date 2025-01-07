@@ -135,7 +135,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
   >();
 
   const vehicleShares = computed(() => {
-    if (currentVehicleId.value === null) {
+    if (!currentVehicleId.value) {
       return [];
     }
 
@@ -233,9 +233,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
     vehicle_id?: Tables<'VehicleShares'>['vehicle_id'],
   ) => {
     try {
-      const currentVehicle_id = currentVehicle.value
-        ? currentVehicle.value.id
-        : vehicle_id;
+      const currentVehicle_id = vehicle_id ?? currentVehicle.value?.id;
 
       if (!currentVehicle_id) {
         return [];

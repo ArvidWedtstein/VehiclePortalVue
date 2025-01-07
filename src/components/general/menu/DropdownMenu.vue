@@ -24,6 +24,8 @@ type Props = {
    */
   direction?: 'top' | 'bottom' | 'left' | 'right';
   alignMenu?: 'start' | 'end';
+
+  menuSize?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
   autoClose: 'always',
   direction: 'bottom',
   alignMenu: 'start',
+  menuSize: 'md',
 });
 
 const dropdownRef = ref<HTMLDivElement | null>(null);
@@ -94,7 +97,15 @@ const handleToggleDropdown = () => {
         v-if="isOpen"
         tabindex="0"
         class="dropdown-content menu bg-base-300 rounded-box z-[1] p-2 shadow"
-        :class="[menuClass]"
+        :class="[
+          menuClass,
+          {
+            'menu-xs': menuSize === 'xs',
+            'menu-sm': menuSize === 'sm',
+            'menu-md': menuSize === 'md',
+            'menu-lg': menuSize === 'lg',
+          },
+        ]"
       >
         <slot name="items">
           <li><a>Item 1</a></li>

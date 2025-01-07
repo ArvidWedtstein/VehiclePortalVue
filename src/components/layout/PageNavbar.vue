@@ -5,6 +5,8 @@ import { useSessionStore } from '@/stores/general/userSession';
 import { storeToRefs } from 'pinia';
 import LoginModal from '../auth/LoginModal.vue';
 import MenuItem from '../general/menu/MenuItem.vue';
+import AvatarImage from '../general/utils/AvatarImage.vue';
+import DropdownMenu from '../general/menu/DropdownMenu.vue';
 
 const router = useRouter();
 
@@ -73,36 +75,34 @@ const navbarRoutes = computed(() => {
           />
         </svg>
       </label>
-      <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center">
-            <img
-              :src="
-                profile?.profile_image_url ||
-                `https://ui-avatars.com/api/?name=${profile?.name || 'Unknown User'}`
-              "
-            />
-          </div>
-        </div>
-        <ul
-          tabindex="0"
-          class="menu menu-sm dropdown-content bg-base-200 rounded-box z-[1] mt-3 w-52 p-2 shadow"
-        >
+
+      <DropdownMenu alignMenu="end" menuSize="sm">
+        <template #default>
+          <AvatarImage
+            tabindex="0"
+            role="button"
+            class="btn btn-ghost btn-circle"
+            :src="profile?.profile_image_url"
+            alt="My Profile Image"
+            :fallbackSrc="`https://ui-avatars.com/api/?name=${profile?.name || 'Unknown User'}`"
+            size="sm"
+          />
+        </template>
+
+        <template #items>
           <template v-if="profile?.id">
-            <li>
-              <RouterLink
-                :to="{ name: 'profile', params: { id: profile.id } }"
-                class="justify-between"
-              >
-                Profile
-              </RouterLink>
-            </li>
-            <li><button @click="sessionStore.logout">Logout</button></li>
+            <MenuItem
+              v-if="profile?.id"
+              :to="{ name: 'profile', params: { id: profile.id } }"
+            >
+              Profile
+            </MenuItem>
+            <MenuItem @click="sessionStore.logout">Logout</MenuItem>
           </template>
 
           <MenuItem v-else @click="loginModalRef?.open()">Login</MenuItem>
-        </ul>
-      </div>
+        </template>
+      </DropdownMenu>
     </div>
   </div>
 </template>

@@ -3,14 +3,16 @@ import CarIcon from '@/assets/icons/CarIcon.vue';
 import GearShifter from '@/assets/icons/GearShifter.vue';
 import MotorcycleIcon from '@/assets/icons/MotorcycleIcon.vue';
 import type { Tables } from '@/database.types';
-import { useVehiclesStore } from '@/stores/vehicles';
+import {
+  useVehiclesStore,
+  type VehicleShareWithProfile,
+} from '@/stores/vehicles';
 import { formatNumber } from '@/utils/format';
-import { getInitials } from '@/utils/utils';
-import { onMounted, toRef } from 'vue';
+import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import AvatarImage from '../general/utils/AvatarImage.vue';
 
 const vehicleStore = useVehiclesStore();
-const vehicleShares = toRef(vehicleStore, 'vehicleShares');
 const { getVehicleShares } = vehicleStore;
 
 type Props = {
@@ -19,8 +21,10 @@ type Props = {
 
 const props = defineProps<Props>();
 
+const shares = ref<VehicleShareWithProfile[]>([]);
+
 onMounted(async () => {
-  await getVehicleShares(props.vehicle.id);
+  shares.value = await getVehicleShares(props.vehicle.id);
 });
 </script>
 
@@ -98,22 +102,14 @@ onMounted(async () => {
 
       <div class="hidden md:card-actions justify-end items-center mt-2">
         <div class="avatar-group -space-x-4 rtl:space-x-reverse me-auto">
-          <div
-            v-for="(share, shareIndex) in vehicleShares"
+          <AvatarImage
+            v-for="(share, shareIndex) in shares"
             :key="shareIndex"
-            class="avatar"
-            :class="{ placeholder: !share.Profiles.profile_image_url }"
-          >
-            <div class="bg-neutral text-neutral-content w-8">
-              <img
-                v-if="share.Profiles.profile_image_url"
-                :src="share.Profiles.profile_image_url"
-              />
-              <span v-else-if="share.Profiles.name">{{
-                getInitials(share.Profiles.name)
-              }}</span>
-            </div>
-          </div>
+            :src="share.Profiles.profile_image_url"
+            alt="User Profile Image"
+            :fallbackSrc="`https://ui-avatars.com/api/?name=${share.Profiles.name || 'Unknown User'}`"
+            size="xs"
+          />
 
           <!-- <div class="avatar placeholder">
             <div class="bg-neutral text-neutral-content w-8">
@@ -121,6 +117,7 @@ onMounted(async () => {
             </div>
           </div> -->
         </div>
+
         <RouterLink
           :to="{ name: 'vehicle', params: { vehicle_id: vehicle.id } }"
           class="btn btn-sm btn-primary"
