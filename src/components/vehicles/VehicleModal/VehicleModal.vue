@@ -17,6 +17,7 @@ import { useToastStore } from '@/stores/general/toasts';
 import { useVehicleManufacturersStore } from '@/stores/vehicleManufacturers';
 import DataList from '@/components/general/form/DataList.vue';
 import { decodeVIN } from '@/utils/vinCountryCodes';
+import { useDocumentsStore } from '@/stores/documents';
 
 const modalRef = ref();
 
@@ -46,7 +47,10 @@ const defaultValues: TablesUpdate<'Vehicles'> = {
 };
 
 const vehiclesStore = useVehiclesStore();
+const vehicleDocumentsStore = useDocumentsStore();
 const vehicleManufacturersStore = useVehicleManufacturersStore();
+
+const { uploadDocumentFile } = vehicleDocumentsStore;
 
 const vehicles = toRef(vehiclesStore, 'vehicles');
 const { upsertVehicle } = vehiclesStore;
@@ -158,6 +162,25 @@ const getModels = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+
+const uploadThumbnail = async (event: Event) => {
+  if (vehicle.value.id == null) return;
+  const target = event.target as HTMLInputElement;
+  const [file] = Array.from(target.files || []);
+  console.log(event, file);
+
+  // TODO: finish tmrw
+  // TODO: do uploading on submit?
+
+  const res = await uploadDocumentFile(
+    `${vehicle.value.id}/${file.name}`,
+    file,
+  );
+
+  if (!res) return;
+
+  vehicle.value.thumbnail = res.path;
 };
 
 defineExpose({ modalRef: modalRef, open: handleOpen });
@@ -285,6 +308,19 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
               { value: 'Olive' },
             ]"
           />
+
+          <label class="form-control w-full sm:col-span-2" v-if="vehicle.id">
+            <div class="label">
+              <span class="label-text">Thumbnail</span>
+              <span class="label-text-alt">Vehicle Image</span>
+            </div>
+            <input
+              type="file"
+              class="file-input file-input-bordered w-full max-w-xs"
+              accept="image/png, image/jpeg, image/webp"
+              @change="uploadThumbnail"
+            />
+          </label>
         </div>
       </template>
       <template #step-engine>

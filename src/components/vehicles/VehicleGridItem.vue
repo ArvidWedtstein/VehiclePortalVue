@@ -31,7 +31,7 @@ onMounted(async () => {
 <template>
   <RouterLink
     :to="{ name: 'vehicle', params: { vehicle_id: vehicle.id } }"
-    class="card card-bordered md:card-normal card-compact bg-base-100 shadow-xl h-full transition-shadow hover:shadow-sm"
+    class="card card-bordered md:card-normal card-compact bg-base-100 shadow hover:shadow-xl h-full transition-shadow"
   >
     <div class="card-body">
       <div class="flex flex-row items-center gap-3">

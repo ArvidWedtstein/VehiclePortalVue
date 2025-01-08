@@ -7,6 +7,35 @@ import { useVehiclesStore } from './vehicles';
 
 // TODO: fix documents to be uploaded in folder by ID instead of license plate?
 
+interface FileOptions {
+  /**
+   * The number of seconds the asset is cached in the browser and in the Supabase CDN. This is set in the `Cache-Control: max-age=<seconds>` header. Defaults to 3600 seconds.
+   */
+  cacheControl?: string;
+  /**
+   * the `Content-Type` header value. Should be specified if using a `fileBody` that is neither `Blob` nor `File` nor `FormData`, otherwise will default to `text/plain;charset=UTF-8`.
+   */
+  contentType?: string;
+  /**
+   * When upsert is set to true, the file is overwritten if it exists. When set to false, an error is thrown if the object already exists. Defaults to false.
+   */
+  upsert?: boolean;
+  /**
+   * The duplex option is a string parameter that enables or disables duplex streaming, allowing for both reading and writing data in the same stream. It can be passed as an option to the fetch() method.
+   */
+  duplex?: string;
+
+  /**
+   * The metadata option is an object that allows you to store additional information about the file. This information can be used to filter and search for files. The metadata object can contain any key-value pairs you want to store.
+   */
+  metadata?: Record<string, unknown>;
+
+  /**
+   * Optionally add extra headers
+   */
+  headers?: Record<string, string>;
+}
+
 export const useDocumentsStore = defineStore('documents', () => {
   const vehiclesStore = useVehiclesStore();
   const currentVehicle = toRef(vehiclesStore, 'currentVehicle');
@@ -115,6 +144,24 @@ export const useDocumentsStore = defineStore('documents', () => {
     }
   };
 
+  const uploadDocumentFile = async (
+    path: string,
+    file: File,
+    options?: FileOptions,
+  ) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('VehicleDocuments')
+        .upload(path, file, options);
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const deleteDocumentFile = async (filePaths: Array<string>) => {
     try {
       if (!filePaths.length) return;
@@ -153,6 +200,7 @@ export const useDocumentsStore = defineStore('documents', () => {
   return {
     documents,
     getDocuments,
+    uploadDocumentFile,
     bindDocumentToService,
     deleteDocumentFile,
     loading,
