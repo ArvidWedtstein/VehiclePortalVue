@@ -6,6 +6,7 @@ import { useProfilesStore } from '@/stores/profiles';
 import ChangelogDrawer from '../changelog/ChangelogDrawer.vue';
 import { formatNumber } from '@/utils/format';
 import EditIcon from '@/assets/icons/EditIcon.vue';
+import AvatarImage from '@/components/general/utils/AvatarImage.vue';
 
 const VehicleModal = defineAsyncComponent(
   async () =>
@@ -183,16 +184,13 @@ const currentVehicleOwner = computed(() => {
       <div class="flex gap-1 items-center">
         <small>Shared with:</small>
         <div class="avatar-group -space-x-2 rtl:space-x-reverse">
-          <a class="avatar" v-for="share in vehicleShares" :key="share.id">
-            <div class="w-5">
-              <img
-                :src="
-                  share.Profiles.profile_image_url ||
-                  `https://ui-avatars.com/api/?name=${share.Profiles.name}`
-                "
-              />
-            </div>
-          </a>
+          <AvatarImage
+            v-for="share in vehicleShares"
+            :key="share.id"
+            size="xxs"
+            :src="share.Profiles.profile_image_url"
+            :fallbackSrc="`https://ui-avatars.com/api/?name=${share.Profiles.name}`"
+          />
         </div>
       </div>
     </div>

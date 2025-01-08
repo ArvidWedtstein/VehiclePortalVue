@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import AvatarImage from '../utils/AvatarImage.vue';
+</script>
 
 <template>
   <li class="group">
@@ -9,9 +11,7 @@
       ></span>
       <div class="relative flex items-start space-x-3">
         <div class="relative">
-          <div class="avatar">
-            <div class="skeleton w-10 h-10 rounded-full"></div>
-          </div>
+          <AvatarImage loading size="sm" />
         </div>
         <div class="min-w-0 flex-1">
           <div>

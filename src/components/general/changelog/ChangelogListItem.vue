@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { relativeDate } from '@/utils/date';
-import { getInitials } from '@/utils/utils';
 import { computed } from 'vue';
+import AvatarImage from '../utils/AvatarImage.vue';
+
 type Props = {
   time?: Date | string | null;
   action?: string;
@@ -46,20 +47,11 @@ const actionText = computed(() => {
       >
         <div class="relative" :class="{ 'px-1': !avatar && !actionByUser }">
           <template v-if="avatar || actionByUser">
-            <div class="avatar" :class="{ placeholder: !avatar }">
-              <div
-                class="bg-neutral text-neutral-content w-10 h-10 rounded-full"
-              >
-                <img
-                  v-if="avatar"
-                  :src="avatar"
-                  class="flex items-center justify-center"
-                />
-                <span v-else class="text-xs">{{
-                  getInitials(actionByUser, 2)
-                }}</span>
-              </div>
-            </div>
+            <AvatarImage
+              size="sm"
+              :fallbackSrc="`https://ui-avatars.com/api/?name=${actionByUser}`"
+            />
+
             <span class="absolute -bottom-0.5 -right-1 rounded-tl px-0.5 py-px">
               <slot name="icon"></slot>
             </span>

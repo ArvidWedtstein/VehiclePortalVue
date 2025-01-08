@@ -15,14 +15,15 @@ type Props = {
    */
   alt?: string | null;
 
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg';
   /**
    * Shape of image.
    * @default 'circle'
    */
   shape?: 'rounded' | 'circle' | 'squircle' | 'hexagon' | 'triangle';
 
-  loading?: 'eager' | 'lazy';
+  loading?: boolean;
+  imageLoading?: 'eager' | 'lazy';
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,7 +33,8 @@ const props = withDefaults(defineProps<Props>(), {
 
   shape: 'circle',
 
-  loading: 'lazy',
+  loading: false,
+  imageLoading: 'lazy',
 });
 
 const fallbackSrc = computed(() => {
@@ -41,6 +43,7 @@ const fallbackSrc = computed(() => {
 
 const computedClasses = computed(() => {
   const sizeClasses = {
+    xxs: 'size-5',
     xs: 'size-8',
     sm: 'size-10',
     md: 'size-12',
@@ -55,7 +58,11 @@ const computedClasses = computed(() => {
     triangle: 'mask mask-triangle',
   };
 
-  return [sizeClasses[props.size], shapeClasses[props.shape]];
+  return [
+    sizeClasses[props.size],
+    shapeClasses[props.shape],
+    { skeleton: props.loading },
+  ];
 });
 
 const handleImageError = (event: Event) => {
@@ -70,13 +77,14 @@ const handleImageError = (event: Event) => {
 
 <template>
   <div class="avatar">
-    <div class="bg-neutral text-neutral-content" :class="computedClasses">
+    <div class="text-neutral-content" :class="computedClasses">
       <img
+        v-if="!loading"
         role="img"
         :src="src || ''"
         :alt="alt || ''"
         decoding="async"
-        :loading="loading"
+        :loading="imageLoading"
         @error="handleImageError"
         @load="$event => console.log('loaded', $event)"
       />
