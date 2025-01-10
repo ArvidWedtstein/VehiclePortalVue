@@ -46,7 +46,7 @@ export const useExpensesStore = defineStore('expenses', () => {
   ) => {
     try {
       if (!currentVehicle.value || !currentVehicle.value.id) {
-        throw new Error('No Vehicle Selected!, GetExpenses');
+        await setCurrentVehicle();
       }
 
       loading.value = true;
@@ -59,7 +59,7 @@ export const useExpensesStore = defineStore('expenses', () => {
         .from('VehicleExpenses')
         .select(columns.join(','), { count: 'exact' })
         .match(filters || {})
-        .eq('vehicle_id', currentVehicle.value.id)
+        .eq('vehicle_id', currentVehicle.value?.id as number)
         // .order('date', { ascending: false })
         .range(...range)
         .returns<Tables<'VehicleExpenses'>[]>();
@@ -67,7 +67,7 @@ export const useExpensesStore = defineStore('expenses', () => {
       if (error && status !== 406) throw error;
 
       const currentVehicleExpensesCache =
-        expensesCache.get(currentVehicle.value.id) || new Map();
+        expensesCache.get(currentVehicle.value?.id as number) || new Map();
 
       if (data) {
         data.forEach(item => {
@@ -75,7 +75,10 @@ export const useExpensesStore = defineStore('expenses', () => {
         });
       }
 
-      expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
+      expensesCache.set(
+        currentVehicle.value?.id as number,
+        currentVehicleExpensesCache,
+      );
 
       return data ?? [];
     } catch (err) {
@@ -118,8 +121,8 @@ export const useExpensesStore = defineStore('expenses', () => {
       }
 
       expensesCache.set(currentVehicle.value.id, currentVehicleExpensesCache);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      throw error;
     } finally {
       loading.value = false;
     }

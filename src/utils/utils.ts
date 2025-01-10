@@ -220,3 +220,15 @@ export const dynamicSort = <T extends Record<string, unknown>>(
     return order === 'asc' ? comparison : -comparison;
   });
 };
+
+/** Removes key from object */
+export const removeKeys = <T extends Record<string, unknown>>(
+  obj: T,
+  keysToRemove: (keyof T)[],
+): Partial<T> => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(
+      ([key]) => !keysToRemove.includes(key as keyof T),
+    ),
+  ) as Partial<T>;
+};

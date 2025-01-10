@@ -71,6 +71,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       }
 
       currentVehicleId.value = vehicle_id;
+
+      return vehicle_id;
     } catch (err) {
       console.error(err);
     }

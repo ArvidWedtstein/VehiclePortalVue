@@ -32,12 +32,20 @@ export const useServicesStore = defineStore('services', () => {
 
     const vehicleServices = servicesCache.get(currentVehicle.value.id);
 
-    return vehicleServices
-      ? Array.from(vehicleServices.values()).sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        )
-      : [];
+    return vehicleServices ? Array.from(vehicleServices.values()) : [];
   });
+
+  const getServiceById = (service_id: Tables<'VehicleServiceLogs'>['id']) => {
+    if (!currentVehicle.value || !currentVehicle.value.id) {
+      return;
+    }
+
+    const vehicleServices = servicesCache.get(currentVehicle.value.id);
+
+    if (!vehicleServices) return;
+
+    return vehicleServices.get(service_id);
+  };
 
   const getServices = async <
     Columns extends (keyof Tables<'VehicleServiceLogs'> | '*')[],
@@ -147,7 +155,14 @@ export const useServicesStore = defineStore('services', () => {
     }
   };
 
-  return { services, getServices, upsertService, deleteService, loading };
+  return {
+    services,
+    getServices,
+    getServiceById,
+    upsertService,
+    deleteService,
+    loading,
+  };
 });
 
 if (import.meta.hot) {

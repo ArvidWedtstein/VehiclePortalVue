@@ -25,8 +25,7 @@ const documentsStore = useDocumentsStore();
 const documents = toRef(documentsStore, 'documents');
 
 const serviceStore = useServicesStore();
-const services = toRef(serviceStore, 'services');
-const { upsertService } = serviceStore;
+const { getServiceById, upsertService } = serviceStore;
 
 const stepControl = reactive({
   step: 0,
@@ -41,7 +40,6 @@ const changeStep = (stepIndex: number) => {
 };
 
 const defaultValues: TablesUpdate<'VehicleServiceLogs'> = {
-  vehicle_id: currentVehicle.value?.id,
   date: new Date().toUTCString().split('.')[0].slice(0, -3),
   provider: '',
   cost: 0,
@@ -100,7 +98,7 @@ const handleOpen = async (
     return;
   }
 
-  const editService = services.value.find(({ id }) => id === service_id);
+  const editService = getServiceById(service_id);
 
   if (!editService) {
     alert('No Service found');

@@ -86,7 +86,6 @@ const handleImageError = (event: Event) => {
         decoding="async"
         :loading="imageLoading"
         @error="handleImageError"
-        @load="$event => console.log('loaded', $event)"
       />
     </div>
   </div>

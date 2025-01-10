@@ -10,8 +10,10 @@ import { supabase } from '@/lib/supabaseClient';
 import { formatNumber } from '@/utils/format';
 import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
 import { useToastStore } from '@/stores/general/toasts';
+import { removeKeys } from '@/utils/utils';
+import type { PostgrestError } from '@supabase/supabase-js';
 
-const modalRef = ref();
+const modalRef = ref<InstanceType<typeof FormDialog>>();
 
 const { addToast } = useToastStore();
 
@@ -36,20 +38,32 @@ const expense = ref<
   TablesInsert<'VehicleExpenses'> | TablesUpdate<'VehicleExpenses'>
 >({ ...defaultValues });
 
-const onFormSubmit = () => {
-  console.log('submit', expense.value);
+const onFormSubmit = async () => {
+  try {
+    // TODO: add loading state
+    await upsertExpense({
+      ...expense.value,
+      date:
+        expense.value.date +
+        `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+    });
 
-  upsertExpense({
-    ...expense.value,
-    date:
-      expense.value.date + `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
-  });
+    addToast(
+      `Successfully ${expense.value.id ? 'saved' : 'created'} expense`,
+      'success',
+      2000,
+    );
 
-  addToast(
-    `Successfully ${expense.value.id ? 'saved' : 'created'} expense`,
-    'success',
-    2000,
-  );
+    modalRef.value?.close();
+  } catch (error) {
+    console.log(error);
+    const { message } = error as PostgrestError;
+    addToast(
+      `Something went wrong while ${expense.value.id ? 'saving' : 'creating'} expense. ${message}`,
+      'error',
+      5000,
+    );
+  }
 };
 
 const handleOpen = async (
@@ -85,12 +99,11 @@ const handleOpen = async (
   }
 
   expense.value = {
-    ...defaultValues,
-    ...editExpense,
+    ...removeKeys(editExpense, ['price_per_unit']),
     date: convertToDatetimeLocal(editExpense.date),
   };
 
-  modalRef.value.modalRef.showModal();
+  modalRef.value?.open();
 };
 
 defineExpose({ modalRef: modalRef, open: handleOpen });
@@ -251,7 +264,11 @@ defineExpose({ modalRef: modalRef, open: handleOpen });
         Cancel
       </button>
 
-      <button type="button" @click="onSubmit" class="btn btn-primary ms-1">
+      <button
+        type="button"
+        @click.stop.prevent="onSubmit"
+        class="btn btn-primary ms-1"
+      >
         {{ expense.id ? 'Save' : 'Create' }}
       </button>
     </template>

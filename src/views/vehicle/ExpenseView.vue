@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useVehiclesStore } from '@/stores/vehicles';
 import { RouterLink, useRoute } from 'vue-router';
-import { computed, onBeforeMount, watch } from 'vue';
+import { computed, defineAsyncComponent, onBeforeMount, ref, watch } from 'vue';
 
 import { storeToRefs } from 'pinia';
 import { useExpensesStore } from '@/stores/expenses';
@@ -13,6 +13,10 @@ import EditIcon from '@/assets/icons/EditIcon.vue';
 import TrashIcon from '@/assets/icons/TrashIcon.vue';
 import ChevronRight from '@/assets/icons/ChevronRight.vue';
 
+const ExpenseModal = defineAsyncComponent(
+  async () => await import('@/components/vehicles/expenses/ExpenseModal.vue'),
+);
+
 const vehiclesStore = useVehiclesStore();
 const expensesStore = useExpensesStore();
 const profilesStore = useProfilesStore();
@@ -22,6 +26,8 @@ const { profiles } = storeToRefs(profilesStore);
 const { currentVehicle } = storeToRefs(vehiclesStore);
 const { expenses, loading } = storeToRefs(expensesStore);
 const { getExpenses, deleteExpense } = expensesStore;
+
+const expenseModal = ref<InstanceType<typeof ExpenseModal>>();
 
 const route = useRoute();
 
@@ -80,8 +86,10 @@ onBeforeMount(() => {
     Back to expenses
   </RouterLink>
 
+  <ExpenseModal ref="expenseModal" />
+
   <div
-    v-if="!loading"
+    v-if="!loading && expense"
     class="card card-compact md:card-normal bg-base-100 md:w-96 shadow-xl"
   >
     <div class="card-body">
@@ -182,7 +190,11 @@ onBeforeMount(() => {
       <p class="capitalize text-sm mb-2">{{ expense.notes }}</p>
 
       <div class="card-actions justify-between">
-        <button type="button" class="btn btn-sm">
+        <button
+          type="button"
+          class="btn btn-sm"
+          @click="expenseModal?.open(expense.id)"
+        >
           <EditIcon class="w-3" />
           Edit
         </button>

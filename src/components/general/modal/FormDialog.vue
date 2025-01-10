@@ -13,13 +13,16 @@ type Props = {
    * Disables submit button
    */
   loading?: boolean;
+
+  closeOnSubmit?: boolean;
 };
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   id: crypto.randomUUID(),
   size: 'lg',
   backdrop: true,
   loading: false,
+  closeOnSubmit: false,
 });
 
 const emit = defineEmits<{
@@ -45,6 +48,8 @@ const handleSubmit = (event: Event) => {
 
   emit('submit', event);
 
+  if (!props.closeOnSubmit) return;
+
   modalRef.value.close('submit');
 };
 
@@ -59,13 +64,20 @@ const observer = new MutationObserver(event => {
   }
 });
 
+const openModal = () => {
+  modalRef.value?.showModal();
+};
+const closeModal = () => {
+  modalRef.value?.close('close');
+};
+
 onMounted(() => {
   if (!modalRef.value) return;
 
   observer.observe(modalRef.value, { attributes: true });
 });
 
-defineExpose({ modalRef: modalRef });
+defineExpose({ modalRef: modalRef, open: openModal, close: closeModal });
 </script>
 
 <template>
