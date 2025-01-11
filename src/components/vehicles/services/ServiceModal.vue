@@ -7,7 +7,7 @@ import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useServicesStore } from '@/stores/services';
 import { supabase } from '@/lib/supabaseClient';
 import { formatNumber } from '@/utils/format';
-import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
+import { convertLocalToUTC, convertToDatetimeLocal } from '@/utils/date';
 import { useToastStore } from '@/stores/general/toasts';
 import DataList from '@/components/general/form/DataList.vue';
 import FormStepper from '@/components/general/form/FormStepper.vue';
@@ -57,9 +57,7 @@ const onFormSubmit = async () => {
   try {
     await upsertService({
       ...service.value,
-      date:
-        service.value.date +
-        `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+      date: convertLocalToUTC(service.value.date),
     });
 
     addToast(
@@ -75,9 +73,9 @@ const onFormSubmit = async () => {
 const handleOpen = async (
   service_id?: TablesUpdate<'VehicleServiceLogs'>['id'],
 ) => {
-  if (service_id == null || service_id === undefined) {
-    if (!currentVehicle.value) return;
+  if (!currentVehicle.value) return;
 
+  if (service_id == null) {
     const { data, error } = await supabase.rpc('get_last_mileage', {
       vehicle_id: currentVehicle.value.id,
       type: 'services',
@@ -89,7 +87,7 @@ const handleOpen = async (
 
     service.value = {
       ...defaultValues,
-      date: getLocalDateISO().split('.')[0].slice(0, -3),
+      date: convertToDatetimeLocal(),
       mileage,
     };
 

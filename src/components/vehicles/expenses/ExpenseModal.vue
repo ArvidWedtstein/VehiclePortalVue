@@ -8,7 +8,7 @@ import type { TablesInsert, TablesUpdate } from '@/database.types';
 import { useExpensesStore } from '@/stores/expenses';
 import { supabase } from '@/lib/supabaseClient';
 import { formatNumber } from '@/utils/format';
-import { convertToDatetimeLocal, getLocalDateISO } from '@/utils/date';
+import { convertLocalToUTC, convertToDatetimeLocal } from '@/utils/date';
 import { useToastStore } from '@/stores/general/toasts';
 import { removeKeys } from '@/utils/utils';
 import type { PostgrestError } from '@supabase/supabase-js';
@@ -25,8 +25,6 @@ const { upsertExpense, deleteExpense } = expensesStore;
 const expenses = toRef(expensesStore, 'expenses');
 
 const defaultValues: TablesUpdate<'VehicleExpenses'> = {
-  vehicle_id: currentVehicle.value?.id || -1,
-  date: new Date().toISOString().split('.')[0].slice(0, -3),
   amount: 0,
   cost: 0,
   currency: 'NOK',
@@ -43,9 +41,7 @@ const onFormSubmit = async () => {
     // TODO: add loading state
     await upsertExpense({
       ...expense.value,
-      date:
-        expense.value.date +
-        `+${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+      date: convertLocalToUTC(expense.value.date),
     });
 
     addToast(
@@ -83,7 +79,7 @@ const handleOpen = async (
 
     expense.value = {
       ...defaultValues,
-      date: getLocalDateISO().split('.')[0].slice(0, -3),
+      date: convertToDatetimeLocal(),
       mileage,
     };
 

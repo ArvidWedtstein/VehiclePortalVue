@@ -50,7 +50,7 @@ defineExpose({
         :key="`step-panel-${stepIndex}`"
       >
         <div
-          v-if="modelValue === stepIndex"
+          v-show="modelValue === stepIndex"
           :id="`step-${step}`"
           class="carousel-item w-full"
         >

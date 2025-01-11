@@ -3,7 +3,6 @@ import {
   addToDate,
   adjustCalendarDate,
   getRangeBetweenDates,
-  toLocaleISODate,
   toLocalPeriod,
 } from '@/utils/date';
 import { getLanguage } from '@/utils/utils';
@@ -231,22 +230,20 @@ const selectMonth = (month: number) => {
               'bg-white text-black':
                 toLocalPeriod(date) === settings.selectedPeriod,
               'text-primary':
-                toLocaleISODate(date) === toLocaleISODate(new Date()) &&
-                toLocaleISODate(date) !== toLocaleISODate(selectedDate),
-              'text-white':
-                toLocaleISODate(date) === toLocaleISODate(selectedDate),
+                toLocalPeriod(date) === toLocalPeriod(new Date()) &&
+                toLocalPeriod(date) !== toLocalPeriod(selectedDate),
+              'text-white': toLocalPeriod(date) === toLocalPeriod(selectedDate),
             }"
             @click="handleDateSelect(date)"
           >
             <time
-              :datetime="toLocaleISODate(date)"
+              :datetime="toLocalPeriod(date)"
               class="mx-auto flex h-7 w-7 items-center justify-center rounded-full"
               :class="{
                 'font-semibold':
-                  toLocaleISODate(date) === toLocaleISODate(new Date()) ||
-                  toLocaleISODate(date) === toLocaleISODate(selectedDate),
-                'bg-black':
-                  toLocaleISODate(date) === toLocaleISODate(selectedDate),
+                  toLocalPeriod(date) === toLocalPeriod(new Date()) ||
+                  toLocalPeriod(date) === toLocalPeriod(selectedDate),
+                'bg-black': toLocalPeriod(date) === toLocalPeriod(selectedDate),
               }"
             >
               {{ date.getDate() }}

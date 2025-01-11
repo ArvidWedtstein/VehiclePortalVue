@@ -64,6 +64,8 @@ const vehicle = ref<TablesInsert<'Vehicles'> | TablesUpdate<'Vehicles'>>({
   ...defaultValues,
 });
 
+const uploadedDocumentFiles = ref<File[]>([]);
+
 const stepControl = reactive({
   step: 0,
   steps: ['General', 'Engine', 'Transmission'],
@@ -78,15 +80,33 @@ const changeStep = (stepIndex: number) => {
 
 const onFormSubmit = async () => {
   try {
-    await upsertVehicle(vehicle.value);
+    const result = await upsertVehicle(vehicle.value);
+    if (!result) return;
 
-    modalRef.value.modalRef.close();
+    if (uploadedDocumentFiles.value.length > 0) {
+      const [createdVehicle] = result;
+
+      const [documentFile] = uploadedDocumentFiles.value;
+
+      const res = await uploadDocumentFile(
+        `${createdVehicle.id}/${documentFile.name}`,
+        documentFile,
+      );
+
+      if (!res) return;
+
+      vehicle.value.thumbnail = res.path;
+
+      await upsertVehicle(vehicle.value);
+    }
 
     addToast(
       `Successfully ${vehicle.value.id ? 'updated' : 'created'} vehicle`,
       'success',
       2000,
     );
+
+    modalRef.value.modalRef.close();
   } catch (err) {
     console.error(err);
 
@@ -165,22 +185,9 @@ const getModels = async () => {
 };
 
 const uploadThumbnail = async (event: Event) => {
-  if (vehicle.value.id == null) return;
   const target = event.target as HTMLInputElement;
-  const [file] = Array.from(target.files || []);
-  console.log(event, file);
 
-  // TODO: finish tmrw
-  // TODO: do uploading on submit?
-
-  const res = await uploadDocumentFile(
-    `${vehicle.value.id}/${file.name}`,
-    file,
-  );
-
-  if (!res) return;
-
-  vehicle.value.thumbnail = res.path;
+  uploadedDocumentFiles.value = Array.from(target.files || []);
 };
 
 defineExpose({ modalRef: modalRef, open: handleOpen });

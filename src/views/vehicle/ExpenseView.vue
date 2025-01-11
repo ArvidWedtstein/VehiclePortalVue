@@ -126,7 +126,12 @@ onBeforeMount(() => {
           </svg> -->
           <span class="font-semibold">Date:</span>
           <span>
-            {{ formatDate(expense.date) }}
+            {{
+              formatDate(expense.date, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })
+            }}
           </span>
         </li>
         <li class="inline-flex gap-2 items-center">

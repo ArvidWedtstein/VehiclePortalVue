@@ -23,13 +23,16 @@ const profile = computed(() => {
   return profiles.value.filter(({ id }) => id === profileId.value)[0];
 });
 
-const handleUserTermination = () => {
+const handleUserTermination = async () => {
   if (!profile.value) return;
   console.log('User termination');
   // TODO: Add a confirmation dialog
-
   confirm('Are you sure you want to delete all your data?');
-  supabase.rpc('terminate_user', { profile_user_id: profile.value.user_id });
+  await supabase.rpc('terminate_user', {
+    profile_user_id: profile.value.user_id,
+  });
+
+  await supabase.auth.signOut();
 };
 
 onBeforeMount(async () => {

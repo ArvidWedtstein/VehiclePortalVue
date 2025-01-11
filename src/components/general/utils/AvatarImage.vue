@@ -65,13 +65,12 @@ const computedClasses = computed(() => {
   ];
 });
 
-const handleImageError = (event: Event) => {
+const handleError = (event: Event) => {
   const target = event.target as HTMLImageElement;
 
   target.onerror = null;
 
   target.src = fallbackSrc.value;
-  console.log('img error', event);
 };
 </script>
 
@@ -85,7 +84,7 @@ const handleImageError = (event: Event) => {
         :alt="alt || ''"
         decoding="async"
         :loading="imageLoading"
-        @error="handleImageError"
+        @error="handleError"
       />
     </div>
   </div>

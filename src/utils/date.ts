@@ -1,12 +1,5 @@
 import { getLanguage } from './utils';
 
-export const getLocalDateISO = () => {
-  return new Date(
-    new Date().setHours(
-      new Date().getHours() - new Date().getTimezoneOffset() / 60,
-    ),
-  ).toISOString();
-};
 export const timeFormatL = (seconds: number, onlyLast: boolean = false) => {
   let time = '';
   const days = Math.floor(seconds / 86400);
@@ -307,20 +300,6 @@ export const relativeDate = (
   }
 };
 
-export const toLocalPeriod = (date: Date): string => {
-  return `${date.getFullYear()}-${(date.getMonth() + 1)
-    .toString()
-    .padStart(2, '0')}`;
-};
-
-export const toLocaleISODate = (date: Date | null) => {
-  if (!date) return;
-  return `${date.getFullYear()}-${(date.getMonth() + 1 + '').padStart(
-    2,
-    '0',
-  )}-${(date.getDate() + '').padStart(2, '0')}`;
-};
-
 export const getDateUnit = (
   type: 'weekday' | 'month' = 'weekday',
   firstDayOfWeek = 1,
@@ -379,8 +358,16 @@ export const addToDate = (
   return result;
 };
 
-export const convertToDatetimeLocal = (isoDate: string): string => {
-  const date = new Date(isoDate);
+export const toLocalPeriod = (date: Date): string => {
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}`;
+};
+
+export const convertToDatetimeLocal = (
+  inputDate: number | string | Date = new Date(),
+): string => {
+  const date = new Date(inputDate);
 
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -391,14 +378,9 @@ export const convertToDatetimeLocal = (isoDate: string): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-export const adjustDateToLocal = (date?: Date | string) => {
-  if (!date) {
-    return new Date(date || '');
-  }
-
-  const dateObj = new Date(date);
-  const offset = dateObj.getTimezoneOffset(); // Offset in minutes
-  const adjustedDate = new Date(dateObj.getTime() - offset * 60 * 1000); // Adjust the time
-
-  return adjustedDate;
+export const convertLocalToUTC = (
+  localDate: string | number | Date = new Date(),
+) => {
+  const utcDate = new Date(localDate);
+  return utcDate.toISOString();
 };

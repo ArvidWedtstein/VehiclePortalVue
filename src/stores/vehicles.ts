@@ -123,6 +123,8 @@ export const useVehiclesStore = defineStore('vehicles', () => {
       data?.forEach(vehicle => {
         vehiclesCache.set(vehicle.id, vehicle);
       });
+
+      return data;
     } catch (err) {
       console.error(err);
     }

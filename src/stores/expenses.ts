@@ -60,7 +60,7 @@ export const useExpensesStore = defineStore('expenses', () => {
         .select(columns.join(','), { count: 'exact' })
         .match(filters || {})
         .eq('vehicle_id', currentVehicle.value?.id as number)
-        // .order('date', { ascending: false })
+        .order('date', { ascending: false })
         .range(...range)
         .returns<Tables<'VehicleExpenses'>[]>();
 
