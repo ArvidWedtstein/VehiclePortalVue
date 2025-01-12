@@ -132,7 +132,7 @@ onBeforeMount(async () => {
   </RouterLink>
 
   <div
-    v-if="!loading"
+    v-if="!loading && service"
     class="card card-compact md:card-side bg-base-100 shadow-xl"
   >
     <div class="card-body">

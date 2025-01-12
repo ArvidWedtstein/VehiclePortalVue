@@ -7,7 +7,7 @@ import { useRoute } from 'vue-router';
 import { useSessionStore } from './general/userSession';
 
 export type VehicleShareWithProfile = Tables<'VehicleShares'> & {
-  Profiles: Pick<Tables<'Profiles'>, 'profile_image_url' | 'name'>;
+  Profiles: Pick<Tables<'Profiles'>, 'id' | 'profile_image_url' | 'name'>;
 };
 
 export const useVehiclesStore = defineStore('vehicles', () => {
@@ -168,6 +168,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
           `
           *,
           Profiles (
+            id,
             name,
             profile_image_url
           )  
@@ -209,6 +210,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
           `
           *,
           Profiles (
+            id,
             name,
             profile_image_url
           )  
@@ -251,6 +253,7 @@ export const useVehiclesStore = defineStore('vehicles', () => {
           `
           *,
           Profiles (
+            id,
             name,
             profile_image_url
           )  

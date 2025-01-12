@@ -55,7 +55,7 @@ export const useServicesStore = defineStore('services', () => {
   ) => {
     try {
       if (!currentVehicle.value || !currentVehicle.value.id) {
-        throw new Error('No Vehicle Selected!');
+        await setCurrentVehicle();
       }
 
       loading.value = true;
@@ -64,7 +64,7 @@ export const useServicesStore = defineStore('services', () => {
         .from('VehicleServiceLogs')
         .select(columns.join(','))
         .match(filters || {})
-        .eq('vehicle_id', currentVehicle.value.id)
+        .eq('vehicle_id', currentVehicle.value?.id as number)
         .limit(100)
         .order('date', { ascending: false })
         .returns<Tables<'VehicleServiceLogs'>[]>();
@@ -72,7 +72,7 @@ export const useServicesStore = defineStore('services', () => {
       if (error && status !== 406) throw error;
 
       const currentVehicleServicesCache =
-        servicesCache.get(currentVehicle.value.id) || new Map();
+        servicesCache.get(currentVehicle.value?.id as number) || new Map();
 
       if (data) {
         data.forEach(item => {
@@ -80,7 +80,10 @@ export const useServicesStore = defineStore('services', () => {
         });
       }
 
-      servicesCache.set(currentVehicle.value.id, currentVehicleServicesCache);
+      servicesCache.set(
+        currentVehicle.value?.id as number,
+        currentVehicleServicesCache,
+      );
     } catch (err) {
       console.error(err);
     } finally {

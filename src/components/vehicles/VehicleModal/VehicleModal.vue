@@ -97,7 +97,7 @@ const onFormSubmit = async () => {
 
       vehicle.value.thumbnail = res.path;
 
-      await upsertVehicle(vehicle.value);
+      await upsertVehicle({ id: createdVehicle.id, ...vehicle.value });
     }
 
     addToast(

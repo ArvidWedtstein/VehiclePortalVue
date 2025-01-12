@@ -97,6 +97,7 @@ const currentVehicleOwner = computed(() => {
             </svg>
             Changelog
           </button>
+          <!-- TODO: finish-->
           <!-- <button
             type="button"
             class="btn btn-sm btn-neutral btn-outline"
@@ -167,16 +168,19 @@ const currentVehicleOwner = computed(() => {
         </small>
       </div>
 
-      <div class="flex gap-1 items-center">
+      <div class="flex gap-1 items-center" v-if="currentVehicleOwner">
         <small>Owner:</small>
-        <div class="avatar tooltip" :data-tip="currentVehicleOwner?.name">
-          <div class="w-5 rounded-full">
-            <img
-              v-if="currentVehicleOwner?.profile_image_url"
-              :src="currentVehicleOwner?.profile_image_url"
-            />
-          </div>
-        </div>
+        <RouterLink
+          class="tooltip"
+          :data-tip="currentVehicleOwner.name"
+          :to="{ name: 'profile', params: { id: currentVehicleOwner.id } }"
+        >
+          <AvatarImage
+            size="xxs"
+            :src="currentVehicleOwner?.profile_image_url"
+            :fallbackSrc="`https://ui-avatars.com/api/?name=${currentVehicleOwner.name}`"
+          />
+        </RouterLink>
 
         {{ currentVehicleOwner?.name }}
       </div>
@@ -184,13 +188,17 @@ const currentVehicleOwner = computed(() => {
       <div class="flex gap-1 items-center">
         <small>Shared with:</small>
         <div class="avatar-group -space-x-2 rtl:space-x-reverse">
-          <AvatarImage
+          <RouterLink
             v-for="share in vehicleShares"
             :key="share.id"
-            size="xxs"
-            :src="share.Profiles.profile_image_url"
-            :fallbackSrc="`https://ui-avatars.com/api/?name=${share.Profiles.name}`"
-          />
+            :to="{ name: 'profile', params: { id: share.Profiles.id } }"
+          >
+            <AvatarImage
+              size="xxs"
+              :src="share.Profiles.profile_image_url"
+              :fallbackSrc="`https://ui-avatars.com/api/?name=${share.Profiles.name}`"
+            />
+          </RouterLink>
         </div>
       </div>
     </div>
