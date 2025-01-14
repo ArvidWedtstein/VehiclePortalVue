@@ -54,9 +54,16 @@ const currentVehicleOwner = computed(() => {
   <ShareVehicleDrawer ref="shareVehicleDrawerRef" />
 
   <div
-    class="card card-bordered bg-base-200 card-compact lg:card-normal shrink"
+    class="card image-full card-bordered bg-base-200 card-compact lg:card-normal shrink"
     v-if="currentVehicle"
   >
+    <figure>
+      <img
+        :src="`https://akhxphgocxpyoofvdqwi.supabase.co/storage/v1/object/public/${currentVehicle.thumbnail}`"
+        alt="Car"
+        class="object-cover max-h-64 grow"
+      />
+    </figure>
     <div class="card-body">
       <div class="flex justify-between items-center gap-6">
         <h2 class="card-title !mb-0">
