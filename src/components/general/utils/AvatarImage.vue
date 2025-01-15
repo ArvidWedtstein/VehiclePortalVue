@@ -28,7 +28,7 @@ type Props = {
 
 const props = withDefaults(defineProps<Props>(), {
   src: '',
-  alt: props => (props.alt || 'Unknown User') as string,
+  alt: props => (props.alt || 'Unknown') as string,
   size: 'md',
 
   shape: 'circle',
@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const fallbackSrc = computed(() => {
-  return props.fallbackSrc ?? `https://ui-avatars.com/api/?name=Unknown User`;
+  return props.fallbackSrc ?? `https://ui-avatars.com/api/?name=Unknown`;
 });
 
 const computedClasses = computed(() => {
@@ -77,15 +77,8 @@ const handleError = (event: Event) => {
 <template>
   <div class="avatar">
     <div class="text-neutral-content" :class="computedClasses">
-      <img
-        v-if="!loading"
-        role="img"
-        :src="src || ''"
-        :alt="alt || ''"
-        decoding="async"
-        :loading="imageLoading"
-        @error="handleError"
-      />
+      <img v-if="!loading" role="img" :src="src || ''" :alt="alt || ''" decoding="async" :loading="imageLoading"
+        @error="handleError" />
     </div>
   </div>
 </template>

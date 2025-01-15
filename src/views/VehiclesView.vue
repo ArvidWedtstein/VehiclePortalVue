@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import VehiclesGrid from '@/components/vehicles/VehiclesGrid.vue';
+import VehiclesList from '@/components/vehicles/VehiclesList.vue';
 </script>
 
 <template>
   <RouterView v-slot="{ Component }">
     <component v-if="Component" :is="Component" />
 
-    <VehiclesGrid v-else />
+    <VehiclesList v-else />
   </RouterView>
 </template>
