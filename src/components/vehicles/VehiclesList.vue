@@ -21,7 +21,7 @@ onMounted(async () => {
   await getVehicles();
 });
 
-const vehicleModal = ref();
+const vehicleModal = ref<InstanceType<typeof VehicleModal> | null>(null);
 </script>
 
 <template>
@@ -41,7 +41,7 @@ const vehicleModal = ref();
       <div class="flex flex-col gap-3">
         <ListGroup>
           <ListGroupItem :title="'Create New Vehicle'" class="border border-primary !rounded-lg"
-            @click="vehicleModal.open()">
+            @click="vehicleModal?.open()">
             <template #icon="{ sizeClass }">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="fill-current p-2" :class="sizeClass">
                 <path
